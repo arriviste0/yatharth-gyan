@@ -1,0 +1,290 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  html {
+    font-family: 'Inter', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    margin: 0;
+    padding: 0;
+    min-height: 100svh;
+    background: #F4F2EE;
+    color: #1a1a2e;
+    overflow-x: hidden;
+  }
+
+  .dark body {
+    background: #07070f;
+    color: #f0ede8;
+  }
+
+  /* Inputs always readable — browsers can override inherited color */
+  input:not([type='checkbox']):not([type='radio']):not([type='range']),
+  textarea,
+  select {
+    color: #1a1a2e;
+  }
+  .dark input:not([type='checkbox']):not([type='radio']):not([type='range']),
+  .dark textarea,
+  .dark select {
+    color: #f0ede8;
+  }
+
+  #root {
+    min-height: 100svh;
+    width: 100%;
+    /* Mobile: constrain to phone width, centered */
+    max-width: 480px;
+    margin: 0 auto;
+    position: relative;
+    background: #F4F2EE;
+  }
+
+  .dark #root {
+    background: #07070f;
+  }
+
+  /* Desktop: full-width flex so SideNav + content sit side-by-side */
+  @media (min-width: 1024px) {
+    #root {
+      max-width: 100%;
+      display: flex;
+      background: #F4F2EE;
+    }
+    .dark #root {
+      background: #07070f;
+    }
+  }
+}
+
+@layer components {
+  .font-verse {
+    font-family: 'Lora', 'Cormorant Garamond', Georgia, serif;
+  }
+
+  .font-dev {
+    font-family: 'Tiro Devanagari Hindi', 'Mukta', serif;
+  }
+
+  /* Page layout */
+  .page-container {
+    @apply px-4 pt-5 pb-28;
+    min-height: 100svh;
+  }
+
+  @media (min-width: 1024px) {
+    .page-container {
+      @apply px-10 pt-8 pb-10;
+      min-height: auto;
+    }
+  }
+
+  @media (min-width: 1280px) {
+    .page-container {
+      @apply px-12;
+    }
+  }
+
+  /* Glassmorphism card */
+  .card {
+    @apply rounded-2xl p-4;
+    background: rgba(255, 255, 255, 0.72);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255, 255, 255, 0.55);
+    box-shadow: 0 1px 12px rgba(0, 0, 0, 0.05), 0 0 0 0.5px rgba(0,0,0,0.03);
+    /* Isolate GPU layer so backdrop-filter compositing doesn't bleed into
+       adjacent elements when nearby background-color values change */
+    isolation: isolate;
+  }
+
+  .dark .card {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    box-shadow: 0 2px 20px rgba(0, 0, 0, 0.35);
+  }
+
+  .card-solid {
+    @apply rounded-2xl p-4 bg-white dark:bg-white/5;
+    border: 1px solid rgba(0, 0, 0, 0.06);
+  }
+
+  .dark .card-solid {
+    border: 1px solid rgba(255, 255, 255, 0.07);
+  }
+
+  /* Gradient text */
+  .gradient-text {
+    background: linear-gradient(135deg, #E8843C 0%, #C9A961 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .gradient-text-indigo {
+    background: linear-gradient(135deg, #2D3561 0%, #5B6BAF 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Pill badge */
+  .pill {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+  }
+
+  /* Section header */
+  .section-label {
+    @apply text-[11px] font-semibold text-stone-400 uppercase tracking-widest;
+  }
+}
+
+@layer utilities {
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar { display: none; }
+
+  .safe-bottom { padding-bottom: env(safe-area-inset-bottom, 0px); }
+}
+
+/* ─── Page transitions ─────────────────────────────────────────────────────── */
+.page-transition {
+  animation: fadeSlideUp 0.22s ease-out both;
+}
+
+@keyframes fadeSlideUp {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Direction-aware transitions (#46) */
+.page-forward {
+  animation: slideInFromRight 0.24s cubic-bezier(0.4,0,0.2,1) both;
+}
+.page-backward {
+  animation: slideInFromLeft 0.24s cubic-bezier(0.4,0,0.2,1) both;
+}
+
+@keyframes slideInFromRight {
+  from { opacity: 0; transform: translateX(24px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes slideInFromLeft {
+  from { opacity: 0; transform: translateX(-24px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+/* Slide-up utility (#animate-slide-up) */
+.animate-slide-up {
+  animation: fadeSlideUp 0.18s ease-out both;
+}
+
+/* ─── Lotus bloom ───────────────────────────────────────────────────────────── */
+@keyframes petal-open {
+  0%   { transform: rotate(var(--petal-rot)) scaleY(0); transform-origin: bottom center; opacity: 0; }
+  100% { transform: rotate(var(--petal-rot)) scaleY(1); transform-origin: bottom center; opacity: 1; }
+}
+
+/* ─── Chakra / mandala ──────────────────────────────────────────────────────── */
+@keyframes chakra-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+@keyframes breath-pulse {
+  0%, 100% { opacity: 0.35; transform: scale(1); }
+  50%       { opacity: 0.65; transform: scale(1.03); }
+}
+
+.chakra-rotate   { animation: chakra-spin 25s linear infinite; }
+.mandala-breathe { animation: breath-pulse 6s ease-in-out infinite; }
+
+/* ─── Sanskrit / verse text ─────────────────────────────────────────────────── */
+.verse-sanskrit {
+  font-family: 'Tiro Devanagari Hindi', serif;
+  font-size: 1.05rem;
+  line-height: 2;
+  color: #2D3561;
+}
+.dark .verse-sanskrit { color: #C9A961; }
+
+/* ─── Range input ───────────────────────────────────────────────────────────── */
+input[type='range'] {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 4px;
+  border-radius: 2px;
+  background: #E8E0D0;
+  outline: none;
+}
+input[type='range']::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #E8843C;
+  cursor: pointer;
+}
+
+/* ─── Heatmap ───────────────────────────────────────────────────────────────── */
+.heatmap-cell {
+  border-radius: 3px;
+  transition: transform 0.12s ease;
+  cursor: default;
+}
+.heatmap-cell:hover { transform: scale(1.4); }
+
+/* ─── Glass navigation ──────────────────────────────────────────────────────── */
+.glass-nav {
+  background: rgba(244, 242, 238, 0.88);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+}
+.dark .glass-nav {
+  background: rgba(7, 7, 15, 0.92);
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+/* ─── Gradient backgrounds ──────────────────────────────────────────────────── */
+.bg-hero-gradient {
+  background: linear-gradient(135deg, #1e2240 0%, #2d3561 50%, #1a1a3e 100%);
+}
+
+.bg-saffron-gradient {
+  background: linear-gradient(135deg, #E8843C 0%, #C9A961 100%);
+}
+
+/* ─── Smooth global transitions ─────────────────────────────────────────────── */
+/*
+  background-color is intentionally excluded here.
+  Applying bg transitions globally causes backdrop-filter (used on .card) to
+  re-composite on every hover/state change anywhere on the page, which produces
+  a floating semi-transparent grey ghost box. Elements that need a bg transition
+  should add transition-colors or transition-all explicitly.
+*/
+* {
+  transition-property: color, border-color;
+  transition-duration: 150ms;
+}
+
+html { scroll-behavior: smooth; }
+
+/* Prevent button/link focus outlines from appearing as grey boxes */
+button:focus:not(:focus-visible),
+a:focus:not(:focus-visible) {
+  outline: none;
+}
