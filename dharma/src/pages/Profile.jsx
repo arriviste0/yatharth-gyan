@@ -78,7 +78,7 @@ export default function Profile({ onClose }) {
       onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
 
-      <div className="relative w-full max-w-md rounded-3xl z-10 page-transition overflow-y-auto max-h-[90svh] bg-[#F4F2EE] dark:bg-[#0f0e1a] border border-black/8 dark:border-white/8"
+      <div className="relative w-full max-w-md rounded-3xl z-10 page-transition overflow-y-auto max-h-[90svh] scrollbar-thin bg-[#F4F2EE] dark:bg-[#0f0e1a] border border-black/8 dark:border-white/8"
         style={{ boxShadow: '0 32px 80px rgba(0,0,0,0.35)' }}>
 
         {/* Header */}
@@ -144,14 +144,14 @@ export default function Profile({ onClose }) {
             <div>
               <label className="text-[10px] font-semibold text-stone-400 uppercase tracking-widest">Name</label>
               <input value={name} onChange={(e) => setName(e.target.value)} required maxLength={60}
-                className="mt-1 w-full text-sm text-[#1a1a2e] dark:text-white bg-stone-50 dark:bg-white/8 border border-black/8 dark:border-white/10 rounded-xl px-3 py-2.5 outline-none focus:border-[#E8843C] transition-colors placeholder-stone-400 dark:placeholder-stone-500" />
+                className="mt-1 w-full text-sm bg-stone-50 border border-black/8 rounded-xl px-3 py-2.5 outline-none focus:border-[#E8843C] transition-colors" />
             </div>
 
             <div>
               <label className="text-[10px] font-semibold text-stone-400 uppercase tracking-widest">Bio</label>
               <textarea value={bio} onChange={(e) => setBio(e.target.value)} maxLength={200} rows={2}
                 placeholder="A short intention or mantra…"
-                className="mt-1 w-full text-sm text-[#1a1a2e] dark:text-white placeholder-stone-400 dark:placeholder-stone-500 bg-stone-50 dark:bg-white/8 border border-black/8 dark:border-white/10 rounded-xl px-3 py-2 outline-none focus:border-[#E8843C] transition-colors resize-none font-verse italic" />
+                className="mt-1 w-full text-sm bg-stone-50 border border-black/8 rounded-xl px-3 py-2 outline-none focus:border-[#E8843C] transition-colors resize-none font-verse italic" />
             </div>
 
             <div className="flex items-center gap-2">
@@ -176,9 +176,9 @@ export default function Profile({ onClose }) {
               <Lock size={10} /> Change Password
             </div>
             <input value={currPw} onChange={(e) => setCurrPw(e.target.value)} required type="password" placeholder="Current password"
-              className="w-full text-sm text-[#1a1a2e] dark:text-white placeholder-stone-400 dark:placeholder-stone-500 bg-stone-50 dark:bg-white/8 border border-black/8 dark:border-white/10 rounded-xl px-3 py-2.5 outline-none focus:border-[#E8843C] transition-colors" />
+              className="w-full text-sm bg-stone-50 border border-black/8 rounded-xl px-3 py-2.5 outline-none focus:border-[#E8843C] transition-colors" />
             <input value={newPw} onChange={(e) => setNewPw(e.target.value)} required type="password" placeholder="New password (min 8 chars)"
-              className="w-full text-sm text-[#1a1a2e] dark:text-white placeholder-stone-400 dark:placeholder-stone-500 bg-stone-50 dark:bg-white/8 border border-black/8 dark:border-white/10 rounded-xl px-3 py-2.5 outline-none focus:border-[#E8843C] transition-colors" />
+              className="w-full text-sm bg-stone-50 border border-black/8 rounded-xl px-3 py-2.5 outline-none focus:border-[#E8843C] transition-colors" />
             <div className="flex items-center gap-2">
               <button type="submit" disabled={pwBusy}
                 className="px-4 py-2 rounded-xl text-xs font-semibold text-white transition-all"
