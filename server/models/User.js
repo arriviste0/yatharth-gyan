@@ -5,8 +5,10 @@ const userSchema = new mongoose.Schema(
   {
     name:         { type: String, required: true, trim: true, maxlength: 60 },
     email:        { type: String, required: true, unique: true, lowercase: true, trim: true },
-    passwordHash: { type: String, required: true },
+    passwordHash: { type: String, default: null },
+    googleId:     { type: String, default: null, index: true, sparse: true },
     avatarColor:  { type: String, default: '#E8843C' },
+    avatarPhoto:  { type: String, default: null },
     bio:          { type: String, default: '', maxlength: 200 },
     streak:       { type: Number, default: 0 },
     joinedAt:     { type: Date, default: Date.now },
@@ -15,6 +17,7 @@ const userSchema = new mongoose.Schema(
 );
 
 userSchema.methods.comparePassword = async function (plain) {
+  if (!this.passwordHash) throw new Error('No password set — use Google sign-in for this account');
   return bcrypt.compare(plain, this.passwordHash);
 };
 

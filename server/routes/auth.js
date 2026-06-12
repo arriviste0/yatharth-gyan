@@ -1,8 +1,11 @@
 const router  = require('express').Router();
 const bcrypt  = require('bcryptjs');
 const jwt     = require('jsonwebtoken');
+const { OAuth2Client } = require('google-auth-library');
 const User    = require('../models/User');
 const requireAuth = require('../middleware/auth');
+
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 function signToken(userId) {
   return jwt.sign({ id: userId }, process.env.JWT_SECRET, {
@@ -47,6 +50,38 @@ router.post('/login', async (req, res) => {
     res.json({ token, user });
   } catch (err) {
     res.status(500).json({ error: err.message });
+  }
+});
+
+/* POST /api/auth/google */
+router.post('/google', async (req, res) => {
+  try {
+    const { credential } = req.body;
+    if (!credential) return res.status(400).json({ error: 'credential required' });
+    if (!process.env.GOOGLE_CLIENT_ID) return res.status(501).json({ error: 'Google sign-in not configured' });
+
+    const ticket = await googleClient.verifyIdToken({
+      idToken: credential,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+    const { sub: googleId, email, name, picture } = ticket.getPayload();
+
+    let user = await User.findOne({ googleId });
+    if (!user) {
+      user = await User.findOne({ email: email.toLowerCase() });
+      if (user) {
+        user.googleId = googleId;
+        if (!user.avatarPhoto && picture) user.avatarPhoto = picture;
+        await user.save();
+      } else {
+        user = await User.create({ name, email, googleId, avatarPhoto: picture || null });
+      }
+    }
+
+    const token = signToken(user._id);
+    res.json({ token, user });
+  } catch (err) {
+    res.status(401).json({ error: 'Google sign-in failed: ' + err.message });
   }
 });
 

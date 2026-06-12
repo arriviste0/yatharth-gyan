@@ -18,3 +18,8 @@ export async function fetchMe() {
 export async function logout() {
   await client.post('/auth/logout').catch(() => {});
 }
+
+export async function loginWithGoogle(credential) {
+  const { data } = await client.post('/auth/google', { credential });
+  return data; // { token, user }
+}

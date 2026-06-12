@@ -72,6 +72,23 @@ export function setCloudSyncCallback(fn) {
   _syncCallback = fn;
 }
 
+/* Called after login/register to hydrate local state from cloud */
+export function loadFromCloud(data) {
+  if (!data) return;
+  const defaults = getInitialState();
+  const merged = {
+    ...defaults,
+    ...data,
+    settings: { ...defaults.settings, ...(data.settings || {}) },
+  };
+  _globalState = merged;
+  saveState(merged);
+  _listeners.forEach((fn) => fn(merged));
+  if (merged.settings?.theme) {
+    document.documentElement.classList.toggle('dark', merged.settings.theme === 'dark');
+  }
+}
+
 export function useStorage() {
   const [state, setLocalState] = useState(_globalState);
 

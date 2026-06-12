@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Settings, Sparkles, Timer, Target, Edit3, LogIn } from 'lucide-react';
+import {
+  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell,
+} from 'recharts';
 import { useAuth } from '../context/AuthContext';
 import { useStorage } from '../hooks/useStorage';
 import { useDailyVerse, useDailyArjunaKrishna } from '../hooks/useDailyVerse';
@@ -12,7 +15,6 @@ import {
   getDayCompletionRate, getTodayCompletedCount, getCurrentStreak,
 } from '../utils/streakUtils';
 import PillarCard from '../components/PillarCard';
-import CompletionRing from '../components/CompletionRing';
 import VerseCard from '../components/VerseCard';
 import NightInterstitial from '../components/NightInterstitial';
 import DayCelebration from '../components/DayCelebration';
@@ -33,9 +35,8 @@ function getGreeting(name) {
   return name ? `${base}, ${name}` : base;
 }
 
-/* ── Week at a Glance ─────────────────────────────────────────────── */
-function WeekGlance({ logs, pillars }) {
-  const [popover, setPopover] = useState(null);
+/* ── Week Bar Chart ───────────────────────────────────────────────── */
+function WeekBarChart({ logs, pillars }) {
   const days = [];
   const today = new Date();
   for (let i = 6; i >= 0; i--) {
@@ -43,65 +44,174 @@ function WeekGlance({ logs, pillars }) {
     d.setDate(today.getDate() - i);
     const key = dateKey(d);
     const rate = getDayCompletionRate(logs, pillars, key);
-    const dayLog = logs[key] || {};
-    const pillarDetails = pillars.map((p) => {
-      const targets = p.targets.filter((t) => t.frequency === 'daily' || !t.frequency);
-      const done = targets.filter((t) => dayLog[t.id]?.done).length;
-      return { name: p.english, color: p.color, done, total: targets.length };
-    }).filter((p) => p.total > 0);
-    days.push({ key, label: WEEKDAY_SHORT[d.getDay()], rate, isToday: i === 0, pillarDetails });
+    days.push({ key, label: WEEKDAY_SHORT[d.getDay()], rate, isToday: i === 0 });
   }
+
+  const totalTargets = pillars.reduce((s, p) =>
+    s + p.targets.filter((t) => t.frequency === 'daily' || !t.frequency).length, 0);
+
+  const completedThisWeek = days.reduce((s, day) => {
+    const dayLog = logs[day.key] || {};
+    return s + pillars.reduce((ps, p) =>
+      ps + p.targets.filter(
+        (t) => (t.frequency === 'daily' || !t.frequency) && dayLog[t.id]?.done
+      ).length
+    , 0);
+  }, 0);
 
   return (
     <div className="card mb-4">
-      <div className="section-label mb-3">This week</div>
-      <div className="flex gap-1.5 justify-between">
-        {days.map(({ key, label, rate, isToday, pillarDetails }) => {
-          const bg =
-            rate >= 0.8 ? '#C9A961' :
-            rate >= 0.5 ? '#E8843C' :
-            rate > 0    ? '#5A8A8A' :
-            'transparent';
-          const isOpen = popover === key;
-          return (
-            <div key={key} className="flex flex-col items-center gap-1.5 flex-1 relative">
-              <button
-                className="w-full aspect-square rounded-xl transition-all max-w-[52px] cursor-pointer"
-                style={{
-                  background: rate > 0 ? bg : 'rgba(0,0,0,0.06)',
-                  opacity: isToday && rate === 0 ? 0.55 : rate > 0 ? 0.88 : 0.35,
-                  boxShadow: isToday ? `0 0 0 2px #E8843C` : isOpen ? `0 0 0 2px ${bg}` : 'none',
-                }}
-                onClick={() => setPopover(isOpen ? null : key)}
-                aria-label={`${label}: ${Math.round(rate * 100)}%`}
-              />
-              <span className="text-[10px] font-bold" style={{ color: isToday ? '#E8843C' : '#9CA3AF' }}>
-                {label}
-              </span>
-              {isOpen && (
-                <div
-                  className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 z-30 rounded-xl p-2.5 w-36 shadow-xl"
-                  style={{ background: 'rgba(255,255,255,0.97)', border: '1px solid rgba(0,0,0,0.08)' }}
-                >
-                  <p className="text-[10px] font-semibold text-stone-400 uppercase tracking-wider mb-1.5">
-                    {Math.round(rate * 100)}% complete
-                  </p>
-                  {pillarDetails.length === 0 ? (
-                    <p className="text-[11px] text-stone-300 italic">No targets logged</p>
-                  ) : pillarDetails.map((p) => (
-                    <div key={p.name} className="flex items-center gap-1.5 mb-1">
-                      <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: p.color }} />
-                      <span className="text-[11px] text-stone-600 flex-1 truncate">{p.name}</span>
-                      <span className="text-[10px] font-semibold" style={{ color: p.done === p.total ? '#C9A961' : p.color }}>
-                        {p.done}/{p.total}
-                      </span>
-                    </div>
-                  ))}
+      <div className="section-label mb-3">Completed in the last 7 days</div>
+      <ResponsiveContainer width="100%" height={100}>
+        <BarChart data={days} barCategoryGap="25%" margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
+          <XAxis
+            dataKey="label"
+            tick={{ fontSize: 10, fill: '#9CA3AF' }}
+            axisLine={false}
+            tickLine={false}
+          />
+          <YAxis hide domain={[0, 1]} />
+          <Tooltip
+            content={({ active, payload }) => {
+              if (!active || !payload?.length) return null;
+              const d = payload[0].payload;
+              return (
+                <div className="bg-white dark:bg-[#0F1429] border border-stone-100 dark:border-white/10 rounded-xl px-3 py-2 shadow-lg text-xs">
+                  <div className="font-semibold text-[#1a1a2e] dark:text-white">
+                    {Math.round(d.rate * 100)}%
+                  </div>
                 </div>
-              )}
-            </div>
-          );
-        })}
+              );
+            }}
+            cursor={{ fill: 'rgba(0,0,0,0.03)' }}
+          />
+          <Bar dataKey="rate" radius={[5, 5, 0, 0]}>
+            {days.map((d) => (
+              <Cell
+                key={d.key}
+                fill={
+                  d.rate >= 0.8 ? '#C9A961' :
+                  d.rate >= 0.5 ? '#E8843C' :
+                  d.rate >  0   ? '#5A8A8A' :
+                  '#E5E7EB'
+                }
+                className="dark:[&]:fill-stone-700"
+                opacity={d.isToday ? 1 : 0.75}
+              />
+            ))}
+          </Bar>
+        </BarChart>
+      </ResponsiveContainer>
+
+      <div className="flex items-center gap-3 pt-2 border-t border-black/5 dark:border-white/5 mt-1">
+        <div className="flex items-center gap-1">
+          <span className="text-sm font-bold" style={{ color: '#E8843C' }}>{completedThisWeek}</span>
+          <span className="text-xs text-stone-400">done this week</span>
+        </div>
+        <div className="w-px h-3 bg-black/10 dark:bg-white/10" />
+        <div className="flex items-center gap-1">
+          <span className="text-sm font-bold" style={{ color: '#5B6BAF' }}>{totalTargets}</span>
+          <span className="text-xs text-stone-400">Targets</span>
+        </div>
+        <div className="w-px h-3 bg-black/10 dark:bg-white/10" />
+        <div className="flex items-center gap-1">
+          <span className="text-sm font-bold text-stone-500">{pillars.length}</span>
+          <span className="text-xs text-stone-400">Pillars</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── Practice Progress Card ───────────────────────────────────────── */
+function PracticeProgressCard({ done, total, completion, pillars, logs }) {
+  const today = todayKey();
+  const dayLog = logs[today] || {};
+  const hour = new Date().getHours();
+  const isLateEvening = hour >= 21;
+
+  const incompleteTargets = pillars.flatMap((p) =>
+    p.targets
+      .filter((t) => (t.frequency === 'daily' || !t.frequency) && !dayLog[t.id]?.done)
+      .map((t) => ({ ...t, pillarColor: p.color }))
+  ).slice(0, 3);
+
+  const pct = Math.round(completion * 100);
+
+  return (
+    <div
+      className="relative mb-4 rounded-2xl overflow-hidden p-5"
+      style={{ background: 'linear-gradient(135deg, #1e2240 0%, #2d3561 55%, #3d4880 100%)' }}
+    >
+      {/* Decorative rings */}
+      <div
+        className="absolute pointer-events-none"
+        style={{ right: '-28px', top: '-28px', width: '140px', height: '140px', borderRadius: '50%', border: '4px solid rgba(255,255,255,0.07)' }}
+      />
+      <div
+        className="absolute pointer-events-none"
+        style={{ right: '4px', top: '48px', width: '80px', height: '80px', borderRadius: '50%', border: '2px solid rgba(201,169,97,0.09)' }}
+      />
+
+      <div className="relative z-10">
+        <p className="text-[11px] font-semibold uppercase tracking-widest mb-1" style={{ color: 'rgba(255,255,255,0.5)' }}>
+          Today's practice progress
+        </p>
+        <div className="flex items-baseline justify-between mb-3">
+          <span className="text-4xl font-bold text-white tabular-nums">{done}/{total}</span>
+          <span
+            className="text-2xl font-bold tabular-nums"
+            style={{ color: pct >= 100 ? '#C9A961' : pct >= 50 ? '#F0A060' : 'rgba(255,255,255,0.65)' }}
+          >
+            {pct}%
+          </span>
+        </div>
+
+        {/* Progress bar */}
+        <div className="h-2 rounded-full mb-3" style={{ background: 'rgba(255,255,255,0.12)' }}>
+          <div
+            className="h-full rounded-full transition-all duration-700"
+            style={{
+              width: `${pct}%`,
+              background: pct >= 100 ? 'linear-gradient(90deg,#C9A961,#DFC07A)' :
+                          pct >= 50  ? 'linear-gradient(90deg,#E8843C,#F0A060)' :
+                                       'linear-gradient(90deg,#5B6BAF,#7A8BC0)',
+            }}
+          />
+        </div>
+
+        {done === total && total > 0 ? (
+          <div className="flex items-center gap-2">
+            <span className="text-lg">🪷</span>
+            <span className="text-sm font-semibold text-white">All done — lotus blooms</span>
+          </div>
+        ) : (
+          <div className="flex flex-wrap gap-1.5">
+            {incompleteTargets.map((t) => (
+              <span
+                key={t.id}
+                className="text-[11px] font-medium px-2.5 py-1 rounded-full truncate max-w-[150px]"
+                style={{ background: 'rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.8)' }}
+              >
+                {t.name}
+              </span>
+            ))}
+            {total - done > 3 && (
+              <span
+                className="text-[11px] px-2.5 py-1 rounded-full"
+                style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.4)' }}
+              >
+                +{total - done - 3} more
+              </span>
+            )}
+          </div>
+        )}
+
+        {isLateEvening && done > 0 && (
+          <p className="mt-3 pt-3 text-[11px] font-verse italic" style={{ color: 'rgba(255,255,255,0.4)', borderTop: '1px solid rgba(255,255,255,0.07)' }}>
+            "{done} of {total} stands on the battlefield today."
+          </p>
+        )}
       </div>
     </div>
   );
@@ -172,6 +282,14 @@ function ProfileHeaderButton({ onOpenProfile }) {
       </button>
     );
   }
+  if (user.avatarPhoto) {
+    return (
+      <button onClick={onOpenProfile} title={user.name}
+        className="w-9 h-9 rounded-full overflow-hidden transition-all hover:scale-105">
+        <img src={user.avatarPhoto} alt={user.name} className="w-full h-full object-cover" />
+      </button>
+    );
+  }
   const initials = user.name.split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase();
   return (
     <button onClick={onOpenProfile} title={user.name}
@@ -202,7 +320,6 @@ export default function Home({ onOpenFocus, onOpenProfile }) {
   const { done, total } = getTodayCompletedCount(logs, pillars);
   const completion     = total > 0 ? done / total : 0;
   const streak         = getCurrentStreak(logs, pillars);
-  const hour           = new Date().getHours();
   const todayIntention = intentions?.[today] || '';
 
   useEffect(() => {
@@ -228,12 +345,6 @@ export default function Home({ onOpenFocus, onOpenProfile }) {
     }
     prevDoneRef[0] = done;
   }, [done, total]);
-
-  const isLateEvening   = hour >= 21;
-  const endOfDayMessage =
-    isLateEvening && done > 0
-      ? `You stood on the battlefield ${done} of ${total} times today. Continue tomorrow.`
-      : null;
 
   return (
     <div className="page-container page-transition">
@@ -286,13 +397,22 @@ export default function Home({ onOpenFocus, onOpenProfile }) {
         </div>
       )}
 
+      {/* ── Practice Progress Card (full-width) ─────────────────── */}
+      <PracticeProgressCard
+        done={done}
+        total={total}
+        completion={completion}
+        pillars={pillars}
+        logs={logs}
+      />
+
       {/* ── Desktop 2-col / Mobile single-col ───────────────────── */}
       <div className="lg:grid lg:grid-cols-5 lg:gap-6 lg:items-start">
 
         {/* ── Left column (desktop 3/5) ────────────────────────── */}
         <div className="lg:col-span-3">
           <IntentionCard today={today} intention={todayIntention} onSave={setIntention} />
-          <WeekGlance logs={logs} pillars={pillars} />
+          <WeekBarChart logs={logs} pillars={pillars} />
 
           {/* Verse of the Day */}
           {dailyVerse && (
@@ -338,45 +458,6 @@ export default function Home({ onOpenFocus, onOpenProfile }) {
 
         {/* ── Right column (desktop 2/5) ───────────────────────── */}
         <div className="lg:col-span-2">
-          {/* Completion ring */}
-          <div className="card mb-4">
-            <div className="flex items-center gap-4">
-              <CompletionRing completion={completion} done={done} total={total} size={96} />
-              <div className="flex-1">
-                <p className="font-semibold text-base text-[#1a1a2e] dark:text-white mb-0.5">
-                  {done === total && total > 0
-                    ? 'All done for today'
-                    : done === 0
-                    ? 'Ready to begin'
-                    : 'Keep going'}
-                </p>
-                <p className="text-xs text-stone-400 mb-2">
-                  {done === total && total > 0
-                    ? 'Every target met.'
-                    : `${total - done} target${total - done !== 1 ? 's' : ''} remaining`}
-                </p>
-                {!settings.silentMode && completion >= 0.8 && (
-                  <span
-                    className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-1 rounded-full"
-                    style={{ background: 'rgba(201,169,97,0.12)', color: '#C9A961' }}
-                  >
-                    🪷 Lotus blooms
-                  </span>
-                )}
-              </div>
-            </div>
-            {endOfDayMessage && (
-              <div className="mt-3 pt-3 border-t border-black/5 dark:border-white/5">
-                <p className="font-verse italic text-sm text-stone-500 dark:text-stone-400 leading-relaxed">
-                  "{endOfDayMessage}"
-                </p>
-                <p className="text-[11px] text-stone-300 dark:text-stone-600 mt-1 font-dev">
-                  अभ्यासेन — continue tomorrow.
-                </p>
-              </div>
-            )}
-          </div>
-
           {/* Today's Practice */}
           <div className="mb-2">
             <p className="section-label mb-3">Today's practice</p>

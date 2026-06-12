@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
+import { GoogleOAuthProvider } from '@react-oauth/google';
 import { Timer, WifiOff, LogIn } from 'lucide-react';
 import { useStorage } from './hooks/useStorage';
 import { getCurrentStreak } from './utils/streakUtils';
@@ -50,6 +51,15 @@ function ProfileButton({ onClick }) {
         className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all"
         style={{ background: 'rgba(232,132,60,0.12)', color: '#E8843C' }}>
         <LogIn size={13} /> Sign in
+      </button>
+    );
+  }
+  if (user.avatarPhoto) {
+    return (
+      <button onClick={onClick} title={user.name}
+        className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 transition-all hover:scale-105 border-2"
+        style={{ borderColor: user.avatarColor || '#E8843C' }}>
+        <img src={user.avatarPhoto} alt={user.name} className="w-full h-full object-cover" />
       </button>
     );
   }
@@ -188,10 +198,12 @@ function AppInner() {
 
 export default function App() {
   return (
-    <BrowserRouter>
-      <AuthProvider>
-        <AppInner />
-      </AuthProvider>
-    </BrowserRouter>
+    <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID || ''}>
+      <BrowserRouter>
+        <AuthProvider>
+          <AppInner />
+        </AuthProvider>
+      </BrowserRouter>
+    </GoogleOAuthProvider>
   );
 }

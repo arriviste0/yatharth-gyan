@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { X, Eye, EyeOff, LogIn, UserPlus } from 'lucide-react';
+import { GoogleLogin } from '@react-oauth/google';
 import { useAuth } from '../context/AuthContext';
 
 export default function AuthModal({ onClose, onSuccess }) {
-  const { register, loginUser } = useAuth();
-  const [mode,     setMode]     = useState('login'); // 'login' | 'register'
+  const { register, loginUser, loginWithGoogle } = useAuth();
+  const [mode,     setMode]     = useState('login');
   const [name,     setName]     = useState('');
   const [email,    setEmail]    = useState('');
   const [password, setPassword] = useState('');
@@ -30,6 +31,22 @@ export default function AuthModal({ onClose, onSuccess }) {
       setBusy(false);
     }
   }
+
+  async function handleGoogleSuccess(credentialResponse) {
+    setError('');
+    setBusy(true);
+    try {
+      await loginWithGoogle(credentialResponse.credential);
+      onSuccess?.();
+      onClose();
+    } catch (err) {
+      setError(err.response?.data?.error || 'Google sign-in failed');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
   return (
     <div className="fixed inset-0 z-[90] flex items-center justify-center p-4"
@@ -57,6 +74,31 @@ export default function AuthModal({ onClose, onSuccess }) {
             {mode === 'login' ? 'Welcome back to your practice' : 'Begin your dharma journey'}
           </p>
         </div>
+
+        {/* Google sign-in */}
+        {googleClientId && (
+          <div className="mb-4">
+            <div className="flex justify-center">
+              <GoogleLogin
+                onSuccess={handleGoogleSuccess}
+                onError={() => setError('Google sign-in failed')}
+                theme="filled_black"
+                shape="pill"
+                text="continue_with"
+                size="large"
+              />
+            </div>
+            <div className="relative my-4">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t" style={{ borderColor: 'rgba(255,255,255,0.08)' }} />
+              </div>
+              <div className="relative flex justify-center">
+                <span className="px-3 text-[10px] uppercase tracking-widest text-stone-600"
+                  style={{ background: '#131325' }}>or</span>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Tab toggle */}
         <div className="flex gap-1 rounded-xl p-1 mb-5" style={{ background: 'rgba(255,255,255,0.05)' }}>

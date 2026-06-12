@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import * as authApi    from '../api/auth';
 import * as progressApi from '../api/progress';
-import { setCloudSyncCallback } from '../hooks/useStorage';
+import { setCloudSyncCallback, loadFromCloud } from '../hooks/useStorage';
 
 const AuthContext = createContext(null);
 
@@ -42,12 +42,23 @@ export function AuthProvider({ children }) {
     return () => setCloudSyncCallback(null);
   }, [scheduledSync]);
 
+  /* Helper: pull cloud state and hydrate local storage */
+  const hydrateFromCloud = useCallback(async () => {
+    try {
+      const { data } = await progressApi.fetchProgress();
+      if (data) loadFromCloud(data);
+    } catch { /* no cloud data yet — that's fine */ }
+  }, []);
+
   /* Restore session on mount */
   useEffect(() => {
     const token = localStorage.getItem(TOKEN_KEY);
     if (!token) { setLoading(false); return; }
     authApi.fetchMe()
-      .then((u) => setUser(u))
+      .then(async (u) => {
+        setUser(u);
+        await hydrateFromCloud();
+      })
       .catch(() => localStorage.removeItem(TOKEN_KEY))
       .finally(() => setLoading(false));
   }, []);
@@ -64,8 +75,17 @@ export function AuthProvider({ children }) {
     const { token, user: u } = await authApi.login(email, password);
     localStorage.setItem(TOKEN_KEY, token);
     setUser(u);
+    await hydrateFromCloud();
     return u;
-  }, []);
+  }, [hydrateFromCloud]);
+
+  const loginWithGoogle = useCallback(async (credential) => {
+    const { token, user: u } = await authApi.loginWithGoogle(credential);
+    localStorage.setItem(TOKEN_KEY, token);
+    setUser(u);
+    await hydrateFromCloud();
+    return u;
+  }, [hydrateFromCloud]);
 
   const logoutUser = useCallback(async () => {
     clearTimeout(syncTimerRef.current);
@@ -96,7 +116,7 @@ export function AuthProvider({ children }) {
   return (
     <AuthContext.Provider value={{
       user, loading, syncing, lastSync,
-      register, loginUser, logoutUser,
+      register, loginUser, loginWithGoogle, logoutUser,
       syncToCloud, pullFromCloud,
       updateUserProfile, changePassword,
     }}>

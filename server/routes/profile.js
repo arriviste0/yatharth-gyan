@@ -10,11 +10,18 @@ router.get('/', requireAuth, (req, res) => {
 /* PUT /api/profile */
 router.put('/', requireAuth, async (req, res) => {
   try {
-    const { name, bio, avatarColor } = req.body;
+    const { name, bio, avatarColor, avatarPhoto } = req.body;
     const updates = {};
     if (name        !== undefined) updates.name        = String(name).trim().slice(0, 60);
     if (bio         !== undefined) updates.bio         = String(bio).trim().slice(0, 200);
     if (avatarColor !== undefined) updates.avatarColor = String(avatarColor).slice(0, 20);
+    if (avatarPhoto !== undefined) {
+      const valid = avatarPhoto === null ||
+        String(avatarPhoto).startsWith('data:image/') ||
+        String(avatarPhoto).startsWith('https://');
+      if (!valid) return res.status(400).json({ error: 'Invalid avatar photo' });
+      updates.avatarPhoto = avatarPhoto;
+    }
 
     const user = await User.findByIdAndUpdate(req.user._id, updates, { new: true }).select('-passwordHash');
     res.json({ user });
