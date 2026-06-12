@@ -495,15 +495,10 @@ export default function Drishti() {
             </div>
 
             {/* Month labels row (#20) */}
-            <div className="grid gap-1 mb-0.5" style={{ gridTemplateColumns: `repeat(${heatmapCols}, 1fr)` }}>
-              {heatmapData.map(({ date }, idx) => {
-                const ml = monthLabels.find((l) => l.idx === idx);
-                return (
-                  <div key={date} className="text-[8px] text-stone-400 text-center truncate h-3 leading-3">
-                    {ml ? ml.label : ''}
-                  </div>
-                );
-              })}
+            <div className="flex justify-between mb-1">
+              {monthLabels.map(({ label }) => (
+                <span key={label} className="text-[9px] text-stone-400 font-medium">{label}</span>
+              ))}
             </div>
 
             <div className="grid gap-1" style={{ gridTemplateColumns: `repeat(${heatmapCols}, 1fr)` }}>
