@@ -4,7 +4,7 @@ import {
   Settings, Sparkles, Timer, LogIn, Check, Plus, Flame,
   Moon, Utensils, Dumbbell, ChevronRight, ArrowRight, Zap,
   TrendingUp, Target, Edit3, X, Clock, Activity, Filter,
-  CheckCircle2, Circle, MoreHorizontal, ChevronDown,
+  CheckCircle2, Circle, MoreHorizontal, ChevronDown, Droplets,
 } from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell,
@@ -46,7 +46,108 @@ function getGreeting(name) {
 }
 
 /* ═══════════════════════════════════════════════════════════════════ *
- *  MOBILE COMPONENTS (unchanged)                                     *
+ *  DYNAMIC ISLAND WIDGET                                             *
+ * ═══════════════════════════════════════════════════════════════════ */
+function DynamicIsland({ streak, done, total, pct, onOpenFocus, logMetric, metrics, today }) {
+  const [expanded, setExpanded] = useState(false);
+  const waterLog = metrics[today]?.water || 0;
+
+  return (
+    <div className="flex justify-center mb-6 z-40">
+      <div
+        onClick={() => setExpanded(!expanded)}
+        className={`cursor-pointer transition-all duration-300 ease-out select-none border border-[#C9A961]/30 shadow-2xl backdrop-blur-xl ${
+          expanded
+            ? 'rounded-3xl p-5 w-full max-w-md bg-[#0e1226]/95 border-[#E8843C]/40 ring-1 ring-[#E8843C]/20'
+            : 'rounded-full px-5 py-2 bg-[#0e1226]/90 hover:bg-[#141936] hover:border-[#C9A961]/50'
+        }`}
+      >
+        {!expanded ? (
+          /* Collapsed Pill View */
+          <div className="flex items-center justify-between gap-4 text-xs font-bold">
+            <div className="flex items-center gap-1.5 text-[#E8843C]">
+              <Flame size={14} className="animate-pulse" />
+              <span>{streak}d Streak</span>
+            </div>
+            <div className="w-px h-3 bg-white/10" />
+            <div className="flex items-center gap-2 text-white/80">
+              <span className="tabular-nums">{done}/{total}</span>
+              <div className="w-12 h-1.5 rounded-full bg-white/10 overflow-hidden">
+                <div className="h-full rounded-full bg-gradient-to-r from-[#E8843C] to-[#C9A961]" style={{ width: `${pct}%` }} />
+              </div>
+              <span className="text-[#C9A961]">{pct}%</span>
+            </div>
+            <div className="w-px h-3 bg-white/10" />
+            <button
+              onClick={(e) => { e.stopPropagation(); onOpenFocus(); }}
+              className="flex items-center gap-1 text-[11px] text-[#C9A961] bg-[#C9A961]/10 px-2.5 py-1 rounded-full hover:bg-[#C9A961]/20 transition-all"
+            >
+              <Timer size={11} /> Focus
+            </button>
+          </div>
+        ) : (
+          /* Expanded Island Dashboard Card */
+          <div className="space-y-4 text-white">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-full bg-[#E8843C]/20 flex items-center justify-center text-[#E8843C]">
+                  <Flame size={16} />
+                </div>
+                <div>
+                  <h4 className="text-xs font-extrabold uppercase tracking-wider text-[#C9A961]">Streak & Practice</h4>
+                  <p className="text-sm font-bold text-white">{streak} Days Continuous Practice</p>
+                </div>
+              </div>
+              <button onClick={(e) => { e.stopPropagation(); setExpanded(false); }} className="text-white/30 hover:text-white">
+                <X size={14} />
+              </button>
+            </div>
+
+            {/* Quick Stats Grid inside Dynamic Island */}
+            <div className="grid grid-cols-2 gap-2 pt-1">
+              <div className="p-3 rounded-2xl bg-white/5 border border-white/8">
+                <div className="text-[10px] text-white/40 uppercase font-semibold">Today's Progress</div>
+                <div className="text-base font-extrabold text-white mt-0.5">{done} of {total} targets</div>
+                <div className="mt-1.5 h-1.5 rounded-full bg-white/10 overflow-hidden">
+                  <div className="h-full rounded-full bg-gradient-to-r from-[#E8843C] to-[#C9A961]" style={{ width: `${pct}%` }} />
+                </div>
+              </div>
+
+              <div className="p-3 rounded-2xl bg-white/5 border border-white/8 flex flex-col justify-between">
+                <div className="text-[10px] text-white/40 uppercase font-semibold">Hydration Tracker</div>
+                <div className="flex items-center justify-between mt-1">
+                  <span className="text-sm font-bold text-[#5A8A8A] tabular-nums">{waterLog} ml</span>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      logMetric(today, 'water', waterLog + 250);
+                    }}
+                    className="px-2 py-1 bg-[#5A8A8A]/20 hover:bg-[#5A8A8A]/30 text-[#5A8A8A] rounded-lg text-[10px] font-bold transition-all"
+                  >
+                    +250ml 💧
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Action buttons inside island */}
+            <div className="flex gap-2 pt-1">
+              <button
+                onClick={(e) => { e.stopPropagation(); onOpenFocus(); }}
+                className="flex-1 py-2 rounded-xl bg-gradient-to-r from-[#E8843C] to-[#C9A961] text-white text-xs font-bold shadow-md hover:opacity-90 transition-all flex items-center justify-center gap-1.5"
+              >
+                <Timer size={13} /> Start 25m Focus Session
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════════ *
+ *  MOBILE COMPONENTS                                                  *
  * ═══════════════════════════════════════════════════════════════════ */
 
 /* ── Circular Progress Ring ───────────────────────────────────────── */
@@ -206,21 +307,6 @@ function MobileTodayView({ pillars, logs, logTarget, dateStr, streak, settings, 
           })}
         </div>
       </div>
-
-      {/* Dashboard Banner */}
-      <Link to="/drishti" className="flex items-center justify-between p-4 rounded-2xl transition-all active:scale-[0.98]"
-        style={{ background: 'linear-gradient(135deg, rgba(232,132,60,0.08), rgba(201,169,97,0.06))', border: '1px solid rgba(232,132,60,0.12)' }}>
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'rgba(232,132,60,0.12)' }}>
-            <Sparkles size={16} style={{ color: '#E8843C' }} />
-          </div>
-          <div>
-            <h4 className="text-[13px] font-bold text-[#1a1a2e] dark:text-white">View Full Dashboard</h4>
-            <p className="text-[10px] text-stone-400 mt-0.5">Monthly grid, health logs & analytics</p>
-          </div>
-        </div>
-        <ArrowRight size={16} className="text-[#E8843C] shrink-0" />
-      </Link>
     </div>
   );
 }
@@ -399,8 +485,8 @@ function DesktopTaskManager({ pillars, logs, logTarget, dateStr, setPillars }) {
       <div className="px-5 pt-5 pb-4">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h3 className="text-base font-bold text-white">Today's Targets</h3>
-            <p className="text-[11px] text-white/30 mt-0.5">Complete your daily practice</p>
+            <h3 className="text-base font-bold text-white">Daily Practice Targets</h3>
+            <p className="text-[11px] text-white/30 mt-0.5">Complete your daily targets</p>
           </div>
           {/* Pillar filter */}
           <div className="relative">
@@ -674,7 +760,6 @@ function DesktopActivityFeed({ logs, pillars, dateStr }) {
           </div>
 
           {activities.map((a) => {
-            const Icon = PILLAR_ICONS[a.pillarIcon] || Zap;
             const time = new Date(a.timestamp);
             const timeStr = time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
             return (
@@ -739,9 +824,9 @@ function ProfileHeaderButton({ onOpenProfile }) {
  * ═══════════════════════════════════════════════════════════════════ */
 
 export default function Home({ onOpenFocus, onOpenProfile }) {
-  const { state, toggleBookmark, logTarget, setPillars } = useStorage();
+  const { state, toggleBookmark, logTarget, setPillars, logMetric } = useStorage();
   const pillars = state.pillars || DEFAULT_PILLARS;
-  const { logs, bookmarks, settings } = state;
+  const { logs, bookmarks, settings, metrics = {} } = state;
   const dailyVerse = useDailyVerse();
 
   const [showNight, setShowNight] = useState(false);
@@ -796,6 +881,18 @@ export default function Home({ onOpenFocus, onOpenProfile }) {
       {showNight && <NightInterstitial onClose={() => setShowNight(false)} />}
       {showCelebration && <DayCelebration onClose={() => setShowCelebration(false)} />}
 
+      {/* ── Dynamic Island Widget (Top Center) ────────────────── */}
+      <DynamicIsland
+        streak={streak}
+        done={done}
+        total={total}
+        pct={pct}
+        onOpenFocus={onOpenFocus}
+        logMetric={logMetric}
+        metrics={metrics}
+        today={today}
+      />
+
       {/* ── Header ──────────────────────────────────────────────── */}
       <div className="flex items-start justify-between mb-5 lg:mb-6">
         <div>
@@ -803,7 +900,7 @@ export default function Home({ onOpenFocus, onOpenProfile }) {
             {dateInfo.dayEn} · {dateInfo.short}
           </p>
           <h1 className="text-2xl lg:text-3xl font-bold text-[#1a1a2e] dark:text-white leading-tight">
-            {getGreeting(settings.name)}
+            Dashboard
           </h1>
         </div>
         <div className="flex items-center gap-2 pt-1">

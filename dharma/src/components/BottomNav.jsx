@@ -1,5 +1,5 @@
 import { NavLink, useLocation } from 'react-router-dom';
-import { Home, Layers, BookOpen, BarChart2, BookMarked, Settings, Timer, Target, LogIn, Cloud, CheckCircle2 } from 'lucide-react';
+import { Home, Layers, BookOpen, BarChart2, BookMarked, Settings, Timer, Target, LogIn, Cloud, CheckCircle2, LayoutDashboard } from 'lucide-react';
 import { useStorage } from '../hooks/useStorage';
 import { DEFAULT_PILLARS } from '../data/defaultPillars';
 import { getTodayCompletedCount, getCurrentStreak } from '../utils/streakUtils';
@@ -8,10 +8,9 @@ import { useDailyVerse } from '../hooks/useDailyVerse';
 import { useAuth } from '../context/AuthContext';
 
 const NAV_ITEMS = [
-  { path: '/home',    label: 'Today',     Icon: Home },
+  { path: '/home',    label: 'Dashboard', Icon: LayoutDashboard },
   { path: '/sadhana', label: 'Pillars',   Icon: Layers },
   { path: '/manan',   label: 'Journal',   Icon: BookOpen },
-  { path: '/drishti', label: 'Dashboard', Icon: BarChart2 },
   { path: '/gyaan',   label: 'Wisdom',    Icon: BookMarked },
 ];
 
@@ -23,7 +22,7 @@ export default function BottomNav() {
     <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md glass-nav safe-bottom z-50 lg:hidden">
       <div className="flex items-stretch px-2 py-1">
         {NAV_ITEMS.map(({ path, label, Icon }) => {
-          const isActive = location.pathname === path || location.pathname.startsWith(path + '/');
+          const isActive = location.pathname === path || (path !== '/home' && location.pathname.startsWith(path + '/'));
           return (
             <NavLink
               key={path}
@@ -133,7 +132,7 @@ export function SideNav({ onOpenFocus, onOpenProfile }) {
         </div>
       </div>
 
-      {/* Today's intention (#48) */}
+      {/* Today's intention */}
       {todayIntention && (
         <div className="mx-0 mb-4 px-3 py-2.5 rounded-xl" style={{ background: 'rgba(201,169,97,0.07)', border: '1px solid rgba(201,169,97,0.15)' }}>
           <div className="flex items-center gap-1 mb-1">
@@ -144,7 +143,7 @@ export function SideNav({ onOpenFocus, onOpenProfile }) {
         </div>
       )}
 
-      {/* Daily verse (#48) */}
+      {/* Daily verse */}
       {dailyVerse && (
         <div className="mx-0 mb-4 px-3 py-2.5 rounded-xl" style={{ background: 'rgba(45,53,97,0.05)', border: '1px solid rgba(45,53,97,0.10)' }}>
           <div className="text-[9px] font-semibold uppercase tracking-widest text-stone-400 mb-1">
@@ -156,10 +155,10 @@ export function SideNav({ onOpenFocus, onOpenProfile }) {
         </div>
       )}
 
-      {/* Nav links (Desktop: remove Pillar page link) */}
+      {/* Nav links (Desktop includes Pillars) */}
       <div className="flex flex-col gap-0.5 flex-1">
-        {NAV_ITEMS.filter((item) => item.path !== '/sadhana').map(({ path, label, Icon }) => {
-          const isActive = location.pathname === path;
+        {NAV_ITEMS.map(({ path, label, Icon }) => {
+          const isActive = location.pathname === path || (path !== '/home' && location.pathname.startsWith(path + '/'));
           return (
             <NavLink
               key={path}
