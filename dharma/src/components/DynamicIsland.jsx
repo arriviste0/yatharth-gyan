@@ -1,5 +1,5 @@
-import { useState, useMemo } from 'react';
-import { Flame, Timer, X, Check, Droplets } from 'lucide-react';
+import { useState } from 'react';
+import { Flame, Timer, X, Droplets } from 'lucide-react';
 import { useStorage } from '../hooks/useStorage';
 import { DEFAULT_PILLARS } from '../data/defaultPillars';
 import { getTodayCompletedCount, getCurrentStreak } from '../utils/streakUtils';
@@ -23,16 +23,16 @@ export default function DynamicIsland({ onOpenFocus }) {
     <div className="fixed top-3 left-1/2 -translate-x-1/2 z-50 max-w-[92vw] sm:max-w-md w-full px-2 pointer-events-auto">
       <div
         onClick={() => setExpanded(!expanded)}
-        className={`cursor-pointer transition-all duration-300 ease-out select-none border border-[#EF5A34]/35 shadow-2xl backdrop-blur-xl ${
+        className={`cursor-pointer transition-all duration-300 ease-out select-none border border-[#F05A36]/35 shadow-2xl backdrop-blur-xl ${
           expanded
-            ? 'rounded-3xl p-4 sm:p-5 w-full bg-[#181925]/95 border-[#EF5A34]/50 ring-1 ring-[#EF5A34]/20 shadow-orange-950/40'
-            : 'rounded-full px-4 sm:px-5 py-2 bg-[#181925]/90 hover:bg-[#202333] hover:border-[#EF5A34]/60 shadow-black/60'
+            ? 'rounded-3xl p-4 sm:p-5 w-full bg-[#181926]/95 text-white border-[#F05A36]/50 ring-1 ring-[#F05A36]/20 shadow-orange-950/40'
+            : 'rounded-full px-4 sm:px-5 py-2 bg-[#181926]/90 hover:bg-[#202334] text-white hover:border-[#F05A36]/60 shadow-black/60'
         }`}
       >
         {!expanded ? (
           /* Collapsed Pill View */
-          <div className="flex items-center justify-between gap-2 sm:gap-4 text-[11px] sm:text-xs font-bold text-white">
-            <div className="flex items-center gap-1.5 text-[#EF5A34] shrink-0">
+          <div className="flex items-center justify-between gap-2 sm:gap-4 text-[11px] sm:text-xs font-extrabold text-white">
+            <div className="flex items-center gap-1.5 text-[#F05A36] shrink-0">
               <Flame size={14} className="animate-pulse" />
               <span>{streak}d Streak</span>
             </div>
@@ -43,11 +43,11 @@ export default function DynamicIsland({ onOpenFocus }) {
               <span className="tabular-nums shrink-0">{done}/{total}</span>
               <div className="w-10 sm:w-14 h-1.5 rounded-full bg-white/10 overflow-hidden shrink-0">
                 <div
-                  className="h-full rounded-full bg-gradient-to-r from-[#EF5A34] to-[#E6A04E] transition-all duration-500"
+                  className="h-full rounded-full bg-[#F05A36] transition-all duration-500"
                   style={{ width: `${pct}%` }}
                 />
               </div>
-              <span className="text-[#E6A04E] shrink-0">{pct}%</span>
+              <span className="text-[#F05A36] shrink-0">{pct}%</span>
             </div>
 
             <div className="w-px h-3 bg-white/15 shrink-0" />
@@ -57,7 +57,7 @@ export default function DynamicIsland({ onOpenFocus }) {
                 e.stopPropagation();
                 if (onOpenFocus) onOpenFocus();
               }}
-              className="flex items-center gap-1 text-[10px] sm:text-[11px] text-[#EF5A34] bg-[#EF5A34]/15 px-2.5 py-1 rounded-full hover:bg-[#EF5A34]/25 transition-all shrink-0"
+              className="flex items-center gap-1 text-[10px] sm:text-[11px] text-white bg-[#F05A36] px-3 py-1 rounded-full hover:bg-[#d94a28] transition-all shrink-0 font-bold"
             >
               <Timer size={11} /> Focus
             </button>
@@ -67,11 +67,11 @@ export default function DynamicIsland({ onOpenFocus }) {
           <div className="space-y-3.5 text-white">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-full bg-[#EF5A34]/20 flex items-center justify-center text-[#EF5A34]">
+                <div className="w-8 h-8 rounded-full bg-[#F05A36]/20 flex items-center justify-center text-[#F05A36]">
                   <Flame size={16} />
                 </div>
                 <div>
-                  <h4 className="text-[10px] font-extrabold uppercase tracking-wider text-[#EF5A34]">Streak & Practice</h4>
+                  <h4 className="text-[10px] font-extrabold uppercase tracking-wider text-[#F05A36]">Streak & Practice</h4>
                   <p className="text-xs sm:text-sm font-bold text-white">{streak} Days Continuous Practice</p>
                 </div>
               </div>
@@ -90,7 +90,7 @@ export default function DynamicIsland({ onOpenFocus }) {
                 <div className="text-sm font-extrabold text-white mt-0.5">{done} of {total} targets</div>
                 <div className="mt-1.5 h-1.5 rounded-full bg-white/10 overflow-hidden">
                   <div
-                    className="h-full rounded-full bg-gradient-to-r from-[#EF5A34] to-[#E6A04E]"
+                    className="h-full rounded-full bg-[#F05A36]"
                     style={{ width: `${pct}%` }}
                   />
                 </div>
@@ -99,13 +99,13 @@ export default function DynamicIsland({ onOpenFocus }) {
               <div className="p-3 rounded-2xl bg-white/5 border border-white/8 flex flex-col justify-between">
                 <div className="text-[9px] text-white/40 uppercase font-semibold">Hydration Tracker</div>
                 <div className="flex items-center justify-between mt-1">
-                  <span className="text-xs font-bold text-[#5A8A8A] tabular-nums">{waterLog} ml</span>
+                  <span className="text-xs font-bold text-teal-400 tabular-nums">{waterLog} ml</span>
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
                       logMetric(today, 'water', waterLog + 250);
                     }}
-                    className="px-2 py-1 bg-[#5A8A8A]/20 hover:bg-[#5A8A8A]/30 text-[#5A8A8A] rounded-lg text-[10px] font-bold transition-all"
+                    className="px-2 py-1 bg-teal-500/20 hover:bg-teal-500/30 text-teal-300 rounded-lg text-[10px] font-bold transition-all"
                   >
                     +250ml 💧
                   </button>
@@ -121,7 +121,7 @@ export default function DynamicIsland({ onOpenFocus }) {
                   setExpanded(false);
                   if (onOpenFocus) onOpenFocus();
                 }}
-                className="w-full py-2 rounded-xl bg-gradient-to-r from-[#EF5A34] to-[#E6A04E] text-white text-xs font-bold shadow-md hover:opacity-90 transition-all flex items-center justify-center gap-1.5"
+                className="w-full py-2.5 rounded-full bg-[#F05A36] text-white text-xs font-extrabold shadow-md hover:bg-[#d94a28] transition-all flex items-center justify-center gap-1.5"
               >
                 <Timer size={13} /> Start 25m Focus Session
               </button>

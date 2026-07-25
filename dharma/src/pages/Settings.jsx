@@ -99,19 +99,37 @@ export default function Settings() {
             </div>
           </div>
 
-          {/* Appearance */}
-          <div className="card mb-4">
-            <div className="section-label mb-3">Appearance</div>
-            <button onClick={toggleTheme} className="flex items-center gap-3 w-full mb-4">
-              <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${settings.theme === 'dark' ? 'bg-[#2D3561]/20' : 'bg-amber-50'}`}>
-                {settings.theme === 'dark' ? <Moon size={18} style={{ color: '#8B9FE0' }} /> : <Sun size={18} className="text-amber-500" />}
+          {/* Theme & Display */}
+          <div className="card-bento mb-4 space-y-3">
+            <div className="text-xs font-extrabold text-[#F05A36] uppercase tracking-wider">Appearance & Theme</div>
+            
+            <div className="flex items-center justify-between p-3 rounded-2xl bg-black/4 dark:bg-white/5">
+              <div className="flex items-center gap-3">
+                {settings.theme === 'dark' ? <Moon size={18} className="text-amber-400" /> : <Sun size={18} className="text-[#F05A36]" />}
+                <div>
+                  <div className="text-xs font-bold text-[#18191E] dark:text-white">Site Theme Mode</div>
+                  <div className="text-[10px] text-stone-400">Current: {settings.theme === 'dark' ? 'Dark Midnight' : 'Light Cream'}</div>
+                </div>
               </div>
-              <div className="flex-1 text-left">
-                <div className="text-sm font-semibold text-[#1a1a2e] dark:text-white">{settings.theme === 'dark' ? 'Dark Mode' : 'Light Mode'}</div>
-                <div className="text-xs text-stone-400">Tap to toggle · auto-follows system on first open</div>
+              <div className="flex bg-white dark:bg-[#181926] p-1 rounded-full border border-black/5 dark:border-white/10">
+                <button
+                  onClick={() => { updateSettings({ theme: 'light' }); document.documentElement.classList.remove('dark'); }}
+                  className={`px-3 py-1 text-xs font-bold rounded-full transition-all ${
+                    settings.theme !== 'dark' ? 'bg-[#F05A36] text-white' : 'text-stone-400 hover:text-[#18191E] dark:hover:text-white'
+                  }`}
+                >
+                  Light ☀️
+                </button>
+                <button
+                  onClick={() => { updateSettings({ theme: 'dark' }); document.documentElement.classList.add('dark'); }}
+                  className={`px-3 py-1 text-xs font-bold rounded-full transition-all ${
+                    settings.theme === 'dark' ? 'bg-[#F05A36] text-white' : 'text-stone-400 hover:text-[#18191E] dark:hover:text-white'
+                  }`}
+                >
+                  Dark 🌙
+                </button>
               </div>
-              <ChevronRight size={16} className="text-stone-300" />
-            </button>
+            </div>
 
             {/* Accent color */}
             <div>

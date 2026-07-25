@@ -1,319 +1,465 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
-  Sparkles, ArrowRight, Play, Heart, BookOpen, Users,
-  Flame, Sun, CheckCircle, ChevronRight, MessageCircle, ShieldCheck
-} from 'lucide-react';
+import MandalaBg from '../components/svgs/MandalaBg';
+import krishnaImg from '../assets/krishna.png';
+import kaImg from '../assets/ka.png';
 
-export default function Onboarding({ onComplete }) {
-  const navigate = useNavigate();
+// ─── Phase order ────────────────────────────────────────────────────────────
+// dark → stars → figures → dialogue → verse → ready → closing → done
+const PHASE_TIMINGS = [
+  { phase: 'stars', delay: 500 },
+  { phase: 'figures', delay: 1400 },
+  { phase: 'dialogue', delay: 2600 },
+  { phase: 'verse', delay: 4200 },
+  { phase: 'ready', delay: 5800 },
+];
 
-  function handleStart() {
-    onComplete();
-    navigate('/home');
-  }
+
+// ─── Typewriter ──────────────────────────────────────────────────────────────
+function TypeWriter({ text, speed = 55, startDelay = 0, className = '' }) {
+  const [shown, setShown] = useState(0);
+
+  useEffect(() => {
+    setShown(0);
+    const t = setTimeout(() => {
+      const iv = setInterval(() => {
+        setShown(prev => {
+          if (prev >= text.length) { clearInterval(iv); return prev; }
+          return prev + 1;
+        });
+      }, speed);
+      return () => clearInterval(iv);
+    }, startDelay);
+    return () => clearTimeout(t);
+  }, [text, startDelay, speed]);
 
   return (
-    <div className="min-h-screen bg-[#FAF6F0] text-[#18191E] dark:bg-[#12141F] dark:text-[#F5F3EF] selection:bg-[#EF5A34] selection:text-white overflow-x-hidden">
+    <span className={className}>
+      {text.slice(0, shown)}
+      {shown < text.length && <span className="animate-pulse opacity-70">|</span>}
+    </span>
+  );
+}
 
-      {/* ── Top Header Navigation ──────────────────────────────────── */}
-      <header className="max-w-7xl mx-auto px-6 py-6 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-[#EF5A34] to-[#E6A04E] flex items-center justify-center text-white font-bold text-xl shadow-lg">
-            ॐ
-          </div>
-          <span className="font-extrabold text-xl tracking-tight text-[#18191E] dark:text-white">
-            Dharma <span className="text-[#EF5A34] font-normal text-sm">Practice</span>
-          </span>
+// ─── Star field ──────────────────────────────────────────────────────────────
+const STARS = Array.from({ length: 55 }, (_, i) => ({
+  id: i,
+  x: Math.sin(i * 137.5 * Math.PI / 180) * 50 + 50,
+  y: (i * 1.618) % 100,
+  r: [0.8, 1, 1.2, 1.5, 0.6][i % 5],
+  delay: (i * 0.13) % 3,
+  dur: 2.5 + (i % 4) * 0.8,
+}));
+
+// ─── Main ────────────────────────────────────────────────────────────────────
+export default function Onboarding({ onComplete }) {
+  const navigate = useNavigate();
+  const [phase, setPhase] = useState('dark');
+  const [closing, setClosing] = useState(false);
+  const timersRef = useRef([]);
+
+  // Auto-advance phases
+  useEffect(() => {
+    timersRef.current = PHASE_TIMINGS.map(({ phase: p, delay }) =>
+      setTimeout(() => setPhase(p), delay)
+    );
+    return () => timersRef.current.forEach(clearTimeout);
+  }, []);
+
+  // Skip to ready on tap (before ready phase)
+  function handleSkip() {
+    if (phase === 'ready' || phase === 'closing') return;
+    timersRef.current.forEach(clearTimeout);
+    setPhase('ready');
+  }
+
+  // Begin — temple-door closing animation then navigate
+  function handleBegin(e) {
+    e.stopPropagation();
+    setClosing(true);
+    setTimeout(() => {
+      onComplete();
+      navigate('/home');
+    }, 900);
+  }
+
+  const vis = (p) => phase === p || PHASE_TIMINGS.findIndex(x => x.phase === p) <
+    PHASE_TIMINGS.findIndex(x => x.phase === phase) ||
+    (phase === 'ready' || phase === 'closing');
+
+  return (
+    <div
+      className="fixed inset-0 overflow-hidden select-none"
+      style={{ background: 'linear-gradient(180deg, #06071a 0%, #0d1030 55%, #1a1440 100%)' }}
+      onClick={handleSkip}
+    >
+      {/* ── Stars ────────────────────────────────────────────────── */}
+      <svg
+        className="absolute inset-0 w-full h-full pointer-events-none"
+        style={{
+          opacity: vis('stars') ? 1 : 0,
+          transition: 'opacity 1.5s ease',
+        }}
+      >
+        {STARS.map(s => (
+          <circle key={s.id} cx={`${s.x}%`} cy={`${s.y}%`} r={s.r} fill="white">
+            <animate
+              attributeName="opacity"
+              values="0.15;0.7;0.15"
+              dur={`${s.dur}s`}
+              begin={`${s.delay}s`}
+              repeatCount="indefinite"
+            />
+          </circle>
+        ))}
+      </svg>
+
+      {/* ── Horizon glow ─────────────────────────────────────────── */}
+      <div
+        className="absolute bottom-0 left-0 right-0 pointer-events-none"
+        style={{
+          height: '35%',
+          background: 'linear-gradient(0deg, rgba(201,169,97,0.08) 0%, transparent 100%)',
+          opacity: vis('stars') ? 1 : 0,
+          transition: 'opacity 2s ease',
+        }}
+      />
+
+      {/* ── Mandala background ───────────────────────────────────── */}
+      <div
+        className="absolute inset-0 flex items-center justify-center pointer-events-none"
+        style={{
+          opacity: vis('figures') ? 0.06 : 0,
+          transition: 'opacity 2s ease',
+        }}
+      >
+        <MandalaBg size={Math.min(window.innerWidth, 640)} color="#C9A961" opacity={1} className="chakra-rotate" />
+      </div>
+
+      {/* ── Battlefield ground line ──────────────────────────────── */}
+      <div
+        className="absolute pointer-events-none"
+        style={{
+          bottom: '18%',
+          left: 0, right: 0,
+          height: '1px',
+          background: 'linear-gradient(90deg, transparent, rgba(201,169,97,0.25) 20%, rgba(201,169,97,0.5) 50%, rgba(201,169,97,0.25) 80%, transparent)',
+          opacity: vis('figures') ? 1 : 0,
+          transition: 'opacity 1.5s ease',
+        }}
+      />
+
+      {/* ── Figures area ─────────────────────────────────────────── */}
+      <div
+        className="absolute inset-x-0 pointer-events-none"
+        style={{ top: '8%', bottom: '20%' }}
+      >
+        {/* Krishna (left) — normal orientation */}
+        <img
+          src={krishnaImg}
+          alt="Krishna"
+          style={{
+            position: 'absolute',
+            left: '2%',
+            bottom: 0,
+            width: 'clamp(130px, 26vw, 280px)',
+            height: 'auto',
+            objectFit: 'contain',
+            objectPosition: 'bottom',
+            opacity: vis('figures') ? 1 : 0,
+            transform: vis('figures') ? 'translateY(0)' : 'translateY(30px)',
+            transition: 'opacity 1.2s ease 0.1s, transform 1.2s ease 0.1s',
+            filter: 'drop-shadow(0 0 24px rgba(201,169,97,0.35))',
+          }}
+        />
+
+        {/* Arjuna (right) — mirrored */}
+        <img
+          src={krishnaImg}
+          alt="Arjuna"
+          style={{
+            position: 'absolute',
+            right: '2%',
+            bottom: 0,
+            width: 'clamp(130px, 26vw, 280px)',
+            height: 'auto',
+            objectFit: 'contain',
+            objectPosition: 'bottom',
+            opacity: vis('figures') ? 1 : 0,
+            transform: vis('figures') ? 'translateY(0) scaleX(-1)' : 'translateY(30px) scaleX(-1)',
+            transition: 'opacity 1.2s ease 0.3s, transform 1.2s ease 0.3s',
+            filter: 'drop-shadow(0 0 20px rgba(201,169,97,0.25))',
+          }}
+        />
+
+        {/* Divine light between them */}
+        <div
+          style={{
+            position: 'absolute',
+            left: '50%',
+            top: '20%',
+            transform: 'translateX(-50%)',
+            width: 'clamp(80px, 15vw, 140px)',
+            height: 'clamp(80px, 15vw, 140px)',
+            borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(201,169,97,0.18) 0%, rgba(232,132,60,0.06) 50%, transparent 70%)',
+            opacity: vis('dialogue') ? 1 : 0,
+            transition: 'opacity 1.5s ease',
+            animation: vis('dialogue') ? 'breath-pulse 4s ease-in-out infinite' : 'none',
+          }}
+        />
+      </div>
+
+      {/* ── Centre content ───────────────────────────────────────── */}
+      <div className="absolute inset-0 flex flex-col items-center justify-center px-6 pointer-events-none">
+
+        {/* ka.png logo */}
+        <div
+          style={{
+            opacity: vis('stars') ? 1 : 0,
+            transform: vis('stars') ? 'scale(1)' : 'scale(0.6)',
+            transition: 'opacity 1.5s ease, transform 1.5s ease',
+            marginBottom: 'clamp(8px, 2vh, 20px)',
+            animation: 'breath-pulse 5s ease-in-out infinite',
+          }}
+        >
+          <img src={kaImg} alt="Dharma" style={{
+            width: 'clamp(56px, 10vw, 88px)',
+            height: 'auto',
+            filter: 'drop-shadow(0 0 14px rgba(201,169,97,0.5))',
+          }} />
         </div>
 
-        <nav className="hidden md:flex items-center gap-8 text-sm font-semibold text-[#18191E]/70 dark:text-white/70">
-          <a href="#hero" className="hover:text-[#EF5A34] transition-colors">Overview</a>
-          <a href="#movement" className="hover:text-[#EF5A34] transition-colors">Movement</a>
-          <a href="#initiatives" className="hover:text-[#EF5A34] transition-colors">Initiatives</a>
-          <a href="#events" className="hover:text-[#EF5A34] transition-colors">Events</a>
-        </nav>
-
-        <div className="flex items-center gap-3">
-          <button
-            onClick={handleStart}
-            className="btn-coral text-xs sm:text-sm shadow-xl flex items-center gap-2"
+        {/* Dialogue exchange */}
+        {vis('dialogue') && (
+          <div
+            style={{
+              opacity: vis('dialogue') ? 1 : 0,
+              transition: 'opacity 0.8s ease',
+              maxWidth: 'clamp(260px, 55vw, 500px)',
+              width: '100%',
+              marginBottom: 'clamp(10px, 2.5vh, 24px)',
+            }}
           >
-            Join us for free <ArrowRight size={15} />
-          </button>
-        </div>
-      </header>
-
-      {/* ── Hero Section (Matching Reference Image 1) ───────────────── */}
-      <section id="hero" className="max-w-7xl mx-auto px-6 pt-10 pb-16">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8 mb-12">
-          <div className="max-w-2xl">
-            <h1 className="text-4xl sm:text-6xl font-black text-[#18191E] dark:text-white tracking-tight leading-[1.1] mb-4">
-              Have you ever <br />
-              <span className="text-[#EF5A34]">felt overwhelmed</span>
-            </h1>
-            <p className="text-base sm:text-lg text-[#18191E]/70 dark:text-white/70 font-medium leading-relaxed max-w-xl">
-              Let's join our daily program — through the wisdom of the Bhagavad Gita, we guide seekers toward inner peace, focus, and spiritual strength.
-            </p>
-          </div>
-
-          <div className="flex flex-col items-start sm:items-end gap-3 shrink-0">
-            <div className="flex items-center gap-3 bg-white dark:bg-white/5 p-2 pr-4 rounded-full border border-black/5 dark:border-white/10 shadow-sm">
-              <div className="flex -space-x-2">
-                <img className="w-8 h-8 rounded-full border-2 border-white object-cover" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100" alt="Seeker" />
-                <img className="w-8 h-8 rounded-full border-2 border-white object-cover" src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100" alt="Seeker" />
-                <img className="w-8 h-8 rounded-full border-2 border-white object-cover" src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100" alt="Seeker" />
-              </div>
-              <span className="text-xs font-bold text-[#18191E] dark:text-white">Over 5k+ People Changed Their Life</span>
-            </div>
-
-            <button
-              onClick={handleStart}
-              className="btn-coral text-sm shadow-xl flex items-center gap-2"
+            {/* Arjuna's words */}
+            <div
+              className="mb-3 rounded-2xl px-4 py-3 text-center"
+              style={{
+                background: 'rgba(90,58,26,0.18)',
+                border: '1px solid rgba(139,105,20,0.2)',
+              }}
             >
-              Join us for free <ArrowRight size={16} />
-            </button>
-          </div>
-        </div>
+              <p className="text-[10px] uppercase tracking-[0.25em] mb-1.5" style={{ color: 'rgba(201,169,97,0.5)' }}>
+                अर्जुन उवाच
+              </p>
+              <p className="font-dev text-white/70" style={{ fontSize: 'clamp(12px, 2vw, 15px)', lineHeight: 1.7 }}>
+                <TypeWriter
+                  text="नष्टो मोहः स्मृतिर्लब्धा — मेरा भ्रम नष्ट हो गया है।"
+                  speed={50}
+                  startDelay={200}
+                />
+              </p>
+            </div>
 
-        {/* Hero Media Grid (3 Cards matching Reference Image 1) */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="relative overflow-hidden rounded-3xl h-80 bg-stone-200 group shadow-lg">
-            <img
-              src="https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=800&q=80"
-              alt="Wisdom teacher"
-              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent flex items-end p-6">
-              <div className="text-white">
-                <span className="text-xs font-bold text-[#E6A04E] uppercase tracking-wider">Guided Discourses</span>
-                <h3 className="text-lg font-bold">Daily Gita Wisdom Sessions</h3>
-              </div>
+            {/* Krishna's reply */}
+            <div
+              className="rounded-2xl px-4 py-3 text-center"
+              style={{
+                background: 'rgba(59,91,165,0.15)',
+                border: '1px solid rgba(201,169,97,0.2)',
+              }}
+            >
+              <p className="text-[10px] uppercase tracking-[0.25em] mb-1.5" style={{ color: 'rgba(232,132,60,0.7)' }}>
+                श्रीकृष्ण उवाच
+              </p>
+              <p className="font-dev text-white/80" style={{ fontSize: 'clamp(12px, 2vw, 15px)', lineHeight: 1.7 }}>
+                <TypeWriter
+                  text="उत्तिष्ठ — अर्जुन। तुम्हारा धर्म तुम्हारी प्रतीक्षा में है।"
+                  speed={50}
+                  startDelay={1800}
+                />
+              </p>
             </div>
           </div>
+        )}
 
-          <div className="relative overflow-hidden rounded-3xl h-80 bg-stone-200 group shadow-lg">
-            <img
-              src="https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&w=800&q=80"
-              alt="Meditation practitioner"
-              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent flex items-end p-6">
-              <div className="text-white">
-                <span className="text-xs font-bold text-[#EF5A34] uppercase tracking-wider">Japa & Meditation</span>
-                <h3 className="text-lg font-bold">Mindful Chanting & Sadhana</h3>
-              </div>
+        {/* Verse */}
+        {vis('verse') && (
+          <div
+            style={{
+              opacity: vis('verse') ? 1 : 0,
+              transition: 'opacity 0.8s ease',
+              maxWidth: 'clamp(260px, 52vw, 480px)',
+              width: '100%',
+              textAlign: 'center',
+              marginBottom: 'clamp(12px, 3vh, 28px)',
+            }}
+          >
+            <div
+              className="rounded-2xl px-5 py-4"
+              style={{
+                background: 'rgba(201,169,97,0.05)',
+                border: '1px solid rgba(201,169,97,0.18)',
+              }}
+            >
+              <p
+                className="font-dev mb-2"
+                style={{
+                  fontSize: 'clamp(14px, 2.4vw, 18px)',
+                  background: 'linear-gradient(135deg, #E8843C, #C9A961)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text',
+                  lineHeight: 2,
+                }}
+              >
+                <TypeWriter
+                  text="कर्मण्येवाधिकारस्ते मा फलेषु कदाचन"
+                  speed={45}
+                  startDelay={200}
+                />
+              </p>
+              <p
+                className="font-verse italic text-white/50"
+                style={{
+                  fontSize: 'clamp(11px, 1.8vw, 14px)',
+                  opacity: vis('ready') ? 0.7 : 0,
+                  transition: 'opacity 1s ease',
+                }}
+              >
+                "You have a right to perform your duty — never to its fruits."
+              </p>
+              <p
+                className="text-[10px] uppercase tracking-widest mt-2"
+                style={{
+                  color: 'rgba(201,169,97,0.35)',
+                  opacity: vis('ready') ? 1 : 0,
+                  transition: 'opacity 1s ease 0.3s',
+                }}
+              >
+                Bhagavad Gita · 2.47
+              </p>
             </div>
           </div>
+        )}
 
-          <div className="relative overflow-hidden rounded-3xl h-80 bg-stone-200 group shadow-lg">
-            <img
-              src="https://images.unsplash.com/photo-1532012197267-da84d127e765?auto=format&fit=crop&w=800&q=80"
-              alt="Bhagavad Gita As It Is"
-              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent flex items-end p-6">
-              <div className="text-white">
-                <span className="text-xs font-bold text-[#C9A961] uppercase tracking-wider">Sacred Scripture</span>
-                <h3 className="text-lg font-bold">Bhagavad Gita As It Is</h3>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ── Animated Devanagari Running Watermark Marquee ───────────── */}
-      <div className="py-6 overflow-hidden bg-[#FFEFEA] dark:bg-white/5 border-y border-[#EF5A34]/15">
-        <div className="animate-marquee whitespace-nowrap text-xl sm:text-2xl font-dev font-bold text-[#EF5A34]/60 dark:text-[#EF5A34]/80 tracking-widest">
-          <span>हरे कृष्ण हरे कृष्ण कृष्ण कृष्ण हरे हरे | हरे राम हरे राम राम राम हरे हरे &nbsp;&nbsp;&nbsp;•&nbsp;&nbsp;&nbsp; </span>
-          <span>हरे कृष्ण हरे कृष्ण कृष्ण कृष्ण हरे हरे | हरे राम हरे राम राम राम हरे हरे &nbsp;&nbsp;&nbsp;•&nbsp;&nbsp;&nbsp; </span>
-          <span>हरे कृष्ण हरे कृष्ण कृष्ण कृष्ण हरे हरे | हरे राम हरे राम राम राम हरे हरे &nbsp;&nbsp;&nbsp;•&nbsp;&nbsp;&nbsp; </span>
+        {/* Begin button */}
+        <div
+          style={{
+            opacity: vis('ready') ? 1 : 0,
+            transform: vis('ready') ? 'translateY(0)' : 'translateY(10px)',
+            transition: 'opacity 0.8s ease, transform 0.8s ease',
+            pointerEvents: vis('ready') ? 'auto' : 'none',
+          }}
+        >
+          <button
+            onClick={handleBegin}
+            className="relative font-semibold transition-all active:scale-95"
+            style={{
+              padding: 'clamp(12px, 2vh, 16px) clamp(28px, 5vw, 48px)',
+              borderRadius: 16,
+              fontSize: 'clamp(13px, 1.8vw, 15px)',
+              background: 'linear-gradient(135deg, #E8843C 0%, #C9A961 100%)',
+              color: '#1a1a2e',
+              boxShadow: '0 0 32px rgba(232,132,60,0.35), 0 0 64px rgba(232,132,60,0.15)',
+              animation: 'breath-pulse 3s ease-in-out infinite',
+            }}
+          >
+            Begin Practice
+          </button>
+          <p
+            className="text-center mt-3 text-white/25"
+            style={{ fontSize: 'clamp(9px, 1.2vw, 11px)', letterSpacing: '0.2em' }}
+          >
+            TAP ANYWHERE TO SKIP
+          </p>
         </div>
       </div>
 
-      {/* ── Dark Bento Contrast Section (Matching Reference Image 1) ── */}
-      <section id="movement" className="max-w-7xl mx-auto px-6 py-16">
-        <div className="rounded-3xl p-8 sm:p-12 bg-[#181925] text-white shadow-2xl space-y-8">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-white/10 pb-8">
-            <div>
-              <div className="flex items-center gap-2 text-[#EF5A34] font-bold text-xs uppercase tracking-widest mb-2">
-                <Sparkles size={14} /> The Hare Krishna Movement & Dharma
-              </div>
-              <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight">
-                Spiritual Organization & Practice Hub
-              </h2>
-            </div>
-            <p className="text-sm sm:text-base text-white/70 max-w-md leading-relaxed">
-              Founded to provide human society an opportunity for a life of happiness, good health, and spiritual self-realization through authentic Gita wisdom.
-            </p>
-          </div>
-
-          {/* Photo Collage inside Dark Card */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            <div className="rounded-2xl overflow-hidden h-64 bg-white/5">
-              <img src="https://images.unsplash.com/photo-1545232979-fbf34fe37b38?auto=format&fit=crop&w=800&q=80" alt="Spiritual leader" className="w-full h-full object-cover" />
-            </div>
-            <div className="rounded-2xl overflow-hidden h-64 bg-white/5">
-              <img src="https://images.unsplash.com/photo-1609137144813-7d9921338f24?auto=format&fit=crop&w=800&q=80" alt="Deities" className="w-full h-full object-cover" />
-            </div>
-            <div className="rounded-2xl overflow-hidden h-64 bg-white/5">
-              <img src="https://images.unsplash.com/photo-1511632765486-a01980e01a18?auto=format&fit=crop&w=800&q=80" alt="Kirtan gathering" className="w-full h-full object-cover" />
-            </div>
-          </div>
+      {/* ── Temple doors ─────────────────────────────────────────── */}
+      {/* Left door */}
+      <div
+        style={{
+          position: 'fixed',
+          top: 0, left: 0,
+          width: '50%', height: '100%',
+          background: 'linear-gradient(135deg, #06071a 0%, #0d1030 100%)',
+          borderRight: '1px solid rgba(201,169,97,0.3)',
+          zIndex: 50,
+          transform: closing ? 'translateX(0)' : 'translateX(-100%)',
+          transition: closing ? 'transform 0.85s cubic-bezier(0.4, 0, 0.2, 1)' : 'none',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'flex-end',
+          paddingRight: 24,
+        }}
+      >
+        {/* Door ornament */}
+        <div style={{ opacity: 0.2 }}>
+          <svg viewBox="0 0 60 160" width="40" height="110">
+            <rect x="4" y="4" width="52" height="152" rx="6" fill="none" stroke="#C9A961" strokeWidth="1.5" />
+            <rect x="10" y="10" width="40" height="140" rx="4" fill="none" stroke="#C9A961" strokeWidth="0.8" />
+            <circle cx="30" cy="80" r="12" fill="none" stroke="#C9A961" strokeWidth="1" />
+            <path d="M30 62 L30 58 M30 98 L30 102 M18 80 L14 80 M42 80 L46 80"
+              stroke="#C9A961" strokeWidth="1" strokeLinecap="round" />
+            <circle cx="30" cy="80" r="4" fill="#C9A961" opacity="0.4" />
+            <path d="M20 30 Q30 24 40 30 M20 130 Q30 136 40 130"
+              stroke="#C9A961" strokeWidth="1" fill="none" />
+          </svg>
         </div>
-      </section>
+      </div>
 
-      {/* ── Spiritual Bento Cards (Matching Reference Image 2) ────────── */}
-      <section id="initiatives" className="max-w-7xl mx-auto px-6 py-10 space-y-6">
-        <div className="text-center max-w-xl mx-auto mb-10">
-          <span className="text-xs font-bold text-[#EF5A34] uppercase tracking-widest">Our Core Initiatives</span>
-          <h2 className="text-3xl font-extrabold text-[#18191E] dark:text-white mt-1">Serve & Practice Together</h2>
+      {/* Right door */}
+      <div
+        style={{
+          position: 'fixed',
+          top: 0, right: 0,
+          width: '50%', height: '100%',
+          background: 'linear-gradient(225deg, #06071a 0%, #0d1030 100%)',
+          borderLeft: '1px solid rgba(201,169,97,0.3)',
+          zIndex: 50,
+          transform: closing ? 'translateX(0)' : 'translateX(100%)',
+          transition: closing ? 'transform 0.85s cubic-bezier(0.4, 0, 0.2, 1)' : 'none',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'flex-start',
+          paddingLeft: 24,
+        }}
+      >
+        <div style={{ opacity: 0.2 }}>
+          <svg viewBox="0 0 60 160" width="40" height="110">
+            <rect x="4" y="4" width="52" height="152" rx="6" fill="none" stroke="#C9A961" strokeWidth="1.5" />
+            <rect x="10" y="10" width="40" height="140" rx="4" fill="none" stroke="#C9A961" strokeWidth="0.8" />
+            <circle cx="30" cy="80" r="12" fill="none" stroke="#C9A961" strokeWidth="1" />
+            <path d="M30 62 L30 58 M30 98 L30 102 M18 80 L14 80 M42 80 L46 80"
+              stroke="#C9A961" strokeWidth="1" strokeLinecap="round" />
+            <circle cx="30" cy="80" r="4" fill="#C9A961" opacity="0.4" />
+            <path d="M20 30 Q30 24 40 30 M20 130 Q30 136 40 130"
+              stroke="#C9A961" strokeWidth="1" fill="none" />
+          </svg>
         </div>
+      </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-
-          {/* Card 1: Puja & Havankund (Matching Reference Image 2 Left) */}
-          <div className="lg:col-span-5 rounded-3xl p-8 bg-[#FFF5F0] dark:bg-[#1f1b24] border border-[#EF5A34]/20 flex flex-col justify-between space-y-6 shadow-sm">
-            <div className="space-y-3">
-              <h3 className="text-2xl font-extrabold text-[#18191E] dark:text-white leading-tight">
-                Celebrate your loved ones' Puja with us!
-              </h3>
-              <p className="text-xs text-[#18191E]/70 dark:text-white/70 leading-relaxed font-medium">
-                With joining our aim of changing the world and fulfilling the desire of Srila Prabhupada, you will be proud of yourself and experience deep peace.
-              </p>
-              <div className="flex items-center gap-3 pt-2">
-                <button onClick={handleStart} className="btn-coral text-xs">Book now</button>
-                <button onClick={handleStart} className="btn-outline-dark text-xs flex items-center gap-1">Whatsapp ↗</button>
-              </div>
-            </div>
-
-            {/* Havankund Fire Vector Art Graphic */}
-            <div className="relative pt-4 flex justify-center">
-              <div className="w-44 h-36 bg-gradient-to-t from-[#EF5A34]/20 to-transparent rounded-2xl flex items-center justify-center">
-                <Flame size={70} className="text-[#EF5A34] animate-bounce" />
-              </div>
-            </div>
-          </div>
-
-          {/* Card 2 & Card 3 Right Stack (Matching Reference Image 2 Right) */}
-          <div className="lg:col-span-7 space-y-6">
-
-            {/* Card 2: Anna-daan Initiative */}
-            <div className="rounded-3xl p-8 bg-[#F2F6FE] dark:bg-[#181c2b] border border-blue-200/30 flex flex-col sm:flex-row items-center justify-between gap-6 shadow-sm">
-              <div className="space-y-3 max-w-md">
-                <h3 className="text-xl font-extrabold text-[#18191E] dark:text-white">
-                  Join Our Anna-daan initiative
-                </h3>
-                <p className="text-xs text-[#18191E]/70 dark:text-white/70 leading-relaxed font-medium">
-                  Support sanctified prasadam distribution to thousands daily. Experience the bliss of feeding souls.
-                </p>
-                <div className="flex items-center gap-3 pt-1">
-                  <button onClick={handleStart} className="btn-coral text-xs">Support us</button>
-                  <button onClick={handleStart} className="btn-outline-dark text-xs">Tax Benefits ↗</button>
-                </div>
-              </div>
-
-              {/* Prasadam Food Illustration */}
-              <div className="w-32 h-32 rounded-full bg-orange-100 flex items-center justify-center shrink-0 shadow-inner">
-                <Sun size={60} className="text-[#E6A04E]" />
-              </div>
-            </div>
-
-            {/* Card 3: Online Spiritual Community */}
-            <div className="rounded-3xl p-8 bg-[#FFFDF5] dark:bg-[#201d18] border border-amber-200/30 flex flex-col sm:flex-row items-center justify-between gap-6 shadow-sm">
-              <div className="space-y-3 max-w-md">
-                <h3 className="text-xl font-extrabold text-[#18191E] dark:text-white">
-                  Join Our Online Spiritual Community
-                </h3>
-                <p className="text-xs text-[#18191E]/70 dark:text-white/70 leading-relaxed font-medium">
-                  Connect with fellow seekers, track daily sadhana goals, and access authenticated Vedic wisdom anywhere.
-                </p>
-                <div className="flex items-center gap-3 pt-1">
-                  <button onClick={handleStart} className="btn-coral text-xs">Register now</button>
-                  <button onClick={handleStart} className="btn-outline-dark text-xs">Whatsapp ↗</button>
-                </div>
-              </div>
-
-              {/* Flute Graphic */}
-              <div className="w-32 h-32 rounded-3xl bg-amber-100/50 flex items-center justify-center shrink-0">
-                <Sparkles size={50} className="text-[#C9A961]" />
-              </div>
-            </div>
-
-          </div>
-
-        </div>
-      </section>
-
-      {/* ── Upcoming Events Section ─────────────────────────────────── */}
-      <section id="events" className="max-w-7xl mx-auto px-6 py-12">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <span className="text-xs font-bold text-[#EF5A34] uppercase tracking-widest">Calendar</span>
-            <h2 className="text-2xl font-extrabold text-[#18191E] dark:text-white">Upcoming Festivals & Events</h2>
-          </div>
-          <button onClick={handleStart} className="text-xs font-bold text-[#EF5A34] hover:underline flex items-center gap-1">
-            Explore all events <ChevronRight size={14} />
-          </button>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {[
-            { title: 'Sri Ram Navami', date: '6 April 2026', tag: 'Festival' },
-            { title: 'Hanuman Jayanti', date: '12 April 2026', tag: 'Festival' },
-            { title: 'Geeta Saar Live', date: '18 April 2026', tag: 'Discourse' },
-            { title: 'Sri Krishna Janmashtami', date: '28 August 2026', tag: 'Grand Event' },
-          ].map(e => (
-            <div key={e.title} className="p-5 rounded-2xl bg-white dark:bg-white/5 border border-black/5 dark:border-white/10 shadow-sm flex flex-col justify-between space-y-4">
-              <div>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-[#EF5A34]/10 text-[#EF5A34] uppercase">{e.tag}</span>
-                <h4 className="text-base font-bold text-[#18191E] dark:text-white mt-2">{e.title}</h4>
-              </div>
-              <div className="flex items-center justify-between pt-2 border-t border-black/5 dark:border-white/5">
-                <span className="text-xs text-stone-400 font-medium">{e.date}</span>
-                <button onClick={handleStart} className="text-xs font-bold text-[#EF5A34]">View</button>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* ── Footer / CTA Section ───────────────────────────────────── */}
-      <footer className="bg-[#181925] text-white pt-16 pb-12 mt-16 border-t border-white/10">
-        <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-12 gap-8 mb-12">
-          <div className="lg:col-span-5 space-y-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-[#EF5A34] to-[#E6A04E] flex items-center justify-center font-bold text-xl text-white">
-                ॐ
-              </div>
-              <span className="text-xl font-extrabold">Dharma Practice</span>
-            </div>
-            <p className="text-xs text-white/60 leading-relaxed max-w-sm">
-              Your personal spiritual companion for habit tracking, Bhagavad Gita wisdom, daily journaling, and mind discipline.
-            </p>
-          </div>
-
-          <div className="lg:col-span-7 flex flex-col sm:flex-row items-center justify-between gap-4 p-6 rounded-3xl bg-white/5 border border-white/10">
-            <div>
-              <h4 className="text-base font-bold">Sign up for our newsletter</h4>
-              <p className="text-xs text-white/50 mt-0.5">Stay updated with daily shlokas and event schedules.</p>
-            </div>
-            <div className="flex gap-2 w-full sm:w-auto">
-              <input placeholder="Enter your email" className="px-3 py-2 text-xs bg-white/10 rounded-xl text-white outline-none border border-white/10" />
-              <button onClick={handleStart} className="btn-coral text-xs shrink-0">Subscribe</button>
-            </div>
-          </div>
-        </div>
-
-        <div className="max-w-7xl mx-auto px-6 pt-6 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between text-xs text-white/40">
-          <p>© 2026 Dharma Practice. Built for spiritual seekers.</p>
-          <div className="flex gap-4 mt-2 sm:mt-0">
-            <button onClick={handleStart} className="hover:text-white">Privacy Policy</button>
-            <button onClick={handleStart} className="hover:text-white">Terms of Service</button>
-          </div>
-        </div>
-      </footer>
-
+      {/* OM flash on door close */}
+      <div
+        style={{
+          position: 'fixed',
+          inset: 0,
+          zIndex: 60,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          pointerEvents: 'none',
+          opacity: closing ? 1 : 0,
+          transition: closing ? 'opacity 0.3s ease 0.4s' : 'none',
+        }}
+      >
+        <img src={kaImg} alt="Dharma" style={{
+          width: 'clamp(64px, 12vw, 100px)',
+          height: 'auto',
+          filter: 'drop-shadow(0 0 20px rgba(201,169,97,0.7))',
+        }} />
+      </div>
     </div>
   );
 }

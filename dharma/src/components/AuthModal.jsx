@@ -1,17 +1,17 @@
 import { useState } from 'react';
-import { X, Eye, EyeOff, LogIn, UserPlus, Sparkles } from 'lucide-react';
+import { X, Eye, EyeOff, LogIn, UserPlus } from 'lucide-react';
 import { GoogleLogin } from '@react-oauth/google';
 import { useAuth } from '../context/AuthContext';
 
 export default function AuthModal({ onClose, onSuccess }) {
   const { register, loginUser, loginWithGoogle } = useAuth();
-  const [mode,     setMode]     = useState('login');
-  const [name,     setName]     = useState('');
-  const [email,    setEmail]    = useState('');
+  const [mode, setMode] = useState('login');
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [showPw,   setShowPw]   = useState(false);
-  const [error,    setError]    = useState('');
-  const [busy,     setBusy]     = useState(false);
+  const [showPw, setShowPw] = useState(false);
+  const [error, setError] = useState('');
+  const [busy, setBusy] = useState(false);
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -51,47 +51,28 @@ export default function AuthModal({ onClose, onSuccess }) {
   return (
     <div className="fixed inset-0 z-[90] flex items-center justify-center p-4"
       onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-md" onClick={onClose} />
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
 
-      <div className="relative w-full max-w-sm rounded-3xl p-7 z-10 page-transition bg-[#FAF6F0] dark:bg-[#181925] border border-black/5 dark:border-white/10 shadow-2xl">
+      <div className="relative w-full max-w-sm rounded-3xl p-6 z-10 page-transition"
+        style={{
+          background: 'linear-gradient(160deg, #0d0d1f 0%, #131325 100%)',
+          border: '1px solid rgba(255,255,255,0.09)',
+          boxShadow: '0 32px 80px rgba(0,0,0,0.6)',
+        }}>
 
         {/* Close */}
         <button onClick={onClose}
-          className="absolute top-5 right-5 w-8 h-8 rounded-full flex items-center justify-center text-stone-400 hover:text-stone-700 dark:hover:text-white bg-black/5 dark:bg-white/5 transition-all">
+          className="absolute top-4 right-4 w-8 h-8 rounded-xl flex items-center justify-center text-stone-500 hover:text-stone-300"
+          style={{ background: 'rgba(255,255,255,0.05)' }}>
           <X size={15} />
         </button>
 
-        {/* Header Logo */}
+        {/* Logo */}
         <div className="text-center mb-6">
-          <div className="w-12 h-12 mx-auto rounded-2xl bg-gradient-to-tr from-[#EF5A34] to-[#E6A04E] flex items-center justify-center font-bold text-2xl text-white shadow-lg mb-3">
-            ॐ
-          </div>
-          <h3 className="text-xl font-extrabold text-[#18191E] dark:text-white">
-            {mode === 'login' ? 'Welcome Back' : 'Create Your Account'}
-          </h3>
-          <p className="text-xs text-stone-500 dark:text-stone-400 mt-0.5">
-            {mode === 'login' ? 'Sign in to sync your sadhana logs' : 'Begin your journey with Dharma Practice'}
+          <div className="font-dev text-4xl text-[#C9A961] mb-1">धर्म</div>
+          <p className="text-xs text-stone-500">
+            {mode === 'login' ? 'Welcome back to your practice' : 'Begin your dharma journey'}
           </p>
-        </div>
-
-        {/* Tab Switcher */}
-        <div className="flex rounded-2xl p-1 mb-5 bg-black/5 dark:bg-white/5">
-          <button onClick={() => setMode('login')}
-            className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${
-              mode === 'login'
-                ? 'bg-white dark:bg-[#232638] text-[#EF5A34] shadow-sm'
-                : 'text-stone-400 hover:text-stone-700 dark:hover:text-white'
-            }`}>
-            Sign In
-          </button>
-          <button onClick={() => setMode('register')}
-            className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${
-              mode === 'register'
-                ? 'bg-white dark:bg-[#232638] text-[#EF5A34] shadow-sm'
-                : 'text-stone-400 hover:text-stone-700 dark:hover:text-white'
-            }`}>
-            Sign Up
-          </button>
         </div>
 
         {/* Google sign-in */}
@@ -101,7 +82,7 @@ export default function AuthModal({ onClose, onSuccess }) {
               <GoogleLogin
                 onSuccess={handleGoogleSuccess}
                 onError={() => setError('Google sign-in failed')}
-                theme="outline"
+                theme="filled_black"
                 shape="pill"
                 text="continue_with"
                 size="large"
@@ -109,80 +90,76 @@ export default function AuthModal({ onClose, onSuccess }) {
             </div>
             <div className="relative my-4">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-black/10 dark:border-white/10" />
+                <div className="w-full border-t" style={{ borderColor: 'rgba(255,255,255,0.08)' }} />
               </div>
               <div className="relative flex justify-center">
-                <span className="px-3 text-[10px] uppercase font-bold tracking-widest text-stone-400 bg-[#FAF6F0] dark:bg-[#181925]">or</span>
+                <span className="px-3 text-[10px] uppercase tracking-widest text-stone-600"
+                  style={{ background: '#131325' }}>or</span>
               </div>
             </div>
           </div>
         )}
 
-        {/* Error notice */}
-        {error && (
-          <div className="mb-4 p-3 rounded-2xl bg-red-500/10 border border-red-500/20 text-xs text-red-500 text-center font-semibold">
-            {error}
-          </div>
-        )}
+        {/* Tab toggle */}
+        <div className="flex gap-1 rounded-xl p-1 mb-5" style={{ background: 'rgba(255,255,255,0.05)' }}>
+          {[
+            { id: 'login', label: 'Sign In', Icon: LogIn },
+            { id: 'register', label: 'Register', Icon: UserPlus },
+          ].map(({ id, label, Icon }) => (
+            <button key={id} onClick={() => { setMode(id); setError(''); }}
+              className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-semibold transition-all ${mode === id
+                  ? 'bg-white/10 text-white'
+                  : 'text-stone-500 hover:text-stone-300'
+                }`}>
+              <Icon size={12} />{label}
+            </button>
+          ))}
+        </div>
 
-        {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-3">
           {mode === 'register' && (
             <div>
-              <label className="text-[11px] font-bold uppercase tracking-wider text-stone-400 mb-1 block">Full Name</label>
-              <input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Arjuna"
-                required
-                className="w-full text-xs text-[#18191E] dark:text-white placeholder-stone-400 bg-white dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-2xl px-4 py-3 outline-none focus:border-[#EF5A34] transition-colors"
-              />
+              <label className="text-[10px] font-semibold text-stone-500 uppercase tracking-widest">Name</label>
+              <input value={name} onChange={(e) => setName(e.target.value)} required placeholder="Your name"
+                className="mt-1 w-full text-sm text-white placeholder-stone-600 bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 outline-none focus:border-[#E8843C] transition-colors" />
             </div>
           )}
 
           <div>
-            <label className="text-[11px] font-bold uppercase tracking-wider text-stone-400 mb-1 block">Email Address</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="seeker@dharma.com"
-              required
-              className="w-full text-xs text-[#18191E] dark:text-white placeholder-stone-400 bg-white dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-2xl px-4 py-3 outline-none focus:border-[#EF5A34] transition-colors"
-            />
+            <label className="text-[10px] font-semibold text-stone-500 uppercase tracking-widest">Email</label>
+            <input value={email} onChange={(e) => setEmail(e.target.value)} required type="email" placeholder="you@example.com"
+              className="mt-1 w-full text-sm text-white placeholder-stone-600 bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 outline-none focus:border-[#E8843C] transition-colors" />
           </div>
 
           <div>
-            <label className="text-[11px] font-bold uppercase tracking-wider text-stone-400 mb-1 block">Password</label>
-            <div className="relative">
-              <input
-                type={showPw ? 'text' : 'password'}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                required
-                className="w-full text-xs text-[#18191E] dark:text-white placeholder-stone-400 bg-white dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-2xl pl-4 pr-10 py-3 outline-none focus:border-[#EF5A34] transition-colors"
-              />
-              <button
-                type="button"
-                onClick={() => setShowPw(!showPw)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600 dark:hover:text-white"
-              >
-                {showPw ? <EyeOff size={15} /> : <Eye size={15} />}
+            <label className="text-[10px] font-semibold text-stone-500 uppercase tracking-widest">Password</label>
+            <div className="relative mt-1">
+              <input value={password} onChange={(e) => setPassword(e.target.value)} required
+                type={showPw ? 'text' : 'password'} placeholder={mode === 'register' ? 'At least 8 characters' : '••••••••'}
+                className="w-full text-sm text-white placeholder-stone-600 bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 pr-10 outline-none focus:border-[#E8843C] transition-colors" />
+              <button type="button" onClick={() => setShowPw(!showPw)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-600 hover:text-stone-400 transition-colors">
+                {showPw ? <EyeOff size={14} /> : <Eye size={14} />}
               </button>
             </div>
           </div>
 
-          <button
-            type="submit"
-            disabled={busy}
-            className="w-full py-3.5 mt-2 rounded-2xl text-xs font-bold uppercase tracking-wider text-white shadow-xl transition-all active:scale-98 disabled:opacity-50"
-            style={{ background: 'linear-gradient(135deg, #EF5A34 0%, #E84D25 100%)' }}
-          >
-            {busy ? 'Processing…' : mode === 'login' ? 'Sign In' : 'Create Account'}
+          {error && (
+            <div className="text-xs text-red-400 bg-red-900/20 rounded-xl px-3 py-2 text-center">
+              {error}
+            </div>
+          )}
+
+          <button type="submit" disabled={busy}
+            className="w-full py-3 rounded-xl text-white font-semibold text-sm transition-all active:scale-[0.98] disabled:opacity-60"
+            style={{ background: busy ? 'rgba(232,132,60,0.4)' : 'linear-gradient(135deg,#E8843C,#C9A961)' }}>
+            {busy ? 'Please wait…' : mode === 'login' ? 'Sign In' : 'Create Account'}
           </button>
         </form>
+
+        <p className="text-[10px] text-stone-600 text-center mt-4">
+          Your data is stored privately. No tracking.
+        </p>
       </div>
     </div>
   );

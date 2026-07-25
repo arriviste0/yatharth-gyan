@@ -317,26 +317,24 @@ function MobileTodayView({ pillars, logs, logTarget, dateStr, streak, settings, 
  * ═══════════════════════════════════════════════════════════════════ */
 
 /* ── KPI Metric Card ──────────────────────────────────────────────── */
-function KPICard({ label, value, sublabel, color = '#E8843C', icon: IconComp, trend }) {
+function KPICard({ label, value, sublabel, color = '#F05A36', icon: IconComp, trend }) {
   return (
-    <div className="rounded-2xl p-5 transition-all hover:shadow-lg"
-      style={{
-        background: 'rgba(255,255,255,0.04)',
-        border: '1px solid rgba(255,255,255,0.06)',
-      }}>
+    <div className="card-bento p-5 transition-all hover:shadow-md flex flex-col justify-between">
       <div className="flex items-start justify-between mb-3">
-        <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: `${color}18` }}>
+        <div className="w-10 h-10 rounded-2xl flex items-center justify-center" style={{ background: `${color}18` }}>
           {IconComp && <IconComp size={18} style={{ color }} />}
         </div>
         {trend !== undefined && (
-          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${trend >= 0 ? 'text-emerald-400 bg-emerald-400/10' : 'text-red-400 bg-red-400/10'}`}>
+          <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full ${trend >= 0 ? 'text-emerald-500 bg-emerald-500/10' : 'text-red-500 bg-red-500/10'}`}>
             {trend >= 0 ? '↑' : '↓'} {Math.abs(trend)}%
           </span>
         )}
       </div>
-      <div className="text-3xl font-extrabold tabular-nums text-white mb-0.5">{value}</div>
-      <div className="text-xs font-semibold text-white/60">{label}</div>
-      {sublabel && <div className="text-[10px] text-white/30 mt-0.5">{sublabel}</div>}
+      <div>
+        <div className="text-3xl font-extrabold tabular-nums text-[#18191E] dark:text-white mb-0.5">{value}</div>
+        <div className="text-xs font-bold text-stone-500 dark:text-stone-400">{label}</div>
+        {sublabel && <div className="text-[10px] text-stone-400 dark:text-white/40 mt-0.5 font-medium">{sublabel}</div>}
+      </div>
     </div>
   );
 }
@@ -346,15 +344,15 @@ function TabButton({ active, label, count, onClick }) {
   return (
     <button
       onClick={onClick}
-      className={`px-4 py-2 text-xs font-bold uppercase tracking-wider rounded-xl transition-all ${
+      className={`px-4 py-2 text-xs font-extrabold uppercase tracking-wider rounded-full transition-all ${
         active
-          ? 'bg-[#E8843C] text-white shadow-md'
-          : 'text-white/40 hover:text-white/70 hover:bg-white/5'
+          ? 'bg-[#F05A36] text-white shadow-md'
+          : 'text-stone-500 dark:text-white/50 hover:text-[#18191E] dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5'
       }`}
     >
       {label}
       {count !== undefined && (
-        <span className={`ml-1.5 px-1.5 py-0.5 rounded-md text-[10px] ${active ? 'bg-white/20' : 'bg-white/5'}`}>
+        <span className={`ml-1.5 px-2 py-0.5 rounded-full text-[10px] ${active ? 'bg-white/20' : 'bg-black/5 dark:bg-white/10'}`}>
           {count}
         </span>
       )}
@@ -367,31 +365,28 @@ function TaskRow({ target, dateStr, logTarget, onEdit }) {
   const Icon = PILLAR_ICONS[target.pillarIcon] || Zap;
 
   return (
-    <div className={`flex items-center gap-4 px-4 py-3 rounded-xl transition-all group ${
-      target.done
-        ? 'bg-white/[0.02] opacity-60'
-        : 'bg-white/[0.03] hover:bg-white/[0.06]'
+    <div className={`flex items-center gap-4 px-4 py-3 rounded-2xl transition-all group border border-black/5 dark:border-white/5 ${
+      target.done ? 'bg-black/[0.02] dark:bg-white/[0.02]' : 'bg-white dark:bg-[#181926] shadow-sm hover:shadow-md'
     }`}>
-      {/* Checkbox */}
+      {/* Target check button */}
       <button
-        onClick={() => logTarget(dateStr, target.id, { done: !target.done, timestamp: Date.now() })}
-        className="shrink-0 transition-all"
+        onClick={() => logTarget(dateStr, target.id, { done: !target.done })}
+        className="shrink-0 transition-transform active:scale-95"
       >
         {target.done ? (
-          <div className="w-6 h-6 rounded-lg flex items-center justify-center"
-            style={{ background: 'linear-gradient(135deg, #E8843C, #C9A961)' }}>
-            <Check size={13} color="white" strokeWidth={3} />
+          <div className="w-6 h-6 rounded-lg flex items-center justify-center bg-[#F05A36] text-white shadow-sm">
+            <Check size={14} strokeWidth={3} />
           </div>
         ) : (
-          <div className="w-6 h-6 rounded-lg border-2 flex items-center justify-center hover:border-[#E8843C]/50 transition-colors"
-            style={{ borderColor: `${target.pillarColor}30` }}>
+          <div className="w-6 h-6 rounded-lg border-2 flex items-center justify-center hover:border-[#F05A36] transition-colors"
+            style={{ borderColor: `${target.pillarColor}40` }}>
           </div>
         )}
       </button>
 
       {/* Pillar icon */}
-      <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
-        style={{ background: `${target.pillarColor}15` }}>
+      <div className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0"
+        style={{ background: `${target.pillarColor}18` }}>
         <Icon size={14} style={{ color: target.pillarColor }} />
       </div>
 
@@ -583,15 +578,15 @@ function DesktopWeeklyChart({ logs, pillars }) {
   const avg = data.length > 0 ? Math.round(data.reduce((s, d) => s + d.rate, 0) / data.length) : 0;
 
   return (
-    <div className="rounded-2xl p-5" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+    <div className="card-bento p-5">
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h3 className="text-base font-bold text-white">Weekly Completion</h3>
-          <p className="text-[11px] text-white/30 mt-0.5">Last 7 days performance</p>
+          <h3 className="text-base font-bold text-[#18191E] dark:text-white">Weekly Completion</h3>
+          <p className="text-[11px] text-stone-400 dark:text-white/40 mt-0.5">Last 7 days performance</p>
         </div>
         <div className="text-right">
-          <div className="text-2xl font-extrabold tabular-nums" style={{ color: avg >= 80 ? '#C9A961' : avg >= 50 ? '#E8843C' : '#5B6BAF' }}>{avg}%</div>
-          <div className="text-[10px] text-white/30">avg rate</div>
+          <div className="text-2xl font-extrabold tabular-nums text-[#F05A36]">{avg}%</div>
+          <div className="text-[10px] text-stone-400 dark:text-white/30">avg rate</div>
         </div>
       </div>
 
@@ -599,23 +594,23 @@ function DesktopWeeklyChart({ logs, pillars }) {
         <AreaChart data={data} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
           <defs>
             <linearGradient id="weekGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#E8843C" stopOpacity={0.3} />
-              <stop offset="100%" stopColor="#E8843C" stopOpacity={0} />
+              <stop offset="0%" stopColor="#F05A36" stopOpacity={0.3} />
+              <stop offset="100%" stopColor="#F05A36" stopOpacity={0} />
             </linearGradient>
           </defs>
-          <XAxis dataKey="label" tick={{ fontSize: 10, fill: 'rgba(255,255,255,0.3)' }} axisLine={false} tickLine={false} />
-          <YAxis domain={[0, 100]} tick={{ fontSize: 10, fill: 'rgba(255,255,255,0.2)' }} axisLine={false} tickLine={false} />
+          <XAxis dataKey="label" tick={{ fontSize: 10, fill: '#9CA3AF' }} axisLine={false} tickLine={false} />
+          <YAxis domain={[0, 100]} tick={{ fontSize: 10, fill: '#9CA3AF' }} axisLine={false} tickLine={false} />
           <Tooltip
             content={({ active, payload }) => {
               if (!active || !payload?.length) return null;
               return (
-                <div className="bg-[#1a1f3d] border border-white/10 rounded-xl px-3 py-2 shadow-xl text-xs">
+                <div className="bg-[#181926] border border-white/10 rounded-xl px-3 py-2 shadow-xl text-xs">
                   <div className="font-bold text-white">{payload[0].payload.label}: {payload[0].value}%</div>
                 </div>
               );
             }}
           />
-          <Area type="monotone" dataKey="rate" stroke="#E8843C" strokeWidth={2} fill="url(#weekGrad)" dot={{ r: 4, fill: '#E8843C', stroke: '#1a1f3d', strokeWidth: 2 }} />
+          <Area type="monotone" dataKey="rate" stroke="#F05A36" strokeWidth={2.5} fill="url(#weekGrad)" dot={{ r: 4, fill: '#F05A36', stroke: '#181926', strokeWidth: 2 }} />
         </AreaChart>
       </ResponsiveContainer>
     </div>
@@ -647,11 +642,11 @@ function DesktopPillarBreakdown({ pillars, logs, dateStr }) {
   const totalAll = pillarStats.reduce((s, p) => s + p.totalCount, 0);
 
   return (
-    <div className="rounded-2xl p-5" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+    <div className="card-bento p-5">
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h3 className="text-base font-bold text-white">Pillar Breakdown</h3>
-          <p className="text-[11px] text-white/30 mt-0.5">Today's completion by category</p>
+          <h3 className="text-base font-bold text-[#18191E] dark:text-white">Pillar Breakdown</h3>
+          <p className="text-[11px] text-stone-400 dark:text-white/40 mt-0.5">Today's completion by category</p>
         </div>
       </div>
 
@@ -675,8 +670,8 @@ function DesktopPillarBreakdown({ pillars, logs, dateStr }) {
             </Pie>
           </PieChart>
           <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <span className="text-2xl font-extrabold text-white tabular-nums">{totalDone}</span>
-            <span className="text-[9px] text-white/30 font-medium">of {totalAll}</span>
+            <span className="text-2xl font-extrabold text-[#18191E] dark:text-white tabular-nums">{totalDone}</span>
+            <span className="text-[9px] text-stone-400 dark:text-white/30 font-medium">of {totalAll}</span>
           </div>
         </div>
       </div>
@@ -686,18 +681,18 @@ function DesktopPillarBreakdown({ pillars, logs, dateStr }) {
         {pillarStats.map((p, i) => {
           const Icon = PILLAR_ICONS[p.icon] || Zap;
           return (
-            <div key={p.id} className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-white/[0.02] hover:bg-white/[0.04] transition-all">
-              <span className="text-[10px] font-bold text-white/20 w-4">{i + 1}</span>
-              <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: `${p.color}18` }}>
+            <div key={p.id} className="flex items-center gap-3 px-3 py-2.5 rounded-2xl bg-black/[0.02] dark:bg-white/[0.03] hover:bg-black/[0.04] dark:hover:bg-white/[0.06] transition-all border border-black/5 dark:border-white/5">
+              <span className="text-[10px] font-bold text-stone-400 dark:text-white/30 w-4">{i + 1}</span>
+              <div className="w-7 h-7 rounded-xl flex items-center justify-center" style={{ background: `${p.color}18` }}>
                 <Icon size={13} style={{ color: p.color }} />
               </div>
               <div className="flex-1 min-w-0">
-                <div className="text-xs font-semibold text-white truncate">{p.name}</div>
-                <div className="text-[9px] text-white/25 font-dev">{p.sanskrit}</div>
+                <div className="text-xs font-bold text-[#18191E] dark:text-white truncate">{p.name}</div>
+                <div className="text-[9px] text-stone-400 dark:text-white/30 font-dev">{p.sanskrit}</div>
               </div>
               <div className="text-right">
-                <div className="text-sm font-bold tabular-nums" style={{ color: p.color }}>{p.pct}%</div>
-                <div className="text-[9px] text-white/25">{p.doneCount}/{p.totalCount}</div>
+                <div className="text-sm font-extrabold tabular-nums" style={{ color: p.color }}>{p.pct}%</div>
+                <div className="text-[9px] text-stone-400 dark:text-white/30">{p.doneCount}/{p.totalCount}</div>
               </div>
             </div>
           );

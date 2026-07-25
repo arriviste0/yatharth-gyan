@@ -21,13 +21,14 @@
     margin: 0;
     padding: 0;
     min-height: 100svh;
-    background: #FAF6F0;
+    background: #FBF9F5;
     color: #18191E;
     overflow-x: hidden;
+    transition: background-color 0.3s ease, color 0.3s ease;
   }
 
   .dark body {
-    background: #12141F;
+    background: #12131C;
     color: #F5F3EF;
   }
 
@@ -55,21 +56,22 @@
     max-width: 480px;
     margin: 0 auto;
     position: relative;
-    background: #FAF6F0;
+    background: #FBF9F5;
+    transition: background-color 0.3s ease;
   }
 
   .dark #root {
-    background: #12141F;
+    background: #12131C;
   }
 
   @media (min-width: 1024px) {
     #root {
       max-width: 100%;
       display: flex;
-      background: #FAF6F0;
+      background: #FBF9F5;
     }
     .dark #root {
-      background: #12141F;
+      background: #12131C;
     }
   }
 }
@@ -102,56 +104,74 @@
     }
   }
 
-  /* Bento Cards */
+  /* Reference Bento Card Styling */
   .card-bento {
     @apply rounded-3xl p-6 transition-all duration-300;
     background: #FFFFFF;
     border: 1px solid rgba(0, 0, 0, 0.06);
-    box-shadow: 0 4px 20px -2px rgba(239, 90, 52, 0.05);
+    box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.04);
   }
 
   .dark .card-bento {
-    background: #191B28;
+    background: #181926;
     border: 1px solid rgba(255, 255, 255, 0.08);
     box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.4);
   }
 
-  /* Buttons */
-  .btn-coral {
-    background: linear-gradient(135deg, #EF5A34 0%, #E84D25 100%);
+  /* Reference Button Styles */
+  .btn-coral,
+  .btn-primary-coral {
+    background: #F05A36;
     color: #FFFFFF;
-    font-weight: 700;
+    font-weight: 800;
     border-radius: 9999px;
-    padding: 0.75rem 1.75rem;
-    box-shadow: 0 4px 20px rgba(239, 90, 52, 0.35);
-    transition: all 0.2s ease;
+    padding: 0.65rem 1.6rem;
+    box-shadow: 0 4px 20px rgba(240, 90, 54, 0.35);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   }
-  .btn-coral:hover {
+  .btn-coral:hover,
+  .btn-primary-coral:hover {
+    background: #d94a28;
     transform: translateY(-1px);
-    box-shadow: 0 6px 25px rgba(239, 90, 52, 0.45);
-    opacity: 0.96;
+    box-shadow: 0 6px 25px rgba(240, 90, 54, 0.45);
   }
 
-  .btn-outline-dark {
+  .btn-outline-dark,
+  .btn-secondary-outline {
     border: 1.5px solid #18191E;
     color: #18191E;
     font-weight: 700;
     border-radius: 9999px;
-    padding: 0.75rem 1.5rem;
-    transition: all 0.2s ease;
+    padding: 0.65rem 1.5rem;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   }
-  .btn-outline-dark:hover {
+  .btn-outline-dark:hover,
+  .btn-secondary-outline:hover {
     background: #18191E;
     color: #FFFFFF;
   }
 
-  .dark .btn-outline-dark {
+  .dark .btn-outline-dark,
+  .dark .btn-secondary-outline {
     border: 1.5px solid rgba(255, 255, 255, 0.3);
     color: #FFFFFF;
   }
-  .dark .btn-outline-dark:hover {
+  .dark .btn-outline-dark:hover,
+  .dark .btn-secondary-outline:hover {
     background: #FFFFFF;
     color: #18191E;
+  }
+
+  /* Glass Nav for Mobile */
+  .glass-nav {
+    background: rgba(251, 249, 245, 0.92);
+    backdrop-filter: blur(16px);
+    border-top: 1px solid rgba(0, 0, 0, 0.06);
+  }
+  .dark .glass-nav {
+    background: rgba(24, 25, 38, 0.92);
+    backdrop-filter: blur(16px);
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
   }
 }
 
