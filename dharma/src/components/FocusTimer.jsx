@@ -263,27 +263,21 @@ export default function FocusTimer({ onClose, onComplete }) {
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
 
-      <div className="relative w-full max-w-sm rounded-3xl p-6 z-10 page-transition"
-        style={{
-          background: 'linear-gradient(160deg, #0d0d1f 0%, #131325 100%)',
-          border: '1px solid rgba(255,255,255,0.09)',
-          boxShadow: '0 32px 80px rgba(0,0,0,0.6)',
-        }}>
+      <div className="relative w-full max-w-sm rounded-3xl p-6 z-10 page-transition bg-white dark:bg-[#181926] border border-black/10 dark:border-white/10 shadow-2xl">
 
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: 'rgba(232,132,60,0.15)' }}>
-              <Flame size={14} style={{ color: '#E8843C' }} />
+            <div className="w-8 h-8 rounded-xl flex items-center justify-center bg-[#F05A36]/15">
+              <Flame size={15} className="text-[#F05A36]" />
             </div>
             <div>
-              <div className="text-sm font-semibold text-white">Focus Timer</div>
-              <div className="text-[11px] text-stone-500">Undivided presence</div>
+              <div className="text-sm font-bold text-[#18191E] dark:text-white">Focus Timer</div>
+              <div className="text-[11px] text-stone-400 font-medium">Undivided presence</div>
             </div>
           </div>
           <button onClick={onClose}
-            className="w-8 h-8 rounded-xl flex items-center justify-center text-stone-500 hover:text-stone-300 transition-colors"
-            style={{ background: 'rgba(255,255,255,0.05)' }}>
+            className="w-8 h-8 rounded-xl flex items-center justify-center text-stone-400 hover:text-[#18191E] dark:hover:text-white bg-black/5 dark:bg-white/5 transition-colors">
             <X size={15} />
           </button>
         </div>
@@ -292,21 +286,21 @@ export default function FocusTimer({ onClose, onComplete }) {
         {!startedRef.current && !finished && (
           <input value={label} onChange={(e) => setLabel(e.target.value)}
             placeholder="Session label (optional)"
-            className="w-full mb-4 text-xs text-stone-300 placeholder-stone-600 bg-white/5 border border-white/8 rounded-xl px-3 py-2 outline-none focus:border-[#E8843C] transition-colors" />
+            className="w-full mb-4 text-xs text-[#18191E] dark:text-white placeholder-stone-400 bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl px-3 py-2 outline-none focus:border-[#F05A36] transition-colors" />
         )}
         {startedRef.current && label && (
-          <div className="text-xs text-stone-500 mb-3 text-center italic">{label}</div>
+          <div className="text-xs text-stone-400 mb-3 text-center italic">{label}</div>
         )}
 
         {/* Preset pills */}
         <div className="flex gap-1.5 mb-2">
           {PRESETS.map((m) => (
             <button key={m} onClick={() => selectPreset(m)} disabled={running}
-              className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${running ? 'opacity-40 cursor-not-allowed' : ''}`}
-              style={{
-                background: minutes === m && !customMin ? '#E8843C' : 'rgba(255,255,255,0.06)',
-                color: minutes === m && !customMin ? '#fff' : '#6B7280',
-              }}>
+              className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${running ? 'opacity-40 cursor-not-allowed' : ''} ${
+                minutes === m && !customMin
+                  ? 'bg-[#F05A36] text-white shadow-sm'
+                  : 'bg-black/5 dark:bg-white/5 text-stone-500 dark:text-stone-400'
+              }`}>
               {m}m
             </button>
           ))}
@@ -319,10 +313,9 @@ export default function FocusTimer({ onClose, onComplete }) {
               onChange={(e) => setCustomMin(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && applyCustom()}
               placeholder="Custom min"
-              className="flex-1 text-xs text-stone-300 placeholder-stone-600 bg-white/5 border border-white/8 rounded-xl px-3 py-2 outline-none focus:border-[#E8843C] transition-colors" />
+              className="flex-1 text-xs text-[#18191E] dark:text-white placeholder-stone-400 bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl px-3 py-2 outline-none focus:border-[#F05A36] transition-colors" />
             <button onClick={applyCustom}
-              className="px-3 py-2 rounded-xl text-xs font-semibold text-stone-300 transition-all"
-              style={{ background: 'rgba(255,255,255,0.06)' }}>
+              className="px-3 py-2 rounded-xl text-xs font-bold text-stone-600 dark:text-white bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 transition-all">
               Set
             </button>
           </div>
@@ -336,12 +329,11 @@ export default function FocusTimer({ onClose, onComplete }) {
                 setAmbient(a.id);
                 if (running) { stopAmbient(); if (a.id !== 'none') startAmbient(a.id); }
               }}
-              className={`flex-1 py-1.5 rounded-xl text-[10px] font-semibold transition-all`}
-              style={{
-                background: ambient === a.id ? 'rgba(91,107,175,0.3)' : 'rgba(255,255,255,0.05)',
-                color: ambient === a.id ? '#8B9FE0' : '#6B7280',
-                border: ambient === a.id ? '1px solid rgba(91,107,175,0.4)' : '1px solid transparent',
-              }}>
+              className={`flex-1 py-1.5 rounded-xl text-[10px] font-bold transition-all ${
+                ambient === a.id
+                  ? 'bg-[#F05A36]/15 text-[#F05A36] border border-[#F05A36]/30'
+                  : 'bg-black/5 dark:bg-white/5 text-stone-400 border border-transparent'
+              }`}>
               {a.label}
             </button>
           ))}
@@ -349,12 +341,11 @@ export default function FocusTimer({ onClose, onComplete }) {
 
         {/* Breathing mode toggle (#36) */}
         <button onClick={() => setBreathing(!breathing)}
-          className="w-full flex items-center justify-center gap-1.5 mb-4 py-1.5 rounded-xl text-xs font-semibold transition-all"
-          style={{
-            background: breathing ? 'rgba(91,107,175,0.15)' : 'rgba(255,255,255,0.04)',
-            color: breathing ? '#8B9FE0' : '#4B5563',
-            border: breathing ? '1px solid rgba(91,107,175,0.3)' : '1px solid transparent',
-          }}>
+          className={`w-full flex items-center justify-center gap-1.5 mb-4 py-2 rounded-xl text-xs font-bold transition-all ${
+            breathing
+              ? 'bg-[#F05A36]/15 text-[#F05A36] border border-[#F05A36]/30'
+              : 'bg-black/5 dark:bg-white/5 text-stone-500 dark:text-stone-400 border border-transparent'
+          }`}>
           <Wind size={12} /> {breathing ? 'Hide breathing guide' : 'Show breathing guide'}
         </button>
 
@@ -366,9 +357,9 @@ export default function FocusTimer({ onClose, onComplete }) {
           <div className="flex justify-center mb-5">
             <div className="relative w-36 h-36">
               <svg width="144" height="144" className="-rotate-90">
-                <circle cx="72" cy="72" r={r} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="7" />
+                <circle cx="72" cy="72" r={r} fill="none" className="stroke-black/5 dark:stroke-white/10" strokeWidth="7" />
                 <circle cx="72" cy="72" r={r} fill="none"
-                  stroke={finished ? '#C9A961' : '#E8843C'}
+                  stroke={finished ? '#10B981' : '#F05A36'}
                   strokeWidth="7" strokeLinecap="round"
                   strokeDasharray={circumference}
                   strokeDashoffset={circumference * (1 - progress)}
@@ -378,14 +369,14 @@ export default function FocusTimer({ onClose, onComplete }) {
                 {finished ? (
                   <div className="text-center">
                     <div className="text-3xl mb-0.5">🔔</div>
-                    <div className="text-xs text-[#C9A961] font-semibold">Done</div>
+                    <div className="text-xs text-emerald-500 font-bold">Done</div>
                   </div>
                 ) : (
                   <>
-                    <div className="text-3xl font-bold text-white tabular-nums tracking-tight">
+                    <div className="text-3xl font-extrabold text-[#18191E] dark:text-white tabular-nums tracking-tight">
                       {String(mins).padStart(2, '0')}:{String(secs).padStart(2, '0')}
                     </div>
-                    <div className="text-[11px] text-stone-600 mt-0.5">
+                    <div className="text-[11px] text-stone-400 mt-0.5 font-medium">
                       {running ? 'focusing…' : startedRef.current ? 'paused' : `${minutes} min`}
                     </div>
                   </>
@@ -397,9 +388,8 @@ export default function FocusTimer({ onClose, onComplete }) {
 
         {/* Completion message */}
         {finished && (
-          <div className="mb-4 px-3 py-2.5 rounded-xl text-center"
-            style={{ background: 'rgba(201,169,97,0.08)', border: '1px solid rgba(201,169,97,0.2)' }}>
-            <p className="font-verse italic text-sm text-[#C9A961] leading-relaxed">
+          <div className="mb-4 px-3 py-2.5 rounded-2xl text-center bg-emerald-500/10 border border-emerald-500/20">
+            <p className="font-verse italic text-sm text-emerald-600 dark:text-emerald-400 leading-relaxed">
               "The action is yours. The fruit belongs to dharma."
             </p>
           </div>
@@ -408,21 +398,18 @@ export default function FocusTimer({ onClose, onComplete }) {
         {/* Controls */}
         <div className="flex gap-2.5">
           <button onClick={reset}
-            className="w-12 h-12 rounded-2xl flex items-center justify-center transition-colors"
-            style={{ background: 'rgba(255,255,255,0.06)', color: '#6B7280' }} title="Reset">
+            className="w-12 h-12 rounded-2xl flex items-center justify-center transition-colors bg-black/5 dark:bg-white/5 text-stone-400 hover:text-[#18191E] dark:hover:text-white" title="Reset">
             <RotateCcw size={15} />
           </button>
 
           {finished ? (
             <button onClick={onClose}
-              className="flex-1 h-12 rounded-2xl text-white text-sm font-bold"
-              style={{ background: 'linear-gradient(135deg, #2D3561, #5B6BAF)' }}>
+              className="btn-coral flex-1 h-12 text-sm font-bold">
               Close
             </button>
           ) : (
             <button onClick={toggleRunning}
-              className="flex-1 h-12 rounded-2xl text-white text-sm font-bold flex items-center justify-center gap-2 transition-all active:scale-[0.97]"
-              style={{ background: running ? 'rgba(255,255,255,0.08)' : 'linear-gradient(135deg, #E8843C, #C9A961)' }}>
+              className="btn-coral flex-1 h-12 text-sm font-bold flex items-center justify-center gap-2 shadow-md">
               {running ? <Pause size={18} /> : <Play size={18} />}
               {running ? 'Pause' : 'Start'}
             </button>

@@ -160,17 +160,11 @@ function CircularProgress({ percentage, size = 120, strokeWidth = 8 }) {
   return (
     <svg width={size} height={size} className="transform -rotate-90">
       <circle cx={center} cy={center} r={radius}
-        stroke="rgba(255,255,255,0.08)" strokeWidth={strokeWidth} fill="none" />
+        className="stroke-black/5 dark:stroke-white/10" strokeWidth={strokeWidth} fill="none" />
       <circle cx={center} cy={center} r={radius}
-        stroke="url(#progressGrad)" strokeWidth={strokeWidth} fill="none"
+        stroke="#F05A36" strokeWidth={strokeWidth} fill="none"
         strokeLinecap="round" strokeDasharray={circumference} strokeDashoffset={offset}
         style={{ transition: 'stroke-dashoffset 0.8s cubic-bezier(0.4,0,0.2,1)' }} />
-      <defs>
-        <linearGradient id="progressGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-          <stop offset="0%" stopColor="#E8843C" />
-          <stop offset="100%" stopColor="#C9A961" />
-        </linearGradient>
-      </defs>
     </svg>
   );
 }
@@ -184,19 +178,18 @@ function PillarCategoryCard({ pillar, dayLog }) {
   const pct = totalCount > 0 ? Math.round((doneCount / totalCount) * 100) : 0;
 
   return (
-    <div className="relative overflow-hidden rounded-2xl p-4 flex flex-col justify-between min-h-[110px] transition-all active:scale-[0.97]"
-      style={{ background: `linear-gradient(145deg, ${pillar.color}18, ${pillar.color}08)`, border: `1px solid ${pillar.color}20` }}>
+    <div className="relative overflow-hidden rounded-2xl p-4 flex flex-col justify-between min-h-[110px] transition-all active:scale-[0.97] bg-white dark:bg-[#181926] border border-black/5 dark:border-white/8 shadow-sm">
       <div className="flex items-start justify-between">
-        <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: `${pillar.color}20` }}>
-          <IconComp size={18} style={{ color: pillar.color }} />
+        <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: `${pillar.color}18` }}>
+          <IconComp size={17} style={{ color: pillar.color }} />
         </div>
-        <span className="text-[11px] font-bold px-2 py-0.5 rounded-full" style={{ background: `${pillar.color}15`, color: pillar.color }}>{pct}%</span>
+        <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full" style={{ background: `${pillar.color}15`, color: pillar.color }}>{pct}%</span>
       </div>
       <div className="mt-3">
-        <h4 className="text-sm font-bold text-[#1a1a2e] dark:text-white">{pillar.english}</h4>
-        <p className="text-[10px] text-stone-400 mt-0.5 font-medium">{doneCount}/{totalCount} completed</p>
+        <h4 className="text-xs font-bold text-[#18191E] dark:text-white truncate">{pillar.english}</h4>
+        <p className="text-[10px] text-stone-400 font-medium">{doneCount}/{totalCount} done</p>
       </div>
-      <div className="mt-2 h-1 rounded-full overflow-hidden" style={{ background: `${pillar.color}15` }}>
+      <div className="mt-2 h-1 rounded-full overflow-hidden bg-black/5 dark:bg-white/5">
         <div className="h-full rounded-full transition-all duration-500" style={{ width: `${pct}%`, background: pillar.color }} />
       </div>
     </div>
@@ -209,7 +202,7 @@ function MobileTodayView({ pillars, logs, logTarget, dateStr, streak, settings, 
   const activeTargets = useMemo(() =>
     pillars.flatMap((p) =>
       p.targets.filter((t) => t.frequency === 'daily' || !t.frequency)
-        .map((t) => ({ ...t, pillarName: p.english, pillarColor: p.color || '#E8843C', pillarIcon: p.icon, done: !!dayLog[t.id]?.done }))
+        .map((t) => ({ ...t, pillarName: p.english, pillarColor: p.color || '#F05A36', pillarIcon: p.icon, done: !!dayLog[t.id]?.done }))
     ), [pillars, dayLog]);
 
   const completedCount = activeTargets.filter((t) => t.done).length;
@@ -222,30 +215,28 @@ function MobileTodayView({ pillars, logs, logTarget, dateStr, streak, settings, 
   return (
     <div className="block lg:hidden space-y-5 mb-5">
       {/* Hero Progress Card */}
-      <div className="relative overflow-hidden rounded-3xl p-6" style={{ background: 'linear-gradient(145deg, #1b1f3b 0%, #2a3158 50%, #3a4478 100%)' }}>
-        <div className="absolute -top-8 -right-8 w-32 h-32 rounded-full opacity-[0.04]" style={{ background: 'radial-gradient(circle, #C9A961, transparent)' }} />
-        <div className="absolute -bottom-12 -left-12 w-40 h-40 rounded-full opacity-[0.03]" style={{ background: 'radial-gradient(circle, #E8843C, transparent)' }} />
+      <div className="card-bento relative overflow-hidden rounded-3xl p-6 bg-white dark:bg-[#181926] border border-black/5 dark:border-white/8 shadow-md">
         <div className="relative z-10 flex items-center justify-between">
           <div className="flex-1">
-            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#C9A961]/70">Today's Progress</span>
-            <h2 className="text-xl font-extrabold text-white mt-1 leading-tight">{allDone ? 'All done! 🪷' : `${totalCount - completedCount} tasks remaining`}</h2>
-            <p className="text-[11px] text-white/40 mt-1.5 leading-relaxed">{allDone ? 'Your practice blooms today — rest well.' : 'Tap each target to check it off.'}</p>
+            <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#F05A36]">Today's Practice</span>
+            <h2 className="text-xl font-extrabold text-[#18191E] dark:text-white mt-1 leading-tight">{allDone ? 'All done! 🪷' : `${totalCount - completedCount} tasks remaining`}</h2>
+            <p className="text-[11px] text-stone-500 dark:text-white/50 mt-1 leading-relaxed">{allDone ? 'Your practice blooms today — rest well.' : 'Tap each target to check it off.'}</p>
             <div className="flex items-center gap-3 mt-4">
               {!settings.silentMode && streak > 0 && (
-                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full" style={{ background: 'rgba(232,132,60,0.15)' }}>
-                  <Flame size={11} className="text-[#E8843C]" /><span className="text-[10px] font-bold text-[#E8843C]">{streak}d streak</span>
+                <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#F05A36]/12">
+                  <Flame size={11} className="text-[#F05A36]" /><span className="text-[10px] font-extrabold text-[#F05A36]">{streak}d streak</span>
                 </div>
               )}
-              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full" style={{ background: 'rgba(201,169,97,0.12)' }}>
-                <Check size={10} className="text-[#C9A961]" /><span className="text-[10px] font-bold text-[#C9A961]">{completedCount} done</span>
+              <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/12">
+                <Check size={11} className="text-emerald-500" /><span className="text-[10px] font-extrabold text-emerald-500">{completedCount} done</span>
               </div>
             </div>
           </div>
           <div className="relative flex items-center justify-center ml-4">
-            <CircularProgress percentage={pct} size={100} strokeWidth={7} />
+            <CircularProgress percentage={pct} size={90} strokeWidth={7} />
             <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <span className="text-2xl font-extrabold text-white tabular-nums">{pct}%</span>
-              <span className="text-[9px] text-white/40 font-medium -mt-0.5">complete</span>
+              <span className="text-xl font-extrabold text-[#18191E] dark:text-white tabular-nums">{pct}%</span>
+              <span className="text-[9px] text-stone-400 font-medium -mt-0.5">complete</span>
             </div>
           </div>
         </div>
@@ -255,7 +246,7 @@ function MobileTodayView({ pillars, logs, logTarget, dateStr, streak, settings, 
       <div>
         <div className="flex items-center justify-between px-1 mb-3">
           <span className="text-xs font-bold uppercase tracking-widest text-stone-400">Your Pillars</span>
-          <Link to="/sadhana" className="text-[10px] font-bold text-[#E8843C] flex items-center gap-0.5">View all <ChevronRight size={10} /></Link>
+          <Link to="/sadhana" className="text-[10px] font-extrabold text-[#F05A36] flex items-center gap-0.5">View all <ChevronRight size={10} /></Link>
         </div>
         <div className="grid grid-cols-3 gap-2.5">
           {pillars.map((pillar) => <PillarCategoryCard key={pillar.id} pillar={pillar} dayLog={dayLog} />)}
@@ -266,23 +257,23 @@ function MobileTodayView({ pillars, logs, logTarget, dateStr, streak, settings, 
       <div>
         <div className="flex items-center justify-between px-1 mb-3">
           <span className="text-xs font-bold uppercase tracking-widest text-stone-400">{pendingTargets.length > 0 ? 'Pending Tasks' : 'Completed'}</span>
-          <span className="text-[11px] font-bold tabular-nums" style={{ color: '#E8843C' }}>{completedCount}/{totalCount}</span>
+          <span className="text-[11px] font-bold tabular-nums text-[#F05A36]">{completedCount}/{totalCount}</span>
         </div>
         <div className="space-y-2">
           {pendingTargets.map((target) => {
             const Icon = PILLAR_ICONS[target.pillarIcon] || Zap;
             return (
               <button key={target.id} onClick={() => logTarget(dateStr, target.id, { done: true, timestamp: Date.now() })}
-                className="w-full flex items-center gap-3 p-3.5 rounded-2xl border text-left transition-all duration-200 active:scale-[0.97] bg-white dark:bg-[#0f1428] border-black/5 dark:border-white/8 hover:border-[#E8843C]/25 hover:shadow-sm">
-                <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: `${target.pillarColor}15` }}>
+                className="w-full flex items-center gap-3 p-3.5 rounded-2xl border text-left transition-all duration-200 active:scale-[0.97] bg-white dark:bg-[#181926] border-black/5 dark:border-white/8 hover:border-[#F05A36]/30 shadow-sm">
+                <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: `${target.pillarColor}18` }}>
                   <Icon size={15} style={{ color: target.pillarColor }} />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="text-[13px] font-semibold text-[#1a1a2e] dark:text-white truncate">{target.name}</div>
-                  <div className="text-[10px] text-stone-400 font-medium uppercase tracking-wide mt-0.5">{target.pillarName}</div>
+                  <div className="text-[13px] font-bold text-[#18191E] dark:text-white truncate">{target.name}</div>
+                  <div className="text-[10px] text-stone-400 font-semibold uppercase tracking-wide mt-0.5">{target.pillarName}</div>
                 </div>
-                <div className="w-7 h-7 rounded-full flex items-center justify-center shrink-0 border-2 transition-all" style={{ borderColor: `${target.pillarColor}30` }}>
-                  <Plus size={12} style={{ color: target.pillarColor, opacity: 0.5 }} />
+                <div className="w-7 h-7 rounded-full flex items-center justify-center shrink-0 border-2 transition-all" style={{ borderColor: `${target.pillarColor}40` }}>
+                  <Plus size={12} style={{ color: target.pillarColor, opacity: 0.6 }} />
                 </div>
               </button>
             );
@@ -291,16 +282,16 @@ function MobileTodayView({ pillars, logs, logTarget, dateStr, streak, settings, 
             const Icon = PILLAR_ICONS[target.pillarIcon] || Zap;
             return (
               <button key={target.id} onClick={() => logTarget(dateStr, target.id, { done: false, timestamp: Date.now() })}
-                className="w-full flex items-center gap-3 p-3.5 rounded-2xl border text-left transition-all duration-200 active:scale-[0.97] bg-stone-50 dark:bg-white/[0.03] border-stone-100 dark:border-[#C9A961]/15">
-                <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: 'rgba(201,169,97,0.1)' }}>
+                className="w-full flex items-center gap-3 p-3.5 rounded-2xl border text-left transition-all duration-200 active:scale-[0.97] bg-black/[0.02] dark:bg-white/[0.03] border-black/5 dark:border-white/5">
+                <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: `${target.pillarColor}12` }}>
                   <Icon size={15} style={{ color: target.pillarColor, opacity: 0.5 }} />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="text-[13px] font-semibold text-stone-400 dark:text-stone-500 line-through truncate">{target.name}</div>
-                  <div className="text-[10px] text-stone-300 dark:text-stone-600 font-medium uppercase tracking-wide mt-0.5">{target.pillarName}</div>
+                  <div className="text-[10px] text-stone-400 dark:text-stone-600 font-semibold uppercase tracking-wide mt-0.5">{target.pillarName}</div>
                 </div>
-                <div className="w-7 h-7 rounded-full flex items-center justify-center shrink-0 transition-all" style={{ background: 'linear-gradient(135deg, #E8843C, #C9A961)' }}>
-                  <Check size={13} color="white" strokeWidth={3} />
+                <div className="w-7 h-7 rounded-full flex items-center justify-center shrink-0 transition-all bg-[#F05A36] text-white">
+                  <Check size={13} strokeWidth={3} />
                 </div>
               </button>
             );
@@ -392,26 +383,26 @@ function TaskRow({ target, dateStr, logTarget, onEdit }) {
 
       {/* Task info */}
       <div className="flex-1 min-w-0">
-        <div className={`text-sm font-semibold truncate ${target.done ? 'line-through text-white/30' : 'text-white'}`}>
+        <div className={`text-sm font-bold truncate ${target.done ? 'line-through text-stone-400 dark:text-white/30' : 'text-[#18191E] dark:text-white'}`}>
           {target.name}
         </div>
       </div>
 
       {/* Pillar badge */}
-      <span className="text-[10px] font-bold px-2.5 py-1 rounded-lg uppercase tracking-wider shrink-0"
-        style={{ background: `${target.pillarColor}12`, color: target.pillarColor }}>
+      <span className="text-[10px] font-extrabold px-3 py-1 rounded-full uppercase tracking-wider shrink-0"
+        style={{ background: `${target.pillarColor}15`, color: target.pillarColor }}>
         {target.pillarName}
       </span>
 
       {/* Type badge */}
-      <span className="text-[10px] font-medium px-2 py-0.5 rounded-md bg-white/5 text-white/40 shrink-0">
+      <span className="text-[10px] font-semibold px-2.5 py-1 rounded-full bg-black/5 dark:bg-white/5 text-stone-600 dark:text-white/50 shrink-0">
         {target.type === 'CHECKBOX' ? 'Yes/No' : target.type === 'NUMBER' ? `≥${target.targetValue}${target.unit || ''}` : target.type === 'TIME' ? `≤${target.targetValue}` : target.type}
       </span>
 
       {/* Edit button */}
       <button
         onClick={() => onEdit(target)}
-        className="w-7 h-7 rounded-lg flex items-center justify-center text-white/20 hover:text-[#E8843C] hover:bg-[#E8843C]/10 transition-all opacity-0 group-hover:opacity-100 shrink-0"
+        className="w-7 h-7 rounded-lg flex items-center justify-center text-stone-400 hover:text-[#F05A36] hover:bg-[#F05A36]/10 transition-all opacity-0 group-hover:opacity-100 shrink-0"
       >
         <Edit3 size={13} />
       </button>
@@ -728,27 +719,27 @@ function DesktopActivityFeed({ logs, pillars, dateStr }) {
   }, [pillars, dayLog]);
 
   return (
-    <div className="rounded-2xl p-5" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+    <div className="card-bento p-5">
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h3 className="text-base font-bold text-white">Activity Feed</h3>
-          <p className="text-[11px] text-white/30 mt-0.5">Recent completions today</p>
+          <h3 className="text-base font-bold text-[#18191E] dark:text-white">Activity Feed</h3>
+          <p className="text-[11px] text-stone-400 dark:text-white/30 mt-0.5">Recent completions today</p>
         </div>
-        <span className="text-[10px] font-bold px-2 py-1 rounded-lg bg-white/5 text-white/30">
+        <span className="text-[10px] font-extrabold px-2.5 py-1 rounded-full bg-black/5 dark:bg-white/5 text-stone-500 dark:text-white/40">
           {activities.length} entries
         </span>
       </div>
 
       {activities.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-8 text-white/15">
-          <Activity size={28} className="mb-2" />
+        <div className="flex flex-col items-center justify-center py-8 text-stone-300 dark:text-white/20">
+          <Activity size={28} className="mb-2 text-stone-300 dark:text-white/20" />
           <span className="text-xs font-medium">No completions yet today</span>
-          <span className="text-[10px] mt-0.5">Complete a target to see it here</span>
+          <span className="text-[10px] text-stone-400 mt-0.5">Complete a target to see it here</span>
         </div>
       ) : (
         <div className="space-y-1 max-h-[300px] overflow-y-auto scrollbar-thin">
           {/* Table header */}
-          <div className="flex items-center gap-3 px-3 py-2 text-[10px] font-bold text-white/20 uppercase tracking-wider">
+          <div className="flex items-center gap-3 px-3 py-2 text-[10px] font-extrabold text-stone-400 uppercase tracking-wider">
             <span className="flex-1">Target</span>
             <span className="w-20 text-center">Pillar</span>
             <span className="w-16 text-right">Time</span>

@@ -35,45 +35,44 @@ export default function VerseCard({
   }
 
   return (
-    <div className="card" style={{ borderLeft: '3px solid rgba(201,169,97,0.4)' }}>
+    <div className="card-bento p-4 bg-white dark:bg-[#181926] border border-black/5 dark:border-white/8 shadow-sm" style={{ borderLeft: '3px solid #F05A36' }}>
       {/* Sanskrit */}
-      <div className="verse-sanskrit text-center leading-loose mb-3 px-2 text-sm">
+      <div className="verse-sanskrit text-center leading-loose mb-3 px-2 text-sm text-[#18191E] dark:text-white">
         {shloka.sanskrit}
       </div>
 
       {/* Hindi transliteration toggle (#32) */}
       {shloka.hindi && (
         <button onClick={() => setShowHindi(!showHindi)}
-          className="w-full text-[10px] text-stone-400 mb-2 hover:text-stone-500 transition-colors text-left pl-1">
+          className="w-full text-[10px] text-stone-400 mb-2 hover:text-[#F05A36] transition-colors text-left pl-1 font-bold">
           {showHindi ? '▲ hide hindi' : '▼ हिन्दी अनुवाद'}
         </button>
       )}
       {showHindi && shloka.hindi && (
-        <p className="font-verse text-xs text-stone-500 dark:text-stone-400 leading-relaxed mb-3 px-1 italic">
+        <p className="font-verse text-xs text-stone-600 dark:text-stone-300 leading-relaxed mb-3 px-1 italic">
           {shloka.hindi}
         </p>
       )}
 
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-1.5">
-          <span className="text-[10px] font-bold tracking-widest uppercase px-2 py-0.5 rounded-full"
-            style={{ background: 'rgba(201,169,97,0.12)', color: '#C9A961' }}>
+          <span className="text-[10px] font-extrabold tracking-widest uppercase px-2 py-0.5 rounded-full bg-[#F05A36]/15 text-[#F05A36]">
             BG {shloka.chapter}.{shloka.verse}
           </span>
           {shloka.theme && (
-            <span className="text-[10px] text-stone-400 italic truncate max-w-[120px]">{shloka.theme}</span>
+            <span className="text-[10px] text-stone-400 italic truncate max-w-[120px] font-medium">{shloka.theme}</span>
           )}
         </div>
         <div className="flex items-center gap-0.5">
           <button onClick={handleShare}
-            className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors"
-            style={{ color: copied ? '#C9A961' : '#D1D5DB' }} title="Copy / Share">
-            {copied ? <Check size={13} /> : <Share2 size={13} />}
+            className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors text-stone-400 hover:text-[#F05A36]"
+            title="Copy / Share">
+            {copied ? <Check size={13} className="text-emerald-500" /> : <Share2 size={13} />}
           </button>
           {onToggleBookmark && (
             <button onClick={() => onToggleBookmark(shloka.id)}
               className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors"
-              style={{ color: bookmarked ? '#C9A961' : '#D1D5DB' }}>
+              style={{ color: bookmarked ? '#F05A36' : '#9CA3AF' }}>
               {bookmarked ? <BookmarkCheck size={14} /> : <Bookmark size={14} />}
             </button>
           )}

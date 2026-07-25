@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { useStorage } from '../hooks/useStorage';
 
 const AVATAR_COLORS = [
-  '#E8843C', '#C9A961', '#2D3561', '#5B6BAF',
+  '#F05A36', '#E6A04E', '#2D3561', '#5B6BAF',
   '#059669', '#E11D48', '#7C3AED', '#0EA5E9',
 ];
 
@@ -55,7 +55,7 @@ export default function Profile({ onClose }) {
 
   const [name,     setName]     = useState(user?.name        || '');
   const [bio,      setBio]      = useState(user?.bio         || '');
-  const [color,    setColor]    = useState(user?.avatarColor || '#E8843C');
+  const [color,    setColor]    = useState(user?.avatarColor || '#F05A36');
   const [photo,    setPhoto]    = useState(user?.avatarPhoto || null);
   const [saving,   setSaving]   = useState(false);
   const [saveMsg,  setSaveMsg]  = useState('');
@@ -124,25 +124,23 @@ export default function Profile({ onClose }) {
       onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
 
-      <div className="relative w-full max-w-md rounded-3xl z-10 page-transition overflow-y-auto max-h-[90svh] scrollbar-thin bg-[#F4F2EE] dark:bg-[#0f0e1a] border border-black/8 dark:border-white/8"
-        style={{ boxShadow: '0 32px 80px rgba(0,0,0,0.35)' }}>
+      <div className="relative w-full max-w-md rounded-3xl z-10 page-transition overflow-y-auto max-h-[90svh] scrollbar-thin bg-white dark:bg-[#181926] border border-black/10 dark:border-white/10 shadow-2xl">
 
         {/* Header */}
-        <div className="sticky top-0 z-10 flex items-center gap-4 px-5 py-4 border-b border-black/6 dark:border-white/6 bg-[#F4F2EE]/95 dark:bg-[#0f0e1a]/95 backdrop-blur-xl">
+        <div className="sticky top-0 z-10 flex items-center gap-4 px-5 py-4 border-b border-black/6 dark:border-white/6 bg-white/95 dark:bg-[#181926]/95 backdrop-blur-xl">
           <AvatarCircle name={name || user?.name} color={color} photo={photo} size={48} />
           <div className="flex-1 min-w-0">
-            <div className="font-bold text-base text-[#1a1a2e] dark:text-white truncate">{user?.name}</div>
+            <div className="font-extrabold text-base text-[#18191E] dark:text-white truncate">{user?.name}</div>
             <div className="flex items-center gap-1.5 text-xs text-stone-400 truncate">
               {user?.email}
               {isGoogleUser && (
-                <span className="text-[10px] px-1.5 py-0.5 rounded-full font-medium"
-                  style={{ background: 'rgba(66,133,244,0.12)', color: '#4285F4' }}>
+                <span className="text-[10px] px-1.5 py-0.5 rounded-full font-medium bg-blue-500/10 text-blue-500">
                   Google
                 </span>
               )}
             </div>
           </div>
-          <div className="flex items-center gap-1 text-[10px] text-stone-400">
+          <div className="flex items-center gap-1 text-[10px] text-stone-400 font-medium">
             {syncing ? (
               <><Cloud size={12} className="animate-pulse" /> syncing…</>
             ) : lastSync ? (
@@ -150,7 +148,7 @@ export default function Profile({ onClose }) {
             ) : null}
           </div>
           <button onClick={onClose}
-            className="text-stone-400 hover:text-stone-600 dark:hover:text-stone-200 text-xl leading-none ml-1">×</button>
+            className="text-stone-400 hover:text-[#18191E] dark:hover:text-white text-xl leading-none ml-1">×</button>
         </div>
 
         <div className="px-5 py-5 space-y-5">
@@ -163,28 +161,27 @@ export default function Profile({ onClose }) {
               { v: bookmarkCount,  l: 'Saved'    },
               { v: focusSessions,  l: 'Focus'    },
             ].map(({ v, l }) => (
-              <div key={l} className="text-center py-3 rounded-2xl bg-white/70 dark:bg-white/5 border border-black/5 dark:border-white/8">
-                <div className="text-xl font-bold text-[#E8843C] tabular-nums">{v}</div>
-                <div className="text-[10px] text-stone-400 mt-0.5">{l}</div>
+              <div key={l} className="text-center py-3 rounded-2xl bg-black/[0.02] dark:bg-white/5 border border-black/5 dark:border-white/8">
+                <div className="text-xl font-extrabold text-[#F05A36] tabular-nums">{v}</div>
+                <div className="text-[10px] text-stone-400 mt-0.5 font-bold">{l}</div>
               </div>
             ))}
           </div>
 
           {/* Edit profile */}
-          <form onSubmit={handleSaveProfile} className="space-y-4 p-4 rounded-2xl bg-white/70 dark:bg-white/5 border border-black/5 dark:border-white/8">
-            <div className="text-xs font-semibold text-stone-400 uppercase tracking-widest">Profile</div>
+          <form onSubmit={handleSaveProfile} className="space-y-4 p-4 rounded-2xl bg-black/[0.02] dark:bg-white/5 border border-black/5 dark:border-white/8">
+            <div className="text-xs font-bold text-stone-400 uppercase tracking-widest">Profile</div>
 
             {/* Avatar photo upload */}
             <div>
-              <p className="text-xs text-stone-400 mb-2">Profile photo</p>
+              <p className="text-xs text-stone-400 mb-2 font-medium">Profile photo</p>
               <div className="flex items-center gap-3">
                 <div className="relative">
                   <AvatarCircle name={name || user?.name} color={color} photo={photo} size={56} />
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
-                    className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full flex items-center justify-center text-white shadow-md transition-all hover:scale-110"
-                    style={{ background: 'linear-gradient(135deg,#E8843C,#C9A961)' }}
+                    className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full flex items-center justify-center text-white shadow-md transition-all hover:scale-110 bg-[#F05A36]"
                     title="Upload photo"
                   >
                     <Camera size={11} />
@@ -194,7 +191,7 @@ export default function Profile({ onClose }) {
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
-                    className="text-xs px-3 py-1.5 rounded-xl font-medium text-stone-600 dark:text-stone-300 border border-black/10 dark:border-white/10 hover:border-[#E8843C] transition-colors"
+                    className="text-xs px-3 py-1.5 rounded-xl font-bold text-stone-600 dark:text-stone-300 border border-black/10 dark:border-white/10 hover:border-[#F05A36] transition-colors"
                   >
                     Upload photo
                   </button>
@@ -202,7 +199,7 @@ export default function Profile({ onClose }) {
                     <button
                       type="button"
                       onClick={handleRemovePhoto}
-                      className="text-xs text-red-400 hover:text-red-500 transition-colors flex items-center gap-1"
+                      className="text-xs text-red-500 hover:text-red-600 transition-colors flex items-center gap-1 font-semibold"
                     >
                       <X size={10} /> Remove
                     </button>
@@ -220,7 +217,7 @@ export default function Profile({ onClose }) {
 
             {/* Avatar color picker */}
             <div>
-              <p className="text-xs text-stone-400 mb-2">Avatar colour {photo && <span className="text-stone-300">(used when no photo)</span>}</p>
+              <p className="text-xs text-stone-400 mb-2 font-medium">Avatar colour {photo && <span className="text-stone-400">(used when no photo)</span>}</p>
               <div className="flex gap-2 flex-wrap">
                 {AVATAR_COLORS.map((c) => (
                   <button key={c} type="button" onClick={() => setColor(c)}
@@ -235,27 +232,25 @@ export default function Profile({ onClose }) {
             </div>
 
             <div>
-              <label className="text-[10px] font-semibold text-stone-400 uppercase tracking-widest">Name</label>
+              <label className="text-[10px] font-bold text-stone-400 uppercase tracking-widest">Name</label>
               <input value={name} onChange={(e) => setName(e.target.value)} required maxLength={60}
-                className="mt-1 w-full text-sm bg-stone-50 dark:bg-white/8 border border-black/8 dark:border-white/10 rounded-xl px-3 py-2.5 outline-none focus:border-[#E8843C] transition-colors" />
+                className="mt-1 w-full text-sm text-[#18191E] dark:text-white bg-white dark:bg-white/8 border border-black/10 dark:border-white/10 rounded-xl px-3 py-2.5 outline-none focus:border-[#F05A36] transition-colors" />
             </div>
 
             <div>
-              <label className="text-[10px] font-semibold text-stone-400 uppercase tracking-widest">Bio</label>
+              <label className="text-[10px] font-bold text-stone-400 uppercase tracking-widest">Bio</label>
               <textarea value={bio} onChange={(e) => setBio(e.target.value)} maxLength={200} rows={2}
                 placeholder="A short intention or mantra…"
-                className="mt-1 w-full text-sm bg-stone-50 dark:bg-white/8 border border-black/8 dark:border-white/10 rounded-xl px-3 py-2 outline-none focus:border-[#E8843C] transition-colors resize-none font-verse italic" />
+                className="mt-1 w-full text-sm text-[#18191E] dark:text-white bg-white dark:bg-white/8 border border-black/10 dark:border-white/10 rounded-xl px-3 py-2 outline-none focus:border-[#F05A36] transition-colors resize-none font-verse italic" />
             </div>
-
             <div className="flex items-center gap-2">
               <button type="submit" disabled={saving}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold text-white transition-all"
-                style={{ background: 'linear-gradient(135deg,#E8843C,#C9A961)' }}>
+                className="btn-coral text-xs flex items-center gap-1.5 shadow-md">
                 <Save size={13} />
                 {saving ? 'Saving…' : 'Save profile'}
               </button>
               {saveMsg && (
-                <span className={`text-xs font-medium flex items-center gap-1 ${saveMsg === 'saved' ? 'text-emerald-500' : 'text-red-400'}`}>
+                <span className={`text-xs font-bold flex items-center gap-1 ${saveMsg === 'saved' ? 'text-emerald-500' : 'text-red-500'}`}>
                   {saveMsg === 'saved' ? <CheckCircle2 size={12} /> : <AlertCircle size={12} />}
                   {saveMsg === 'saved' ? 'Saved!' : saveMsg}
                 </span>
@@ -265,22 +260,21 @@ export default function Profile({ onClose }) {
 
           {/* Change password — hidden for Google-only accounts */}
           {!isGoogleUser && (
-            <form onSubmit={handleChangePassword} className="space-y-3 p-4 rounded-2xl bg-white/70 dark:bg-white/5 border border-black/5 dark:border-white/8">
-              <div className="flex items-center gap-1.5 text-xs font-semibold text-stone-400 uppercase tracking-widest">
+            <form onSubmit={handleChangePassword} className="space-y-3 p-4 rounded-2xl bg-black/[0.02] dark:bg-white/5 border border-black/5 dark:border-white/8">
+              <div className="flex items-center gap-1.5 text-xs font-bold text-stone-400 uppercase tracking-widest">
                 <Lock size={10} /> Change Password
               </div>
               <input value={currPw} onChange={(e) => setCurrPw(e.target.value)} required type="password" placeholder="Current password"
-                className="w-full text-sm bg-stone-50 dark:bg-white/8 border border-black/8 dark:border-white/10 rounded-xl px-3 py-2.5 outline-none focus:border-[#E8843C] transition-colors" />
+                className="w-full text-sm text-[#18191E] dark:text-white bg-white dark:bg-white/8 border border-black/10 dark:border-white/10 rounded-xl px-3 py-2.5 outline-none focus:border-[#F05A36] transition-colors" />
               <input value={newPw} onChange={(e) => setNewPw(e.target.value)} required type="password" placeholder="New password (min 8 chars)"
-                className="w-full text-sm bg-stone-50 dark:bg-white/8 border border-black/8 dark:border-white/10 rounded-xl px-3 py-2.5 outline-none focus:border-[#E8843C] transition-colors" />
+                className="w-full text-sm text-[#18191E] dark:text-white bg-white dark:bg-white/8 border border-black/10 dark:border-white/10 rounded-xl px-3 py-2.5 outline-none focus:border-[#F05A36] transition-colors" />
               <div className="flex items-center gap-2">
                 <button type="submit" disabled={pwBusy}
-                  className="px-4 py-2 rounded-xl text-xs font-semibold text-white transition-all"
-                  style={{ background: 'linear-gradient(135deg,#2D3561,#5B6BAF)' }}>
+                  className="px-4 py-2 rounded-xl text-xs font-bold text-stone-700 dark:text-white bg-black/5 dark:bg-white/10 border border-black/10 dark:border-white/10 hover:border-[#F05A36] transition-all">
                   {pwBusy ? 'Changing…' : 'Change'}
                 </button>
                 {pwMsg && (
-                  <span className={`text-xs font-medium ${pwMsg === 'Password changed' ? 'text-emerald-500' : 'text-red-400'}`}>
+                  <span className={`text-xs font-bold ${pwMsg === 'Password changed' ? 'text-emerald-500' : 'text-red-500'}`}>
                     {pwMsg}
                   </span>
                 )}
@@ -290,7 +284,7 @@ export default function Profile({ onClose }) {
 
           {/* Sign out */}
           <button onClick={logoutUser}
-            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold text-red-500 dark:text-red-400 bg-red-50 dark:bg-red-500/10 hover:bg-red-100 dark:hover:bg-red-500/20 transition-all">
+            className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl text-xs font-extrabold uppercase tracking-wider text-red-500 bg-red-500/10 hover:bg-red-500/20 transition-all border border-red-500/20">
             <LogOut size={15} />
             Sign Out
           </button>

@@ -20,8 +20,8 @@ function ChapterGrid({ progress }) {
             title={`Ch. ${ch.number}: ${ch.english_name}`}
             className="aspect-square rounded-sm flex items-center justify-center text-[7px] font-bold transition-all"
             style={{
-              background: done ? 'linear-gradient(135deg,#C9A961,#E8843C)' : 'rgba(201,169,97,0.12)',
-              color: done ? 'white' : '#C9A961',
+              background: done ? '#F05A36' : 'rgba(240,90,54,0.12)',
+              color: done ? 'white' : '#F05A36',
             }}>
             {ch.number}
           </div>
@@ -36,23 +36,23 @@ function ChapterCard({ chapter, isRead, onMarkRead, bookmarks, onToggleBookmark 
   const [expanded, setExpanded] = useState(false);
 
   return (
-    <div className={`card transition-all duration-200 ${isRead ? 'border-[#C9A961]/30' : ''}`}>
+    <div className={`card-bento p-4 transition-all duration-200 bg-white dark:bg-[#181926] border border-black/5 dark:border-white/8 shadow-sm ${isRead ? 'border-[#F05A36]/30' : ''}`}>
       <button className="w-full flex items-start gap-3 text-left" onClick={() => setExpanded(!expanded)}>
         <div className="w-12 h-12 rounded-xl flex-shrink-0 flex items-center justify-center font-dev font-bold text-lg"
-          style={{ background: isRead ? 'linear-gradient(135deg, #C9A961, #E8843C)' : 'rgba(45,53,97,0.08)', color: isRead ? 'white' : '#2D3561' }}>
+          style={{ background: isRead ? '#F05A36' : 'rgba(240,90,54,0.10)', color: isRead ? 'white' : '#F05A36' }}>
           {chapter.devanagari}
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-2">
             <div>
-              <div className="font-dev text-sm font-semibold text-[#1a1a2e] dark:text-white leading-snug">{chapter.sanskrit_name}</div>
-              <div className="text-xs text-stone-400">{chapter.english_name}</div>
+              <div className="font-dev text-sm font-bold text-[#18191E] dark:text-white leading-snug">{chapter.sanskrit_name}</div>
+              <div className="text-xs text-stone-400 font-medium">{chapter.english_name}</div>
             </div>
-            {isRead && <CheckCircle2 size={16} className="flex-shrink-0 text-[#C9A961] mt-0.5" />}
+            {isRead && <CheckCircle2 size={16} className="flex-shrink-0 text-emerald-500 mt-0.5" />}
           </div>
           <p className="text-xs text-stone-500 dark:text-stone-400 mt-1.5 line-clamp-2 leading-relaxed">{chapter.essence}</p>
         </div>
-        <div className="text-stone-300 flex-shrink-0 mt-1">
+        <div className="text-stone-400 flex-shrink-0 mt-1">
           {expanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
         </div>
       </button>
@@ -62,18 +62,18 @@ function ChapterCard({ chapter, isRead, onMarkRead, bookmarks, onToggleBookmark 
           <p className="font-verse text-sm text-stone-600 dark:text-stone-300 leading-relaxed">{chapter.essence}</p>
 
           <div>
-            <div className="text-[11px] font-semibold text-stone-400 uppercase tracking-widest mb-2">Key Shlokas</div>
+            <div className="text-[11px] font-bold text-stone-400 uppercase tracking-widest mb-2">Key Shlokas</div>
             <div className="space-y-3">
               {chapter.key_shlokas.map((ks) => {
                 const full = shlokas.find((s) => `${s.chapter}.${s.verse}` === ks.verse);
                 return (
-                  <div key={ks.verse} className="rounded-xl border border-stone-100 dark:border-white/10 p-3">
-                    <div className="verse-sanskrit text-sm mb-2">{ks.sanskrit}</div>
-                    <div className="font-verse italic text-xs text-stone-400">{ks.english}</div>
+                  <div key={ks.verse} className="rounded-xl border border-black/5 dark:border-white/10 p-3 bg-black/[0.02] dark:bg-white/[0.02]">
+                    <div className="verse-sanskrit text-sm mb-2 text-[#18191E] dark:text-white">{ks.sanskrit}</div>
+                    <div className="font-verse italic text-xs text-stone-500 dark:text-stone-400">{ks.english}</div>
                     {full && (
                       <button onClick={(e) => { e.stopPropagation(); onToggleBookmark(full.id); }}
-                        className="mt-2 flex items-center gap-1 text-[11px]"
-                        style={{ color: bookmarks.includes(full.id) ? '#C9A961' : '#9CA3AF' }}>
+                        className="mt-2 flex items-center gap-1 text-[11px] font-bold"
+                        style={{ color: bookmarks.includes(full.id) ? '#F05A36' : '#9CA3AF' }}>
                         {bookmarks.includes(full.id) ? <BookmarkCheck size={12} /> : <Bookmark size={12} />}
                         {bookmarks.includes(full.id) ? 'Bookmarked' : 'Bookmark'}
                       </button>
@@ -84,15 +84,14 @@ function ChapterCard({ chapter, isRead, onMarkRead, bookmarks, onToggleBookmark 
             </div>
           </div>
 
-          <div className="rounded-xl p-3" style={{ background: 'rgba(232,132,60,0.05)', border: '1px solid rgba(232,132,60,0.15)' }}>
-            <div className="text-[10px] font-semibold text-[#E8843C] uppercase tracking-widest mb-1.5">Reflection</div>
+          <div className="rounded-xl p-3 bg-[#F05A36]/5 border border-[#F05A36]/15">
+            <div className="text-[10px] font-extrabold text-[#F05A36] uppercase tracking-widest mb-1.5">Reflection</div>
             <p className="font-verse italic text-sm text-stone-600 dark:text-stone-300 leading-relaxed">{chapter.reflection}</p>
           </div>
 
           {!isRead && (
             <button onClick={(e) => { e.stopPropagation(); onMarkRead(chapter.number); }}
-              className="w-full py-2.5 rounded-xl text-sm font-medium transition-all"
-              style={{ color: '#2D3561', border: '1px solid rgba(45,53,97,0.2)' }}>
+              className="w-full py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider text-[#F05A36] bg-[#F05A36]/10 hover:bg-[#F05A36]/20 transition-all border border-[#F05A36]/20">
               Mark as read
             </button>
           )}
@@ -129,17 +128,16 @@ function AskKrishna({ bookmarks, allShlokas }) {
   }
 
   return (
-    <div className="card dark:bg-white/3" style={{ background: 'rgba(45,53,97,0.04)', border: '1px solid rgba(45,53,97,0.12)' }}>
+    <div className="card-bento p-5 bg-white dark:bg-[#181926] border border-black/5 dark:border-white/8 shadow-sm">
       <div className="flex items-center gap-2 mb-3">
-        <div className="w-1 h-4 rounded-full bg-[#E8843C]" />
-        <div className="text-sm font-semibold text-[#1a1a2e] dark:text-white">Ask Krishna</div>
+        <div className="w-1.5 h-4 rounded-full bg-[#F05A36]" />
+        <div className="text-sm font-bold text-[#18191E] dark:text-white">Ask Krishna</div>
       </div>
       <form onSubmit={(e) => { e.preventDefault(); search(); }} className="flex gap-2 mb-3">
         <input value={query} onChange={(e) => setQuery(e.target.value)}
           placeholder="What struggles you today?"
-          className="flex-1 text-sm text-[#1a1a2e] dark:text-white placeholder-stone-400 bg-white dark:bg-white/10 border border-black/8 dark:border-white/10 rounded-xl px-3 py-2.5 outline-none focus:border-[#E8843C] transition-colors font-verse" />
-        <button type="submit" className="px-4 py-2.5 rounded-xl text-white text-sm font-medium"
-          style={{ background: 'linear-gradient(135deg, #2D3561, #5B6BAF)' }}>
+          className="flex-1 text-sm text-[#18191E] dark:text-white placeholder-stone-400 bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-2xl px-3.5 py-2.5 outline-none focus:border-[#F05A36] transition-colors font-verse" />
+        <button type="submit" className="btn-coral text-xs px-4 py-2.5">
           <Search size={16} />
         </button>
       </form>
@@ -147,12 +145,11 @@ function AskKrishna({ bookmarks, allShlokas }) {
       <div className="flex flex-wrap gap-1.5 mb-3">
         {SUGGEST_THEMES.map((t) => (
           <button key={t} onClick={() => { setQuery(t); search(t); }}
-            className="text-[10px] px-2.5 py-1 rounded-lg font-semibold transition-all"
-            style={{
-              background: query === t ? 'rgba(232,132,60,0.15)' : 'rgba(0,0,0,0.05)',
-              color: query === t ? '#E8843C' : '#9CA3AF',
-              border: query === t ? '1px solid rgba(232,132,60,0.3)' : '1px solid transparent',
-            }}>
+            className={`text-[10px] px-3 py-1 rounded-full font-bold transition-all ${
+              query === t
+                ? 'bg-[#F05A36] text-white shadow-sm'
+                : 'bg-black/5 dark:bg-white/5 text-stone-500 hover:text-[#18191E] dark:hover:text-white'
+            }`}>
             {t}
           </button>
         ))}

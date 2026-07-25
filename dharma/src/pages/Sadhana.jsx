@@ -309,13 +309,12 @@ export default function Sadhana() {
       {/* Header */}
       <div className="flex items-start justify-between mb-6">
         <div>
-          <h1 className="text-2xl lg:text-3xl font-bold text-[#1a1a2e] dark:text-white">Pillars of Practice</h1>
-          <p className="text-xs text-stone-400 mt-0.5">Customize your non-negotiables & core habits</p>
+          <h1 className="text-2xl lg:text-3xl font-extrabold text-[#18191E] dark:text-white">Pillars of Practice</h1>
+          <p className="text-xs text-stone-500 dark:text-stone-400 mt-0.5 font-medium">Customize your non-negotiables & core habits</p>
         </div>
         <button
           onClick={() => setAddingPillar(true)}
-          className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-white shadow-md hover:opacity-90 transition-all"
-          style={{ background: 'linear-gradient(135deg,#E8843C,#C9A961)' }}
+          className="btn-coral text-xs flex items-center gap-1.5 shadow-md"
         >
           <Plus size={14} /> Add Pillar
         </button>
@@ -323,26 +322,26 @@ export default function Sadhana() {
 
       {/* Summary KPI Row */}
       <div className="grid grid-cols-3 gap-3 mb-6">
-        <div className="rounded-2xl p-4 bg-white/60 dark:bg-white/[0.03] border border-black/5 dark:border-white/6">
+        <div className="card-bento p-4 bg-white dark:bg-[#181926] border border-black/5 dark:border-white/8 shadow-sm">
           <div className="flex items-center gap-2 mb-1">
-            <Layers size={14} className="text-[#E8843C]" />
-            <span className="text-[10px] font-bold uppercase tracking-wider text-stone-400">Total Pillars</span>
+            <Layers size={14} className="text-[#F05A36]" />
+            <span className="text-[10px] font-extrabold uppercase tracking-wider text-stone-400">Total Pillars</span>
           </div>
-          <div className="text-2xl font-extrabold text-white tabular-nums">{pillars.length}</div>
+          <div className="text-2xl font-extrabold text-[#18191E] dark:text-white tabular-nums">{pillars.length}</div>
         </div>
-        <div className="rounded-2xl p-4 bg-white/60 dark:bg-white/[0.03] border border-black/5 dark:border-white/6">
+        <div className="card-bento p-4 bg-white dark:bg-[#181926] border border-black/5 dark:border-white/8 shadow-sm">
           <div className="flex items-center gap-2 mb-1">
-            <Target size={14} className="text-[#C9A961]" />
-            <span className="text-[10px] font-bold uppercase tracking-wider text-stone-400">All Targets</span>
+            <Target size={14} className="text-[#E6A04E]" />
+            <span className="text-[10px] font-extrabold uppercase tracking-wider text-stone-400">All Targets</span>
           </div>
-          <div className="text-2xl font-extrabold text-white tabular-nums">{totalTargets}</div>
+          <div className="text-2xl font-extrabold text-[#18191E] dark:text-white tabular-nums">{totalTargets}</div>
         </div>
-        <div className="rounded-2xl p-4 bg-white/60 dark:bg-white/[0.03] border border-black/5 dark:border-white/6">
+        <div className="card-bento p-4 bg-white dark:bg-[#181926] border border-black/5 dark:border-white/8 shadow-sm">
           <div className="flex items-center gap-2 mb-1">
-            <Activity size={14} className="text-emerald-400" />
-            <span className="text-[10px] font-bold uppercase tracking-wider text-stone-400">Daily Targets</span>
+            <Activity size={14} className="text-emerald-500" />
+            <span className="text-[10px] font-extrabold uppercase tracking-wider text-stone-400">Daily Targets</span>
           </div>
-          <div className="text-2xl font-extrabold text-white tabular-nums">{dailyTargets}</div>
+          <div className="text-2xl font-extrabold text-[#18191E] dark:text-white tabular-nums">{dailyTargets}</div>
         </div>
       </div>
 
@@ -350,7 +349,7 @@ export default function Sadhana() {
       {addingPillar && (
         <div className="mb-6">
           <PillarEditor
-            pillar={{ sanskrit: '', english: '', description: '', icon: 'star', color: '#E8843C' }}
+            pillar={{ sanskrit: '', english: '', description: '', icon: 'star', color: '#F05A36' }}
             onSave={addNewPillar}
             onCancel={() => setAddingPillar(false)}
           />
@@ -377,11 +376,7 @@ export default function Sadhana() {
           return (
             <div
               key={pillar.id}
-              className="rounded-2xl p-5 transition-all space-y-4"
-              style={{
-                background: 'rgba(255,255,255,0.03)',
-                border: '1px solid rgba(255,255,255,0.06)',
-              }}
+              className="card-bento p-5 space-y-4 bg-white dark:bg-[#181926] border border-black/5 dark:border-white/8 shadow-sm"
             >
               {/* Pillar Header */}
               <div className="flex items-start justify-between">
@@ -394,7 +389,7 @@ export default function Sadhana() {
                   </div>
                   <div>
                     <div className="flex items-baseline gap-2">
-                      <h3 className="text-lg font-bold text-[#1a1a2e] dark:text-white leading-tight">
+                      <h3 className="text-lg font-bold text-[#18191E] dark:text-white leading-tight">
                         {pillar.english}
                       </h3>
                       <span className="font-dev text-sm font-semibold" style={{ color: pillar.color }}>
@@ -402,7 +397,7 @@ export default function Sadhana() {
                       </span>
                     </div>
                     {pillar.description && (
-                      <p className="text-xs text-stone-400 mt-0.5 leading-snug">{pillar.description}</p>
+                      <p className="text-xs text-stone-500 dark:text-stone-400 mt-0.5 leading-snug">{pillar.description}</p>
                     )}
                   </div>
                 </div>
@@ -410,19 +405,19 @@ export default function Sadhana() {
                 <div className="flex items-center gap-1">
                   <button
                     onClick={() => setEditingId(pillar.id)}
-                    className="w-8 h-8 rounded-xl flex items-center justify-center text-stone-400 hover:text-white hover:bg-white/5 transition-all"
+                    className="w-8 h-8 rounded-xl flex items-center justify-center text-stone-400 hover:text-[#18191E] dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5 transition-all"
                   >
                     <Edit3 size={14} />
                   </button>
                   {confirmDeleteId === pillar.id ? (
                     <div className="flex items-center gap-1">
-                      <button onClick={() => deletePillar(pillar.id)} className="text-xs font-bold text-red-400 px-2 py-1 bg-red-400/10 rounded-lg">Delete</button>
+                      <button onClick={() => deletePillar(pillar.id)} className="text-xs font-bold text-red-500 px-2 py-1 bg-red-500/10 rounded-lg">Delete</button>
                       <button onClick={() => setConfirmDeleteId(null)} className="text-xs text-stone-400 px-1"><X size={12} /></button>
                     </div>
                   ) : (
                     <button
                       onClick={() => setConfirmDeleteId(pillar.id)}
-                      className="w-8 h-8 rounded-xl flex items-center justify-center text-stone-400 hover:text-red-400 hover:bg-red-400/10 transition-all"
+                      className="w-8 h-8 rounded-xl flex items-center justify-center text-stone-400 hover:text-red-500 hover:bg-red-500/10 transition-all"
                     >
                       <Trash2 size={14} />
                     </button>
@@ -433,7 +428,7 @@ export default function Sadhana() {
               {/* Targets List */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between px-1">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-stone-400">Targets ({pillar.targets.length})</span>
+                  <span className="text-[10px] font-extrabold uppercase tracking-wider text-stone-400">Targets ({pillar.targets.length})</span>
                 </div>
 
                 {pillar.targets.map((target) => {
@@ -453,13 +448,13 @@ export default function Sadhana() {
                   return (
                     <div
                       key={target.id}
-                      className="flex items-center justify-between p-3 rounded-xl bg-white/[0.02] border border-black/5 dark:border-white/5 hover:bg-white/[0.04] transition-all group"
+                      className="flex items-center justify-between p-3 rounded-2xl bg-black/[0.02] dark:bg-white/[0.03] border border-black/5 dark:border-white/5 hover:bg-black/[0.04] dark:hover:bg-white/[0.06] transition-all group"
                     >
                       <div className="flex items-center gap-2.5 min-w-0">
                         <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: pillar.color }} />
                         <div>
-                          <div className="text-xs font-semibold text-[#1a1a2e] dark:text-white truncate">{target.name}</div>
-                          <div className="text-[10px] text-stone-400">
+                          <div className="text-xs font-bold text-[#18191E] dark:text-white truncate">{target.name}</div>
+                          <div className="text-[10px] text-stone-400 font-medium">
                             {target.type === 'CHECKBOX' ? 'Yes / No' : target.type === 'NUMBER' ? `Goal: ≥ ${target.targetValue} ${target.unit || ''}` : target.type === 'TIME' ? `Time: ≤ ${target.targetValue}` : target.type}
                             {' · '}{target.frequency || 'daily'}
                           </div>
@@ -469,13 +464,13 @@ export default function Sadhana() {
                       <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button
                           onClick={() => setEditingTarget({ pillarId: pillar.id, target })}
-                          className="w-7 h-7 rounded-lg flex items-center justify-center text-stone-400 hover:text-white hover:bg-white/5"
+                          className="w-7 h-7 rounded-lg flex items-center justify-center text-stone-400 hover:text-[#18191E] dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5"
                         >
                           <Edit3 size={12} />
                         </button>
                         <button
                           onClick={() => deleteTarget(pillar.id, target.id)}
-                          className="w-7 h-7 rounded-lg flex items-center justify-center text-stone-400 hover:text-red-400 hover:bg-red-400/10"
+                          className="w-7 h-7 rounded-lg flex items-center justify-center text-stone-400 hover:text-red-500 hover:bg-red-500/10"
                         >
                           <Trash2 size={12} />
                         </button>
@@ -494,7 +489,7 @@ export default function Sadhana() {
               ) : (
                 <button
                   onClick={() => setAddingTargetTo(pillar.id)}
-                  className="w-full py-2.5 rounded-xl border border-dashed border-black/10 dark:border-white/10 text-xs font-bold text-stone-400 hover:text-[#E8843C] hover:border-[#E8843C]/40 transition-all flex items-center justify-center gap-1.5"
+                  className="w-full py-2.5 rounded-2xl border border-dashed border-black/15 dark:border-white/15 text-xs font-bold text-stone-500 dark:text-stone-400 hover:text-[#F05A36] hover:border-[#F05A36]/50 transition-all flex items-center justify-center gap-1.5"
                 >
                   <Plus size={13} /> Add Target to {pillar.english}
                 </button>

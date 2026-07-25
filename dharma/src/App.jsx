@@ -122,8 +122,8 @@ function AppShell({ children, onOpenFocus, onOpenProfile }) {
         </div>
         <BottomNav />
         <button onClick={onOpenFocus} title="Focus Timer"
-          className="fixed bottom-20 right-4 z-40 w-12 h-12 rounded-full flex items-center justify-center shadow-lg lg:hidden transition-all active:scale-95"
-          style={{ background: 'linear-gradient(135deg,#E8843C,#C9A961)', boxShadow: '0 4px 20px rgba(232,132,60,0.4)' }}>
+          className="fixed bottom-20 right-4 z-40 w-12 h-12 rounded-full flex items-center justify-center shadow-lg lg:hidden transition-all active:scale-95 bg-[#F05A36] text-white"
+          style={{ boxShadow: '0 4px 20px rgba(240,90,54,0.4)' }}>
           <Timer size={20} color="white" strokeWidth={2} />
         </button>
       </div>

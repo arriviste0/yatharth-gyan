@@ -17,7 +17,7 @@ export const DEFAULT_PILLARS = [
     sanskrit: 'आहार',
     english: 'Food',
     icon: 'bowl',
-    color: '#E8843C',
+    color: '#F05A36',
     targets: [
       { id: 'ahara-breakfast', name: 'Breakfast with protein', sanskrit: 'प्रातः आहार', type: 'CHECKBOX', targetValue: true, frequency: 'daily', reminder: null },
       { id: 'ahara-vegetables', name: 'Half-plate vegetables at lunch', sanskrit: 'शाकाहार', type: 'CHECKBOX', targetValue: true, frequency: 'daily', reminder: null },
