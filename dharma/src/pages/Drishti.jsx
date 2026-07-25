@@ -56,12 +56,12 @@ function HeatmapCell({ date, completion }) {
   const opacity = completion === 0 ? 0.09 : 0.2 + completion * 0.8;
   const color =
     completion >= 0.8 ? '#C9A961' :
-    completion >= 0.5 ? '#E8843C' :
-    completion > 0    ? '#5A8A8A' :
-    '#D1C8B8';
+      completion >= 0.5 ? '#E8843C' :
+        completion > 0 ? '#5A8A8A' :
+          '#D1C8B8';
 
-  const d     = new Date(date);
-  const day   = d.getDate();
+  const d = new Date(date);
+  const day = d.getDate();
   const month = d.toLocaleString('default', { month: 'short' });
 
   return (
@@ -101,7 +101,7 @@ const NumericTooltip = ({ active, payload, label }) => {
 /* ── Week range label ─────────────────────────────────────────────── */
 function weekRangeLabel(key) {
   const start = new Date(key);
-  const end   = new Date(key);
+  const end = new Date(key);
   end.setDate(end.getDate() + 6);
   const sm = start.toLocaleString('default', { month: 'short' });
   const em = end.toLocaleString('default', { month: 'short' });
@@ -131,10 +131,10 @@ export default function Drishti() {
   /* Date range filter (#21) */
   const [heatmapRange, setHeatmapRange] = useState(90);
 
-  const currentStreak  = useMemo(() => getCurrentStreak(logs, pillars), [logs, pillars]);
-  const bestStreak     = useMemo(() => getBestStreak(logs, pillars), [logs, pillars]);
-  const last90         = useMemo(() => getLast90Days(), []);
-  const last8Weeks     = useMemo(() => getLast8Weeks(), []);
+  const currentStreak = useMemo(() => getCurrentStreak(logs, pillars), [logs, pillars]);
+  const bestStreak = useMemo(() => getBestStreak(logs, pillars), [logs, pillars]);
+  const last90 = useMemo(() => getLast90Days(), []);
+  const last8Weeks = useMemo(() => getLast8Weeks(), []);
 
   /* Total days ever logged */
   const totalActiveDays = useMemo(() =>
@@ -188,7 +188,7 @@ export default function Drishti() {
     const now = new Date();
     const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
     const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-    const lastMonthEnd   = new Date(now.getFullYear(), now.getMonth(), 0);
+    const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
 
     const avgForRange = (start, end) => {
       let total = 0, count = 0;
@@ -247,8 +247,8 @@ export default function Drishti() {
   /* Per-pillar insights with trend arrows */
   const pillarInsights = useMemo(() => {
     return pillars.map((p) => {
-      const streak   = getPillarStreak(logs, p);
-      const weeks    = getLast8Weeks();
+      const streak = getPillarStreak(logs, p);
+      const weeks = getLast8Weeks();
       const thisWeek = weeks.slice(-1)[0];
       const prevWeek = weeks.slice(-2)[0];
       const rate = (wk) => {
@@ -351,10 +351,9 @@ export default function Drishti() {
                 </div>
                 <div className="flex flex-col items-center">
                   <TrendArrow current={monthComparison.thisRate} prev={monthComparison.lastRate} size={22} />
-                  <div className={`text-xs font-semibold mt-1 tabular-nums ${
-                    monthComparison.delta > 0 ? 'text-emerald-500' :
-                    monthComparison.delta < 0 ? 'text-red-400' : 'text-stone-400'
-                  }`}>
+                  <div className={`text-xs font-semibold mt-1 tabular-nums ${monthComparison.delta > 0 ? 'text-emerald-500' :
+                      monthComparison.delta < 0 ? 'text-red-400' : 'text-stone-400'
+                    }`}>
                     {monthComparison.delta > 0 ? '+' : ''}{monthComparison.delta}%
                   </div>
                 </div>
@@ -482,11 +481,10 @@ export default function Drishti() {
               <div className="flex gap-1">
                 {[30, 60, 90].map((r) => (
                   <button key={r} onClick={() => setHeatmapRange(r)}
-                    className={`text-[10px] px-2 py-0.5 rounded-lg font-semibold transition-all ${
-                      heatmapRange === r
+                    className={`text-[10px] px-2 py-0.5 rounded-lg font-semibold transition-all ${heatmapRange === r
                         ? 'text-white'
                         : 'text-stone-400 bg-stone-100 dark:bg-white/5'
-                    }`}
+                      }`}
                     style={heatmapRange === r ? { background: '#E8843C' } : {}}>
                     {r}d
                   </button>

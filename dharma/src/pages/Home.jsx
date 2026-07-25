@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Settings, Sparkles, Timer, Target, Edit3, LogIn } from 'lucide-react';
+import { Settings, Sparkles, Timer, LogIn } from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell,
 } from 'recharts';
 import { useAuth } from '../context/AuthContext';
 import { useStorage } from '../hooks/useStorage';
-import { useDailyVerse, useDailyArjunaKrishna } from '../hooks/useDailyVerse';
+import { useDailyVerse } from '../hooks/useDailyVerse';
 import { DEFAULT_PILLARS } from '../data/defaultPillars';
 import {
   formatDateDisplay, todayKey, isAfterElevenPM, dateKey,
@@ -14,24 +14,22 @@ import {
 import {
   getDayCompletionRate, getTodayCompletedCount, getCurrentStreak,
 } from '../utils/streakUtils';
-import PillarCard from '../components/PillarCard';
 import VerseCard from '../components/VerseCard';
 import NightInterstitial from '../components/NightInterstitial';
 import DayCelebration from '../components/DayCelebration';
 import ShankhaSVG from '../components/svgs/ShankhaSVG';
-import MandalaBg from '../components/svgs/MandalaBg';
-import ChariotSVG from '../components/svgs/ChariotSVG';
+import MonthlyTracker from '../components/MonthlyTracker';
 
 const WEEKDAY_SHORT = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
 function getGreeting(name) {
   const h = new Date().getHours();
   const base =
-    h < 5  ? 'Still up' :
-    h < 12 ? 'Good morning' :
-    h < 17 ? 'Good afternoon' :
-    h < 21 ? 'Good evening' :
-    'Evening';
+    h < 5 ? 'Still up' :
+      h < 12 ? 'Good morning' :
+        h < 17 ? 'Good afternoon' :
+          h < 21 ? 'Good evening' :
+            'Evening';
   return name ? `${base}, ${name}` : base;
 }
 
@@ -56,7 +54,7 @@ function WeekBarChart({ logs, pillars }) {
       ps + p.targets.filter(
         (t) => (t.frequency === 'daily' || !t.frequency) && dayLog[t.id]?.done
       ).length
-    , 0);
+      , 0);
   }, 0);
 
   return (
@@ -91,9 +89,9 @@ function WeekBarChart({ logs, pillars }) {
                 key={d.key}
                 fill={
                   d.rate >= 0.8 ? '#C9A961' :
-                  d.rate >= 0.5 ? '#E8843C' :
-                  d.rate >  0   ? '#5A8A8A' :
-                  '#E5E7EB'
+                    d.rate >= 0.5 ? '#E8843C' :
+                      d.rate > 0 ? '#5A8A8A' :
+                        '#E5E7EB'
                 }
                 className="dark:[&]:fill-stone-700"
                 opacity={d.isToday ? 1 : 0.75}
@@ -174,8 +172,8 @@ function PracticeProgressCard({ done, total, completion, pillars, logs }) {
             style={{
               width: `${pct}%`,
               background: pct >= 100 ? 'linear-gradient(90deg,#C9A961,#DFC07A)' :
-                          pct >= 50  ? 'linear-gradient(90deg,#E8843C,#F0A060)' :
-                                       'linear-gradient(90deg,#5B6BAF,#7A8BC0)',
+                pct >= 50 ? 'linear-gradient(90deg,#E8843C,#F0A060)' :
+                  'linear-gradient(90deg,#5B6BAF,#7A8BC0)',
             }}
           />
         </div>
@@ -217,59 +215,6 @@ function PracticeProgressCard({ done, total, completion, pillars, logs }) {
   );
 }
 
-/* ── Today's Intention ────────────────────────────────────────────── */
-function IntentionCard({ today, intention, onSave }) {
-  const [editing, setEditing] = useState(false);
-  const [draft, setDraft]     = useState(intention || '');
-
-  function commit() {
-    onSave(today, draft.trim());
-    setEditing(false);
-  }
-
-  return (
-    <div className="card mb-4" style={{ borderLeft: '3px solid rgba(201,169,97,0.55)' }}>
-      <div className="flex items-center justify-between mb-1.5">
-        <div className="flex items-center gap-1.5">
-          <Target size={12} style={{ color: '#C9A961' }} />
-          <span className="section-label">Today's intention</span>
-        </div>
-        {intention && !editing && (
-          <button
-            onClick={() => { setDraft(intention); setEditing(true); }}
-            className="w-6 h-6 flex items-center justify-center text-stone-300 hover:text-stone-500 transition-colors"
-          >
-            <Edit3 size={11} />
-          </button>
-        )}
-      </div>
-      {editing ? (
-        <input
-          value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-          onBlur={commit}
-          onKeyDown={(e) => { if (e.key === 'Enter') commit(); if (e.key === 'Escape') setEditing(false); }}
-          placeholder="I will focus on…"
-          autoFocus
-          className="w-full text-sm bg-transparent outline-none text-[#1a1a2e] dark:text-white placeholder-stone-300 font-verse italic"
-        />
-      ) : intention ? (
-        <button
-          onClick={() => { setDraft(intention); setEditing(true); }}
-          className="text-sm font-verse italic text-[#1a1a2e] dark:text-white text-left w-full leading-snug"
-        >
-          "{intention}"
-        </button>
-      ) : (
-        <button onClick={() => setEditing(true)}
-          className="text-sm text-stone-300 dark:text-stone-600 italic font-verse text-left">
-          Set your intention for today…
-        </button>
-      )}
-    </div>
-  );
-}
-
 /* ── Profile header button ────────────────────────────────────────── */
 function ProfileHeaderButton({ onOpenProfile }) {
   const { user } = useAuth();
@@ -302,25 +247,21 @@ function ProfileHeaderButton({ onOpenProfile }) {
 
 /* ── Main page ────────────────────────────────────────────────────── */
 export default function Home({ onOpenFocus, onOpenProfile }) {
-  const { state, logTarget, toggleBookmark, setIntention } = useStorage();
+  const { state, toggleBookmark } = useStorage();
   const pillars = state.pillars || DEFAULT_PILLARS;
-  const { logs, bookmarks, settings, intentions } = state;
-  const dailyVerse    = useDailyVerse();
-  const dailyDialogue = useDailyArjunaKrishna();
+  const { logs, bookmarks, settings } = state;
+  const dailyVerse = useDailyVerse();
 
-  const [showNight, setShowNight]       = useState(false);
-  const [nightShown, setNightShown]     = useState(false);
-  // Hero resets every session (sessionStorage, not state)
-  const [showHero, setShowHero]         = useState(() => !sessionStorage.getItem('hero_hidden'));
+  const [showNight, setShowNight] = useState(false);
+  const [nightShown, setNightShown] = useState(false);
   const [showCelebration, setShowCelebration] = useState(false);
   const prevDoneRef = useState(null);
 
-  const today          = todayKey();
-  const dateInfo       = formatDateDisplay(new Date());
+  const today = todayKey();
+  const dateInfo = formatDateDisplay(new Date());
   const { done, total } = getTodayCompletedCount(logs, pillars);
-  const completion     = total > 0 ? done / total : 0;
-  const streak         = getCurrentStreak(logs, pillars);
-  const todayIntention = intentions?.[today] || '';
+  const completion = total > 0 ? done / total : 0;
+  const streak = getCurrentStreak(logs, pillars);
 
   useEffect(() => {
     if (isAfterElevenPM() && !nightShown) {
@@ -348,7 +289,7 @@ export default function Home({ onOpenFocus, onOpenProfile }) {
 
   return (
     <div className="page-container page-transition">
-      {showNight       && <NightInterstitial onClose={() => setShowNight(false)} />}
+      {showNight && <NightInterstitial onClose={() => setShowNight(false)} />}
       {showCelebration && <DayCelebration onClose={() => setShowCelebration(false)} />}
 
       {/* ── Header ──────────────────────────────────────────────── */}
@@ -382,21 +323,6 @@ export default function Home({ onOpenFocus, onOpenProfile }) {
         </div>
       </div>
 
-      {/* ── Hero banner ─────────────────────────────────────────── */}
-      {showHero && (
-        <div
-          className="relative mb-4 rounded-2xl overflow-hidden cursor-pointer"
-          style={{ background: 'linear-gradient(135deg, #1e2240 0%, #2d3561 60%, #1a1a3e 100%)' }}
-          onClick={() => { setShowHero(false); sessionStorage.setItem('hero_hidden', '1'); }}
-        >
-          <div className="absolute inset-0 flex items-center justify-center opacity-[0.04]">
-            <MandalaBg size={300} color="#C9A961" opacity={1} />
-          </div>
-          <ChariotSVG className="w-full relative z-10 py-1" opacity={0.85} />
-          <span className="absolute bottom-2 right-3 text-[10px] text-white/15 select-none">tap to hide</span>
-        </div>
-      )}
-
       {/* ── Practice Progress Card (full-width) ─────────────────── */}
       <PracticeProgressCard
         done={done}
@@ -406,75 +332,27 @@ export default function Home({ onOpenFocus, onOpenProfile }) {
         logs={logs}
       />
 
-      {/* ── Desktop 2-col / Mobile single-col ───────────────────── */}
-      <div className="lg:grid lg:grid-cols-5 lg:gap-6 lg:items-start">
+      {/* ── Weekly Chart (dashboard) ────────────────────────────── */}
+      <WeekBarChart logs={logs} pillars={pillars} />
 
-        {/* ── Left column (desktop 3/5) ────────────────────────── */}
-        <div className="lg:col-span-3">
-          <IntentionCard today={today} intention={todayIntention} onSave={setIntention} />
-          <WeekBarChart logs={logs} pillars={pillars} />
-
-          {/* Verse of the Day */}
-          {dailyVerse && (
-            <div className="mb-4">
-              <div className="flex items-center gap-2 mb-2.5">
-                <Sparkles size={13} style={{ color: '#E8843C' }} />
-                <span className="section-label">Verse of the day</span>
-              </div>
-              <VerseCard
-                shloka={dailyVerse}
-                bookmarked={bookmarks.includes(dailyVerse.id)}
-                onToggleBookmark={toggleBookmark}
-              />
-            </div>
-          )}
-
-          {/* Arjuna asks · Krishna answers */}
-          {dailyDialogue && (
-            <div className="card mb-4" style={{ borderLeft: '3px solid #E8843C' }}>
-              <div className="flex items-center justify-between mb-3">
-                <p className="section-label">Arjuna asks · Krishna answers</p>
-                <span className="text-[10px] font-bold tracking-widest uppercase px-2 py-0.5 rounded-full" style={{ background: 'rgba(232,132,60,0.1)', color: '#E8843C' }}>
-                  BG {dailyDialogue.chapter}.{dailyDialogue.verse}
-                </span>
-              </div>
-              <div className="space-y-2">
-                <div className="rounded-xl bg-black/3 dark:bg-white/4 p-3">
-                  <p className="text-[10px] text-stone-400 uppercase tracking-widest mb-1">The struggle</p>
-                  <p className="font-verse italic text-sm text-stone-600 dark:text-stone-300 leading-relaxed">
-                    "{dailyDialogue.arjuna_struggle}"
-                  </p>
-                </div>
-                <div className="rounded-xl p-3" style={{ background: 'rgba(232,132,60,0.06)', border: '1px solid rgba(232,132,60,0.15)' }}>
-                  <p className="text-[10px] text-[#E8843C] uppercase tracking-widest mb-1">The answer</p>
-                  <p className="font-verse text-sm text-[#1a1a2e] dark:text-stone-200 leading-relaxed">
-                    {dailyDialogue.krishna_answer}
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* ── Right column (desktop 2/5) ───────────────────────── */}
-        <div className="lg:col-span-2">
-          {/* Today's Practice */}
-          <div className="mb-2">
-            <p className="section-label mb-3">Today's practice</p>
-            <div className="space-y-3">
-              {pillars.map((pillar) => (
-                <PillarCard
-                  key={pillar.id}
-                  pillar={pillar}
-                  logs={logs}
-                  onLog={(dateStr, targetId, entry) => logTarget(dateStr, targetId, entry)}
-                  defaultExpanded={pillars.length <= 3}
-                />
-              ))}
-            </div>
+      {/* ── Verse of the Day ────────────────────────────────────── */}
+      {dailyVerse && (
+        <div className="mb-4">
+          <div className="flex items-center gap-2 mb-2.5">
+            <Sparkles size={13} style={{ color: '#E8843C' }} />
+            <span className="section-label">Verse of the day</span>
           </div>
+          <VerseCard
+            shloka={dailyVerse}
+            bookmarked={bookmarks.includes(dailyVerse.id)}
+            onToggleBookmark={toggleBookmark}
+          />
         </div>
+      )}
 
+      {/* ── Monthly Habit Tracker (dashboard) ───────────────────── */}
+      <div className="mt-6 pt-6 border-t border-black/5 dark:border-white/5">
+        <MonthlyTracker />
       </div>
 
       <div className="h-6" />

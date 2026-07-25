@@ -54,8 +54,8 @@ function saveState(state) {
   }
 }
 
-let _globalState  = loadState();
-let _listeners    = [];
+let _globalState = loadState();
+let _listeners = [];
 let _syncCallback = null; // optional cloud-sync hook set by AuthProvider
 
 function getState() { return _globalState; }
@@ -180,10 +180,10 @@ export function useStorage() {
       const dateStr = e.date || e.weekStart;
       lines.push(`## ${dateStr}${e.mood ? ` · mood ${e.mood}` : ''}`);
       if (e.tags?.length) lines.push(`_Tags: ${e.tags.map(t => '#' + t).join(' ')}_\n`);
-      if (e.problem)   lines.push(`**Problem noticed:**\n${e.problem}\n`);
+      if (e.problem) lines.push(`**Problem noticed:**\n${e.problem}\n`);
       if (e.curiosity) lines.push(`**Curiosity explored:**\n${e.curiosity}\n`);
       if (e.gratitude) lines.push(`**Gratitude:**\n${e.gratitude}\n`);
-      if (e.wins)      lines.push(`**Wins:**\n${e.wins}\n`);
+      if (e.wins) lines.push(`**Wins:**\n${e.wins}\n`);
       lines.push('---\n');
     }
     const blob = new Blob([lines.join('\n')], { type: 'text/markdown' });

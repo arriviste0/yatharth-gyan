@@ -20,6 +20,7 @@ import Manan from './pages/Manan';
 import Drishti from './pages/Drishti';
 import Gyaan from './pages/Gyaan';
 import Settings from './pages/Settings';
+import HabitTracker from './pages/HabitTracker';
 
 const NAV_ROUTES = ['/home', '/sadhana', '/manan', '/drishti', '/gyaan'];
 
@@ -190,6 +191,7 @@ function AppInner() {
         <Route path="/drishti"  element={<AppShell onOpenFocus={openFocus} onOpenProfile={openProfile}><Drishti /></AppShell>} />
         <Route path="/gyaan"    element={<AppShell onOpenFocus={openFocus} onOpenProfile={openProfile}><Gyaan /></AppShell>} />
         <Route path="/settings" element={<AppShell onOpenFocus={openFocus} onOpenProfile={openProfile}><Settings /></AppShell>} />
+        <Route path="/tracker"  element={<HabitTracker />} />
         <Route path="*"         element={<Navigate to="/" replace />} />
       </Routes>
     </NavDirectionProvider>
