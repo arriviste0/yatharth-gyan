@@ -8,6 +8,7 @@ import { DEFAULT_PILLARS } from './data/defaultPillars';
 import BottomNav, { SideNav } from './components/BottomNav';
 import MilestoneScreen from './components/MilestoneScreen';
 import FocusTimer from './components/FocusTimer';
+import DynamicIsland from './components/DynamicIsland';
 import AuthModal from './components/AuthModal';
 import Profile from './pages/Profile';
 import { NavDirectionProvider, useNavDirection } from './hooks/useNavDirection';
@@ -109,9 +110,10 @@ function AppShell({ children, onOpenFocus, onOpenProfile }) {
   const { handleTouchStart, handleTouchEnd } = useSwipeNav();
 
   return (
-    <div className="flex min-h-screen w-full">
+    <div className="flex min-h-screen w-full relative">
+      <DynamicIsland onOpenFocus={onOpenFocus} />
       <SideNav onOpenFocus={onOpenFocus} onOpenProfile={onOpenProfile} />
-      <div className="flex-1 min-w-0 relative"
+      <div className="flex-1 min-w-0 relative pt-12 lg:pt-14"
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}>
         <div key={location.pathname}

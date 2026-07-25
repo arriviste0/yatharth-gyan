@@ -881,18 +881,6 @@ export default function Home({ onOpenFocus, onOpenProfile }) {
       {showNight && <NightInterstitial onClose={() => setShowNight(false)} />}
       {showCelebration && <DayCelebration onClose={() => setShowCelebration(false)} />}
 
-      {/* ── Dynamic Island Widget (Top Center) ────────────────── */}
-      <DynamicIsland
-        streak={streak}
-        done={done}
-        total={total}
-        pct={pct}
-        onOpenFocus={onOpenFocus}
-        logMetric={logMetric}
-        metrics={metrics}
-        today={today}
-      />
-
       {/* ── Header ──────────────────────────────────────────────── */}
       <div className="flex items-start justify-between mb-5 lg:mb-6">
         <div>
