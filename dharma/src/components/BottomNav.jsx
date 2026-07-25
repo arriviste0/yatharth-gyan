@@ -156,9 +156,9 @@ export function SideNav({ onOpenFocus, onOpenProfile }) {
         </div>
       )}
 
-      {/* Nav links */}
+      {/* Nav links (Desktop: remove Pillar page link) */}
       <div className="flex flex-col gap-0.5 flex-1">
-        {NAV_ITEMS.map(({ path, label, Icon }) => {
+        {NAV_ITEMS.filter((item) => item.path !== '/sadhana').map(({ path, label, Icon }) => {
           const isActive = location.pathname === path;
           return (
             <NavLink

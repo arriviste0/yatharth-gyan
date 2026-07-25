@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Settings, Sparkles, Timer, LogIn } from 'lucide-react';
+import { Settings, Sparkles, Timer, LogIn, Check, Plus, Heart, Flame } from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell,
 } from 'recharts';
@@ -18,7 +18,6 @@ import VerseCard from '../components/VerseCard';
 import NightInterstitial from '../components/NightInterstitial';
 import DayCelebration from '../components/DayCelebration';
 import ShankhaSVG from '../components/svgs/ShankhaSVG';
-import MonthlyTracker from '../components/MonthlyTracker';
 
 const WEEKDAY_SHORT = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
@@ -33,7 +32,7 @@ function getGreeting(name) {
   return name ? `${base}, ${name}` : base;
 }
 
-/* ── Week Bar Chart ───────────────────────────────────────────────── */
+/* ── Desktop-only Weekly Chart ─────────────────────────────────────── */
 function WeekBarChart({ logs, pillars }) {
   const days = [];
   const today = new Date();
@@ -58,7 +57,7 @@ function WeekBarChart({ logs, pillars }) {
   }, 0);
 
   return (
-    <div className="card mb-4">
+    <div className="card mb-4 hidden lg:block">
       <div className="section-label mb-3">Completed in the last 7 days</div>
       <ResponsiveContainer width="100%" height={100}>
         <BarChart data={days} barCategoryGap="25%" margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
@@ -121,6 +120,97 @@ function WeekBarChart({ logs, pillars }) {
   );
 }
 
+/* ── Mobile Today Creative & Interactive View (lg:hidden) ────────── */
+function MobileTodayInteractive({ pillars, logs, logTarget, dateStr, onOpenFocus }) {
+  const dayLog = logs[dateStr] || {};
+  const activeTargets = pillars.flatMap((p) =>
+    p.targets.map((t) => ({
+      ...t,
+      pillarName: p.english,
+      pillarColor: p.color || '#E8843C',
+      done: !!dayLog[t.id]?.done,
+    }))
+  );
+
+  const completedCount = activeTargets.filter((t) => t.done).length;
+  const pct = activeTargets.length > 0 ? Math.round((completedCount / activeTargets.length) * 100) : 0;
+
+  return (
+    <div className="block lg:hidden space-y-4 mb-5">
+      {/* Dynamic Mindful Lotus & Progress Orbit */}
+      <div className="relative overflow-hidden rounded-3xl p-5 bg-gradient-to-br from-[#1b1f3b] via-[#2a3158] to-[#3a4478] text-white shadow-xl">
+        <div className="flex items-center justify-between">
+          <div>
+            <span className="text-[10px] font-bold uppercase tracking-widest text-[#C9A961]">Today's Mindful Lotus</span>
+            <h3 className="text-xl font-extrabold mt-0.5">{completedCount} of {activeTargets.length} Completed</h3>
+            <p className="text-xs text-stone-300 mt-1">Tap targets below to bloom your practice</p>
+          </div>
+          <button
+            onClick={onOpenFocus}
+            className="relative flex items-center justify-center w-16 h-16 rounded-full bg-white/10 border-2 border-[#C9A961]/40 shadow-inner active:scale-95 transition-all"
+            title="Focus Timer"
+          >
+            <span className="text-xl font-bold text-[#C9A961]">{pct}%</span>
+          </button>
+        </div>
+
+        {/* Dynamic lotus progress line */}
+        <div className="mt-4 h-2 rounded-full bg-white/10 overflow-hidden">
+          <div
+            className="h-full rounded-full bg-gradient-to-r from-[#E8843C] via-[#C9A961] to-[#5A8A8A] transition-all duration-500"
+            style={{ width: `${pct}%` }}
+          />
+        </div>
+      </div>
+
+      {/* Interactive Mobile Quick Check-off Cards */}
+      <div className="space-y-2.5">
+        <div className="flex items-center justify-between px-1">
+          <span className="text-xs font-bold uppercase tracking-widest text-stone-400">Quick Daily Check-off</span>
+          <span className="text-[11px] font-bold text-[#E8843C]">{completedCount}/{activeTargets.length} Done</span>
+        </div>
+
+        <div className="grid grid-cols-1 gap-2.5">
+          {activeTargets.map((target) => (
+            <button
+              key={target.id}
+              onClick={() => logTarget(dateStr, target.id, { done: !target.done, timestamp: Date.now() })}
+              className={`w-full flex items-center justify-between p-3.5 rounded-2xl border text-left transition-all active:scale-98 ${
+                target.done
+                  ? 'bg-stone-900/90 dark:bg-white/10 border-[#E8843C]/40 text-white shadow-md'
+                  : 'bg-white dark:bg-[#0f1428] border-black/5 dark:border-white/10 text-[#1a1a2e] dark:text-white hover:border-[#E8843C]/30'
+              }`}
+            >
+              <div className="flex items-center gap-3 min-w-0">
+                <div
+                  className="w-3.5 h-3.5 rounded-full shrink-0 shadow-sm"
+                  style={{ backgroundColor: target.pillarColor }}
+                />
+                <div className="min-w-0">
+                  <div className={`text-xs font-bold truncate ${target.done ? 'line-through opacity-70' : ''}`}>
+                    {target.name}
+                  </div>
+                  <div className="text-[10px] text-stone-400 uppercase tracking-wide">{target.pillarName}</div>
+                </div>
+              </div>
+
+              <div
+                className={`w-7 h-7 rounded-xl flex items-center justify-center transition-all ${
+                  target.done
+                    ? 'bg-gradient-to-r from-[#E8843C] to-[#C9A961] text-white shadow-md'
+                    : 'bg-stone-100 dark:bg-white/5 text-stone-300 border border-black/5 dark:border-white/10'
+                }`}
+              >
+                {target.done ? <Check size={14} strokeWidth={3} /> : <Plus size={14} />}
+              </div>
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ── Practice Progress Card ───────────────────────────────────────── */
 function PracticeProgressCard({ done, total, completion, pillars, logs }) {
   const today = todayKey();
@@ -141,16 +231,6 @@ function PracticeProgressCard({ done, total, completion, pillars, logs }) {
       className="relative mb-4 rounded-2xl overflow-hidden p-5"
       style={{ background: 'linear-gradient(135deg, #1e2240 0%, #2d3561 55%, #3d4880 100%)' }}
     >
-      {/* Decorative rings */}
-      <div
-        className="absolute pointer-events-none"
-        style={{ right: '-28px', top: '-28px', width: '140px', height: '140px', borderRadius: '50%', border: '4px solid rgba(255,255,255,0.07)' }}
-      />
-      <div
-        className="absolute pointer-events-none"
-        style={{ right: '4px', top: '48px', width: '80px', height: '80px', borderRadius: '50%', border: '2px solid rgba(201,169,97,0.09)' }}
-      />
-
       <div className="relative z-10">
         <p className="text-[11px] font-semibold uppercase tracking-widest mb-1" style={{ color: 'rgba(255,255,255,0.5)' }}>
           Today's practice progress
@@ -247,7 +327,7 @@ function ProfileHeaderButton({ onOpenProfile }) {
 
 /* ── Main page ────────────────────────────────────────────────────── */
 export default function Home({ onOpenFocus, onOpenProfile }) {
-  const { state, toggleBookmark } = useStorage();
+  const { state, toggleBookmark, logTarget } = useStorage();
   const pillars = state.pillars || DEFAULT_PILLARS;
   const { logs, bookmarks, settings } = state;
   const dailyVerse = useDailyVerse();
@@ -323,16 +403,27 @@ export default function Home({ onOpenFocus, onOpenProfile }) {
         </div>
       </div>
 
-      {/* ── Practice Progress Card (full-width) ─────────────────── */}
-      <PracticeProgressCard
-        done={done}
-        total={total}
-        completion={completion}
+      {/* ── Mobile Creative & Interactive Today Section (lg:hidden) ── */}
+      <MobileTodayInteractive
         pillars={pillars}
         logs={logs}
+        logTarget={logTarget}
+        dateStr={today}
+        onOpenFocus={onOpenFocus}
       />
 
-      {/* ── Weekly Chart (dashboard) ────────────────────────────── */}
+      {/* ── Practice Progress Card (Desktop) ─────────────────── */}
+      <div className="hidden lg:block">
+        <PracticeProgressCard
+          done={done}
+          total={total}
+          completion={completion}
+          pillars={pillars}
+          logs={logs}
+        />
+      </div>
+
+      {/* ── Desktop-only Weekly Chart ────────────────────────────── */}
       <WeekBarChart logs={logs} pillars={pillars} />
 
       {/* ── Verse of the Day ────────────────────────────────────── */}
@@ -350,9 +441,21 @@ export default function Home({ onOpenFocus, onOpenProfile }) {
         </div>
       )}
 
-      {/* ── Monthly Habit Tracker (dashboard) ───────────────────── */}
-      <div className="mt-6 pt-6 border-t border-black/5 dark:border-white/5">
-        <MonthlyTracker />
+      {/* ── Dashboard Quick Access Banner ──────────────────────────── */}
+      <div className="mt-6 pt-4 border-t border-black/5 dark:border-white/5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-gradient-to-r from-[#1e2240] to-[#2d3561] p-4 sm:p-5 rounded-2xl text-white shadow-md">
+          <div>
+            <span className="text-[10px] font-bold uppercase tracking-widest text-[#C9A961]">Habit Matrix & Health</span>
+            <h3 className="text-sm sm:text-base font-bold mt-0.5">Explore Detailed Monthly Tracker</h3>
+            <p className="text-xs text-stone-300 mt-0.5">View your 31-day habit grid, water, protein & mood logs</p>
+          </div>
+          <Link
+            to="/drishti"
+            className="px-4 py-2 bg-[#E8843C] hover:bg-[#d4732b] text-white rounded-xl text-xs font-bold transition-all shadow-md text-center shrink-0"
+          >
+            Open Dashboard →
+          </Link>
+        </div>
       </div>
 
       <div className="h-6" />
