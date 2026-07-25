@@ -2,10 +2,11 @@ import { useState, useMemo, useEffect } from 'react';
 import {
   Search, BookOpen, Plus, X, Folder, Sparkles, Trophy, Calendar,
   ArrowLeft, Share2, Trash2, Check, ArrowDown, Zap, CheckCircle2,
-  Copy, Image as ImageIcon
+  Copy, Image as ImageIcon, Edit3, MoreVertical, FileText, CheckSquare,
+  ChevronRight, FolderPlus, FilePlus, Layers
 } from 'lucide-react';
 import { useStorage } from '../hooks/useStorage';
-import { getWeekKey, formatDateDisplay, getMonthLabel, todayKey } from '../utils/dateUtils';
+import { formatDateDisplay, todayKey } from '../utils/dateUtils';
 
 // Preset banner graphics for notes
 const BANNER_PRESETS = [
@@ -14,85 +15,147 @@ const BANNER_PRESETS = [
   'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=80',
 ];
 
+const FOLDER_COLORS = [
+  '#E8843C', '#C9A961', '#5A8A8A', '#2D3561',
+  '#7C3AED', '#059669', '#DC2626', '#D97706',
+];
+
+const FOLDER_ICONS = {
+  calendar: Calendar,
+  folder: Folder,
+  sparkles: Sparkles,
+  trophy: Trophy,
+  layers: Layers,
+};
+
 /* ═══════════════════════════════════════════════════════════════════ *
- *  CLEAN FOLDER CARD COMPONENT                                       *
+ *  3D FOLDER CARD COMPONENT                                           *
  * ═══════════════════════════════════════════════════════════════════ */
-function FolderCard({ title, count, color, icon: IconComp, onClick, isSelected }) {
+function FolderCard({ folder, count, onOpen, onRename, onDelete }) {
+  const [showMenu, setShowMenu] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editTitle, setEditTitle] = useState(folder.title);
+
+  const IconComp = FOLDER_ICONS[folder.icon] || Folder;
+
+  function handleSaveRename(e) {
+    e.stopPropagation();
+    if (!editTitle.trim()) return;
+    onRename(folder.id, editTitle.trim());
+    setIsEditing(false);
+  }
+
   return (
-    <button
-      onClick={onClick}
-      className={`group relative overflow-hidden rounded-3xl p-5 text-left transition-all duration-300 active:scale-[0.97] flex flex-col justify-between min-h-[130px] ${
-        isSelected
-          ? 'ring-2 ring-[#E8843C] shadow-2xl scale-[1.02]'
-          : 'hover:scale-[1.01] hover:shadow-xl'
-      }`}
+    <div
+      onClick={() => !isEditing && onOpen(folder.id)}
+      className="group relative overflow-hidden rounded-3xl p-5 text-left transition-all duration-300 cursor-pointer flex flex-col justify-between min-h-[145px] bg-[#0e1226]/80 hover:bg-[#141936] shadow-xl hover:shadow-2xl border border-white/8 hover:border-[#E8843C]/40"
       style={{
-        background: `linear-gradient(135deg, ${color}28 0%, ${color}10 100%)`,
-        border: `1px solid ${color}35`,
+        background: `linear-gradient(135deg, ${folder.color}20 0%, ${folder.color}05 100%)`,
       }}
     >
-      {/* Curved Tab on top of folder box */}
+      {/* 3D Top Curved Tab */}
       <div
         className="absolute top-0 left-6 w-16 h-2.5 rounded-b-lg opacity-90 shadow-sm"
-        style={{ backgroundColor: color }}
+        style={{ backgroundColor: folder.color }}
       />
 
       <div className="flex items-start justify-between">
         <div
-          className="w-11 h-11 rounded-2xl flex items-center justify-center shadow-lg transition-transform group-hover:scale-110"
-          style={{ backgroundColor: `${color}25` }}
+          className="w-11 h-11 rounded-2xl flex items-center justify-center shadow-md transition-transform group-hover:scale-105"
+          style={{ backgroundColor: `${folder.color}25` }}
         >
-          <IconComp size={20} style={{ color }} />
+          <IconComp size={20} style={{ color: folder.color }} />
+        </div>
+
+        {/* Options Menu Button */}
+        <div className="relative" onClick={e => e.stopPropagation()}>
+          <button
+            onClick={() => setShowMenu(!showMenu)}
+            className="w-7 h-7 rounded-full flex items-center justify-center text-white/30 hover:text-white hover:bg-white/5 transition-all"
+          >
+            <MoreVertical size={15} />
+          </button>
+
+          {showMenu && (
+            <div className="absolute right-0 top-8 w-36 bg-[#161a36] border border-white/12 rounded-xl shadow-2xl p-1 z-30 space-y-0.5">
+              <button
+                onClick={() => { setShowMenu(false); setIsEditing(true); }}
+                className="w-full px-3 py-1.5 text-xs text-left text-white/80 hover:text-white hover:bg-white/5 rounded-lg flex items-center gap-2"
+              >
+                <Edit3 size={12} /> Rename
+              </button>
+              <button
+                onClick={() => { setShowMenu(false); onDelete(folder.id); }}
+                className="w-full px-3 py-1.5 text-xs text-left text-red-400 hover:bg-red-500/10 rounded-lg flex items-center gap-2"
+              >
+                <Trash2 size={12} /> Delete
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
       <div className="mt-4">
-        <h3 className="text-base font-bold text-white group-hover:text-[#C9A961] transition-colors truncate">
-          {title}
-        </h3>
+        {isEditing ? (
+          <div className="flex items-center gap-1" onClick={e => e.stopPropagation()}>
+            <input
+              value={editTitle}
+              onChange={e => setEditTitle(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') handleSaveRename(e); }}
+              autoFocus
+              className="w-full text-xs text-white bg-white/10 border border-white/20 rounded-lg px-2 py-1 outline-none focus:border-[#E8843C]"
+            />
+            <button onClick={handleSaveRename} className="p-1 text-emerald-400"><Check size={14} /></button>
+          </div>
+        ) : (
+          <h3 className="text-base font-extrabold text-white group-hover:text-[#C9A961] transition-colors truncate">
+            {folder.title}
+          </h3>
+        )}
         <p className="text-xs text-white/40 mt-0.5 font-medium">
-          {count} {count === 1 ? 'note' : 'notes'}
+          {count} {count === 1 ? 'file' : 'files'}
         </p>
       </div>
-    </button>
+    </div>
   );
 }
 
 /* ═══════════════════════════════════════════════════════════════════ *
- *  WORKING NOTE DETAIL & EDITOR                                      *
+ *  FILE EDITOR (Matching Middle Screen Reference Image)              *
  * ═══════════════════════════════════════════════════════════════════ */
-function NoteDetailView({ entry, onSave, onDelete, onBack }) {
-  const [title, setTitle] = useState(entry.title || entry.problem || 'New Note');
-  const [todoItems, setTodoItems] = useState(entry.todoItems || [
+function FileEditor({ file, onSave, onDelete, onBack }) {
+  const [title, setTitle] = useState(file.title || 'Untitled Note');
+  const [fileType, setFileType] = useState(file.fileType || 'todo'); // 'todo' | 'txt'
+  const [todoItems, setTodoItems] = useState(file.todoItems || [
     { id: '1', text: 'Morning meditation & practice', done: true },
     { id: '2', text: 'Hydrate water & protein breakfast', done: true },
   ]);
-  const [placeItems, setPlaceItems] = useState(entry.placeItems || [
+  const [placeItems, setPlaceItems] = useState(file.placeItems || [
     { id: 'p1', text: 'Evening gratitude journaling', done: false },
   ]);
   const [newTodoText, setNewTodoText] = useState('');
   const [newPlaceText, setNewPlaceText] = useState('');
-  const [noteContent, setNoteContent] = useState(entry.curiosity || entry.gratitude || '');
-  const [bannerIdx, setBannerIdx] = useState(entry.bannerIdx || 0);
+  const [noteContent, setNoteContent] = useState(file.content || file.curiosity || '');
+  const [bannerIdx, setBannerIdx] = useState(file.bannerIdx || 0);
   const [copied, setCopied] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
-  // Sync state whenever entry changes
   useEffect(() => {
-    setTitle(entry.title || entry.problem || (entry.date ? 'Daily Note' : 'Weekly Reflections'));
-    setTodoItems(entry.todoItems || [
+    setTitle(file.title || (file.fileType === 'todo' ? 'To-Do List Note' : 'Text Note'));
+    setFileType(file.fileType || 'todo');
+    setTodoItems(file.todoItems || [
       { id: '1', text: 'Morning meditation & practice', done: true },
       { id: '2', text: 'Hydrate water & protein breakfast', done: true },
     ]);
-    setPlaceItems(entry.placeItems || [
+    setPlaceItems(file.placeItems || [
       { id: 'p1', text: 'Evening gratitude journaling', done: false },
     ]);
-    setNoteContent(entry.curiosity || entry.gratitude || '');
-    setBannerIdx(entry.bannerIdx || 0);
+    setNoteContent(file.content || file.curiosity || '');
+    setBannerIdx(file.bannerIdx || 0);
     setConfirmDelete(false);
-  }, [entry.id]);
+  }, [file.id]);
 
-  const dateInfo = formatDateDisplay(new Date(entry.date || entry.weekStart || Date.now()));
+  const dateInfo = formatDateDisplay(new Date(file.updatedAt || Date.now()));
 
   function toggleTodo(id) {
     setTodoItems(items => items.map(i => i.id === id ? { ...i, done: !i.done } : i));
@@ -122,19 +185,21 @@ function NoteDetailView({ entry, onSave, onDelete, onBack }) {
     setNewPlaceText('');
   }
 
-  function handleShareNote() {
-    const text = `${title}\n${dateInfo.full}\n\nTo Do:\n${todoItems.map(i => `${i.done ? '[x]' : '[ ]'} ${i.text}`).join('\n')}\n\nPriorities:\n${placeItems.map(i => `${i.done ? '[x]' : '[ ]'} ${i.text}`).join('\n')}\n\nNotes:\n${noteContent}`;
+  function handleCopy() {
+    const text = `${title}\n${dateInfo.full}\n\nTo Do:\n${todoItems.map(i => `${i.done ? '[x]' : '[ ]'} ${i.text}`).join('\n')}\n\nNotes:\n${noteContent}`;
     navigator.clipboard.writeText(text);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   }
 
-  function handleSaveNote() {
+  function handleSave() {
     onSave({
-      ...entry,
+      ...file,
       title: title.trim() || 'Untitled Note',
+      fileType,
       todoItems,
       placeItems,
+      content: noteContent,
       curiosity: noteContent,
       problem: title.trim() || 'Untitled Note',
       bannerIdx,
@@ -145,177 +210,178 @@ function NoteDetailView({ entry, onSave, onDelete, onBack }) {
   return (
     <div className="relative rounded-3xl p-6 space-y-5 bg-[#0e1226]/90 border border-white/8 shadow-2xl">
 
-      {/* Top Header Bar */}
+      {/* Header bar */}
       <div className="flex items-center justify-between">
-        {onBack ? (
-          <button onClick={onBack} className="w-9 h-9 rounded-full flex items-center justify-center bg-white/5 text-white/70 hover:text-white transition-all">
-            <ArrowLeft size={18} />
-          </button>
-        ) : <div />}
+        <button onClick={onBack} className="flex items-center gap-1.5 text-xs text-white/50 hover:text-white transition-all">
+          <ArrowLeft size={16} /> Back to Files
+        </button>
 
         <div className="flex items-center gap-2">
-          {/* Share/Copy Note Button */}
+          {/* File Type toggle */}
+          <div className="flex items-center bg-white/5 rounded-xl p-0.5 border border-white/8">
+            <button
+              onClick={() => setFileType('todo')}
+              className={`px-2.5 py-1 text-[10px] font-bold rounded-lg transition-all ${
+                fileType === 'todo' ? 'bg-[#E8843C] text-white' : 'text-white/40'
+              }`}
+            >
+              .todo List
+            </button>
+            <button
+              onClick={() => setFileType('txt')}
+              className={`px-2.5 py-1 text-[10px] font-bold rounded-lg transition-all ${
+                fileType === 'txt' ? 'bg-[#C9A961] text-white' : 'text-white/40'
+              }`}
+            >
+              .txt Note
+            </button>
+          </div>
+
           <button
-            onClick={handleShareNote}
-            title="Copy Note Text"
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 text-white/70 hover:text-white text-xs font-semibold transition-all"
+            onClick={handleCopy}
+            title="Copy file text"
+            className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-white/5 text-white/70 hover:text-white text-xs font-semibold"
           >
-            {copied ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
-            <span>{copied ? 'Copied!' : 'Copy'}</span>
+            {copied ? <Check size={13} className="text-emerald-400" /> : <Copy size={13} />}
           </button>
 
-          {/* Delete Note Button */}
           {confirmDelete ? (
-            <div className="flex items-center gap-1.5 bg-red-500/20 px-2 py-1 rounded-full border border-red-500/40">
+            <div className="flex items-center gap-1 bg-red-500/20 px-2 py-1 rounded-xl border border-red-500/40">
               <span className="text-[10px] font-bold text-red-400">Delete?</span>
-              <button onClick={() => onDelete(entry.id)} className="text-xs font-bold text-red-400 hover:underline">Yes</button>
+              <button onClick={() => onDelete(file.id)} className="text-xs font-bold text-red-400 hover:underline">Yes</button>
               <button onClick={() => setConfirmDelete(false)} className="text-xs text-white/40"><X size={12} /></button>
             </div>
           ) : (
             <button
               onClick={() => setConfirmDelete(true)}
-              title="Delete Note"
-              className="w-8 h-8 rounded-full flex items-center justify-center bg-white/5 text-white/40 hover:text-red-400 hover:bg-red-500/10 transition-all"
+              className="w-8 h-8 rounded-xl flex items-center justify-center bg-white/5 text-white/40 hover:text-red-400 hover:bg-red-500/10"
             >
-              <Trash2 size={15} />
+              <Trash2 size={14} />
             </button>
           )}
         </div>
       </div>
 
-      {/* Note Title & Date */}
+      {/* Title & Date */}
       <div>
         <input
           value={title}
           onChange={e => setTitle(e.target.value)}
-          placeholder="Note Title…"
+          placeholder="File Title…"
           className="w-full text-2xl font-extrabold text-white bg-transparent outline-none border-b border-transparent focus:border-[#E8843C] transition-colors"
         />
         <p className="text-xs text-white/40 font-medium mt-1">{dateInfo.full}</p>
       </div>
 
-      {/* Featured Banner Card with Preset Switcher */}
-      <div className="relative overflow-hidden rounded-2xl h-44 bg-gradient-to-r from-[#1e2240] to-[#2d3561] border border-white/10 flex items-center justify-center p-4 group">
+      {/* Featured Banner Card */}
+      <div className="relative overflow-hidden rounded-2xl h-40 bg-gradient-to-r from-[#1e2240] to-[#2d3561] border border-white/10 flex items-center justify-center p-4 group">
         <img
           src={BANNER_PRESETS[bannerIdx]}
           alt="Banner"
-          className="absolute inset-0 w-full h-full object-cover opacity-40 mix-blend-overlay transition-opacity"
+          className="absolute inset-0 w-full h-full object-cover opacity-40 mix-blend-overlay"
         />
         <div className="relative z-10 text-center space-y-1">
-          <span className="text-[10px] font-bold text-[#C9A961] uppercase tracking-[0.2em]">Dharma Reflections</span>
-          <h3 className="text-lg font-bold text-white">Mindfulness & Practice Journal</h3>
+          <span className="text-[10px] font-bold text-[#C9A961] uppercase tracking-[0.2em]">JotPad Note</span>
+          <h3 className="text-base font-bold text-white">{title}</h3>
         </div>
-
-        {/* Change Banner Overlay Button */}
         <button
           onClick={() => setBannerIdx((bannerIdx + 1) % BANNER_PRESETS.length)}
-          className="absolute bottom-3 right-3 z-20 text-[10px] font-bold px-2.5 py-1 rounded-lg bg-black/50 text-white/70 hover:text-white border border-white/10 backdrop-blur-md opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1"
+          className="absolute bottom-2.5 right-2.5 text-[10px] font-bold px-2 py-0.5 rounded-lg bg-black/50 text-white/70 hover:text-white border border-white/10 backdrop-blur-md opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1"
         >
-          <ImageIcon size={11} /> Change Cover
+          <ImageIcon size={10} /> Cover
         </button>
       </div>
 
-      {/* Checklist Section 1: To do list */}
-      <div className="space-y-2 pt-2">
-        <h4 className="text-sm font-bold text-white">To do list:</h4>
-        <div className="space-y-1.5">
-          {todoItems.map(item => (
-            <div
-              key={item.id}
-              className="flex items-center justify-between py-1 px-1 group/item"
-            >
-              <button
-                onClick={() => toggleTodo(item.id)}
-                className="flex items-center gap-3 text-left flex-1 min-w-0"
-              >
-                <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all ${
-                  item.done ? 'bg-[#E8843C] border-[#E8843C] text-white' : 'border-white/30 group-hover/item:border-[#E8843C]'
-                }`}>
-                  {item.done && <Check size={11} strokeWidth={3} />}
+      {/* Interactive To-Do List Section */}
+      {fileType === 'todo' && (
+        <div className="space-y-4 pt-1">
+          {/* Section 1: To do list */}
+          <div className="space-y-2">
+            <h4 className="text-sm font-bold text-white">To do list:</h4>
+            <div className="space-y-1.5">
+              {todoItems.map(item => (
+                <div key={item.id} className="flex items-center justify-between py-1 px-1 group/item">
+                  <button onClick={() => toggleTodo(item.id)} className="flex items-center gap-3 text-left flex-1 min-w-0">
+                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all ${
+                      item.done ? 'bg-[#E8843C] border-[#E8843C] text-white' : 'border-white/30 group-hover/item:border-[#E8843C]'
+                    }`}>
+                      {item.done && <Check size={11} strokeWidth={3} />}
+                    </div>
+                    <span className={`text-xs font-medium truncate ${item.done ? 'line-through text-white/30' : 'text-white'}`}>
+                      {item.text}
+                    </span>
+                  </button>
+                  <button onClick={() => removeTodo(item.id)} className="opacity-0 group-hover/item:opacity-100 text-white/20 hover:text-red-400 px-1">
+                    <X size={12} />
+                  </button>
                 </div>
-                <span className={`text-xs font-medium truncate ${item.done ? 'line-through text-white/30' : 'text-white'}`}>
-                  {item.text}
-                </span>
-              </button>
-              <button onClick={() => removeTodo(item.id)} className="opacity-0 group-hover/item:opacity-100 text-white/20 hover:text-red-400 transition-opacity px-1">
-                <X size={12} />
-              </button>
+              ))}
+              <div className="flex gap-2 pt-1">
+                <input
+                  value={newTodoText}
+                  onChange={e => setNewTodoText(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addTodo(); } }}
+                  placeholder="+ Add to-do item…"
+                  className="flex-1 text-xs text-white bg-white/5 border border-white/8 rounded-xl px-3 py-1.5 outline-none focus:border-[#E8843C]"
+                />
+              </div>
             </div>
-          ))}
+          </div>
 
-          {/* Quick add item */}
-          <div className="flex gap-2 pt-1">
-            <input
-              value={newTodoText}
-              onChange={e => setNewTodoText(e.target.value)}
-              onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addTodo(); } }}
-              placeholder="+ Add to-do item…"
-              className="flex-1 text-xs text-white bg-white/5 border border-white/8 rounded-xl px-3 py-1.5 outline-none focus:border-[#E8843C]"
-            />
+          {/* Section 2: Priorities */}
+          <div className="space-y-2">
+            <h4 className="text-sm font-bold text-white">Places / Priorities:</h4>
+            <div className="space-y-1.5">
+              {placeItems.map(item => (
+                <div key={item.id} className="flex items-center justify-between py-1 px-1 group/item">
+                  <button onClick={() => togglePlace(item.id)} className="flex items-center gap-3 text-left flex-1 min-w-0">
+                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all ${
+                      item.done ? 'bg-[#C9A961] border-[#C9A961] text-white' : 'border-white/30 group-hover/item:border-[#C9A961]'
+                    }`}>
+                      {item.done && <Check size={11} strokeWidth={3} />}
+                    </div>
+                    <span className={`text-xs font-medium truncate ${item.done ? 'line-through text-white/30' : 'text-white'}`}>
+                      {item.text}
+                    </span>
+                  </button>
+                  <button onClick={() => removePlace(item.id)} className="opacity-0 group-hover/item:opacity-100 text-white/20 hover:text-red-400 px-1">
+                    <X size={12} />
+                  </button>
+                </div>
+              ))}
+              <div className="flex gap-2 pt-1">
+                <input
+                  value={newPlaceText}
+                  onChange={e => setNewPlaceText(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addPlace(); } }}
+                  placeholder="+ Add priority…"
+                  className="flex-1 text-xs text-white bg-white/5 border border-white/8 rounded-xl px-3 py-1.5 outline-none focus:border-[#C9A961]"
+                />
+              </div>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
-      {/* Checklist Section 2: Priorities & Insights */}
-      <div className="space-y-2 pt-2">
-        <h4 className="text-sm font-bold text-white">Priorities & Insights:</h4>
-        <div className="space-y-1.5">
-          {placeItems.map(item => (
-            <div
-              key={item.id}
-              className="flex items-center justify-between py-1 px-1 group/item"
-            >
-              <button
-                onClick={() => togglePlace(item.id)}
-                className="flex items-center gap-3 text-left flex-1 min-w-0"
-              >
-                <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all ${
-                  item.done ? 'bg-[#C9A961] border-[#C9A961] text-white' : 'border-white/30 group-hover/item:border-[#C9A961]'
-                }`}>
-                  {item.done && <Check size={11} strokeWidth={3} />}
-                </div>
-                <span className={`text-xs font-medium truncate ${item.done ? 'line-through text-white/30' : 'text-white'}`}>
-                  {item.text}
-                </span>
-              </button>
-              <button onClick={() => removePlace(item.id)} className="opacity-0 group-hover/item:opacity-100 text-white/20 hover:text-red-400 transition-opacity px-1">
-                <X size={12} />
-              </button>
-            </div>
-          ))}
-
-          {/* Quick add priority */}
-          <div className="flex gap-2 pt-1">
-            <input
-              value={newPlaceText}
-              onChange={e => setNewPlaceText(e.target.value)}
-              onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addPlace(); } }}
-              placeholder="+ Add priority…"
-              className="flex-1 text-xs text-white bg-white/5 border border-white/8 rounded-xl px-3 py-1.5 outline-none focus:border-[#C9A961]"
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* Freeform Notes Section */}
-      <div className="pt-2">
-        <h4 className="text-sm font-bold text-white mb-1.5">Notes & Reflections:</h4>
+      {/* Freeform Text Note Content */}
+      <div className="pt-1">
+        <h4 className="text-sm font-bold text-white mb-1.5">Notes & Text:</h4>
         <textarea
           value={noteContent}
           onChange={e => setNoteContent(e.target.value)}
-          placeholder="Write your freeform thoughts, curiosities, or gratitude here…"
-          rows={4}
+          placeholder="Type your notes or reflections here…"
+          rows={5}
           className="w-full text-xs text-white placeholder-white/20 bg-white/5 border border-white/8 rounded-2xl p-3.5 outline-none resize-none font-verse leading-relaxed"
         />
       </div>
 
-      {/* Save Button */}
+      {/* Floating Save Button */}
       <div className="flex justify-end pt-2">
         <button
-          onClick={handleSaveNote}
+          onClick={handleSave}
           className="px-6 py-2.5 bg-[#E8843C] hover:bg-[#d4732b] text-white rounded-full text-xs font-extrabold uppercase tracking-wider shadow-xl transition-all active:scale-95 flex items-center gap-1.5"
         >
-          <Check size={14} /> Save Note
+          <Check size={14} /> Save File
         </button>
       </div>
     </div>
@@ -323,246 +389,265 @@ function NoteDetailView({ entry, onSave, onDelete, onBack }) {
 }
 
 /* ═══════════════════════════════════════════════════════════════════ *
- *  MAIN JOTPAD JOURNAL COMPONENT                                      *
+ *  MAIN MANAN FILE EXPLORER COMPONENT                                *
  * ═══════════════════════════════════════════════════════════════════ */
 export default function Manan() {
-  const { state, addNotebookEntry, deleteNotebookEntry } = useStorage();
-  const { notebook = [] } = state;
+  const { state, addNotebookEntry, deleteNotebookEntry, addFolder, updateFolder, deleteFolder } = useStorage();
+  const folders = state.folders || [];
+  const notebook = state.notebook || [];
 
+  const [activeFolderId, setActiveFolderId] = useState(null); // null = Root explorer view
+  const [activeFile, setActiveFile] = useState(null); // null = Folder view, file object = FileEditor view
   const [search, setSearch] = useState('');
-  const [selectedFolder, setSelectedFolder] = useState('all');
-  const [activeEntryId, setActiveEntryId] = useState(null);
-  const [sortOrder, setSortOrder] = useState('newest'); // 'newest' | 'oldest'
+  const [showAddFolder, setShowAddFolder] = useState(false);
+  const [newFolderName, setNewFolderName] = useState('');
+  const [newFolderColor, setNewFolderColor] = useState('#E8843C');
 
-  const currentDayKey = todayKey();
+  const currentFolder = useMemo(() => folders.find(f => f.id === activeFolderId), [folders, activeFolderId]);
 
-  // Create a default today note if none exists
-  const todayEntry = useMemo(() => {
-    const existing = notebook.find(e => e.date === currentDayKey);
-    if (existing) return existing;
-    return {
-      id: `note-${currentDayKey}`,
-      date: currentDayKey,
-      title: 'Daily Note',
-      todoItems: [
-        { id: '1', text: 'Morning meditation & practice', done: true },
-        { id: '2', text: 'Hydrate water & protein breakfast', done: true },
-      ],
-      placeItems: [
-        { id: 'p1', text: 'Evening gratitude journaling', done: false },
-      ],
-      curiosity: '',
-      problem: 'Daily Note',
-    };
-  }, [notebook, currentDayKey]);
+  // Count files per folder
+  const fileCounts = useMemo(() => {
+    const counts = {};
+    folders.forEach(f => {
+      counts[f.id] = notebook.filter(e => e.folderId === f.id || (!e.folderId && f.id === 'f-1')).length;
+    });
+    return counts;
+  }, [folders, notebook]);
 
-  // Folder counts based on real data
-  const folderCounts = useMemo(() => {
-    const dailyCount = notebook.filter(e => !!e.date).length;
-    const weeklyCount = notebook.filter(e => !!e.weekStart).length;
-    const curiositiesCount = notebook.filter(e => !!e.curiosity && e.curiosity.trim().length > 0).length;
-    const gratitudeCount = notebook.filter(e => !!e.gratitude || !!e.wins).length;
-    return { daily: dailyCount, weekly: weeklyCount, curiosities: curiositiesCount, gratitude: gratitudeCount };
-  }, [notebook]);
-
-  // Filtered & Sorted Notes List
-  const filteredNotes = useMemo(() => {
-    let list = [...notebook];
-
-    if (selectedFolder === 'daily') list = list.filter(e => !!e.date);
-    else if (selectedFolder === 'weekly') list = list.filter(e => !!e.weekStart);
-    else if (selectedFolder === 'curiosities') list = list.filter(e => !!e.curiosity && e.curiosity.trim().length > 0);
-    else if (selectedFolder === 'gratitude') list = list.filter(e => !!e.gratitude || !!e.wins);
-
+  // Files inside currently opened folder
+  const folderFiles = useMemo(() => {
+    if (!activeFolderId) return [];
+    let list = notebook.filter(e => e.folderId === activeFolderId || (!e.folderId && activeFolderId === 'f-1'));
     if (search.trim()) {
       const q = search.toLowerCase();
-      list = list.filter(e =>
-        ['title','problem','curiosity','gratitude','wins'].some(f => e[f]?.toLowerCase().includes(q)) ||
-        (e.todoItems || []).some(t => t.text?.toLowerCase().includes(q))
-      );
+      list = list.filter(e => e.title?.toLowerCase().includes(q) || e.content?.toLowerCase().includes(q));
     }
+    return list;
+  }, [notebook, activeFolderId, search]);
 
-    return list.sort((a, b) => {
-      const ta = a.updatedAt || new Date(a.date || a.weekStart || 0).getTime();
-      const tb = b.updatedAt || new Date(b.date || b.weekStart || 0).getTime();
-      return sortOrder === 'newest' ? tb - ta : ta - tb;
-    });
-  }, [notebook, selectedFolder, search, sortOrder]);
-
-  // Currently selected note to display in NoteDetailView
-  const selectedNote = useMemo(() => {
-    if (!activeEntryId) return todayEntry;
-    return notebook.find(e => e.id === activeEntryId) || todayEntry;
-  }, [activeEntryId, notebook, todayEntry]);
-
-  function handleSaveNote(updated) {
-    addNotebookEntry(updated);
-    setActiveEntryId(updated.id);
+  function handleCreateFolder(e) {
+    e.preventDefault();
+    if (!newFolderName.trim()) return;
+    const newF = {
+      id: `f-${Date.now()}`,
+      title: newFolderName.trim(),
+      color: newFolderColor,
+      icon: 'folder',
+    };
+    addFolder(newF);
+    setNewFolderName('');
+    setShowAddFolder(false);
   }
 
-  function handleDeleteNote(id) {
-    deleteNotebookEntry(id);
-    setActiveEntryId(null);
-  }
-
-  function handleCreateNewNote() {
-    const newId = `note-${Date.now()}`;
-    const newNote = {
-      id: newId,
-      date: currentDayKey,
-      title: 'New Reflection',
-      todoItems: [],
+  function handleCreateFile(fileType = 'todo') {
+    const targetFolderId = activeFolderId || folders[0]?.id || 'f-1';
+    const newFile = {
+      id: `file-${Date.now()}`,
+      folderId: targetFolderId,
+      title: fileType === 'todo' ? 'New Checklist' : 'New Text Note',
+      fileType,
+      todoItems: fileType === 'todo' ? [{ id: '1', text: 'First item', done: false }] : [],
       placeItems: [],
-      curiosity: '',
-      problem: 'New Reflection',
+      content: '',
       createdAt: Date.now(),
     };
-    addNotebookEntry(newNote);
-    setActiveEntryId(newId);
+    addNotebookEntry(newFile);
+    setActiveFile(newFile);
+  }
+
+  function handleSaveFile(updated) {
+    addNotebookEntry(updated);
+    setActiveFile(updated);
+  }
+
+  function handleDeleteFile(fileId) {
+    deleteNotebookEntry(fileId);
+    setActiveFile(null);
   }
 
   return (
     <div className="page-container page-transition relative min-h-screen">
 
-      {/* Header */}
+      {/* JotPad File Explorer Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl lg:text-3xl font-extrabold text-white tracking-tight">
-            JotPad
-          </h1>
-          <p className="text-xs text-white/40 mt-0.5">Your Daily Note Journal for Reflection</p>
-        </div>
-
-        {/* Search input */}
-        <div className="relative">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30" />
-          <input
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            placeholder="Search notes…"
-            className="w-44 lg:w-60 pl-9 pr-3 py-2 text-xs text-white bg-white/5 border border-white/10 rounded-full outline-none focus:border-[#E8843C]"
-          />
-        </div>
-      </div>
-
-      {/* Subheader Filters */}
-      <div className="flex items-center justify-between mb-5 px-1">
-        <button
-          onClick={() => setSortOrder(sortOrder === 'newest' ? 'oldest' : 'newest')}
-          className="flex items-center gap-1.5 text-xs text-white/60 font-semibold hover:text-white transition-colors"
-        >
-          <ArrowDown size={12} className={sortOrder === 'oldest' ? 'rotate-180' : ''} />
-          <span>{sortOrder === 'newest' ? 'Newest first' : 'Oldest first'}</span>
-        </button>
-
-        <button
-          onClick={handleCreateNewNote}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#E8843C] text-white text-xs font-bold hover:bg-[#d4732b] transition-all"
-        >
-          <Plus size={14} /> New Note
-        </button>
-      </div>
-
-      {/* 2x2 Folder Box Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <FolderCard
-          title="Daily Notes"
-          count={folderCounts.daily}
-          color="#E8843C"
-          icon={Calendar}
-          isSelected={selectedFolder === 'daily'}
-          onClick={() => setSelectedFolder(selectedFolder === 'daily' ? 'all' : 'daily')}
-        />
-        <FolderCard
-          title="Reflections"
-          count={folderCounts.weekly}
-          color="#C9A961"
-          icon={Folder}
-          isSelected={selectedFolder === 'weekly'}
-          onClick={() => setSelectedFolder(selectedFolder === 'weekly' ? 'all' : 'weekly')}
-        />
-        <FolderCard
-          title="Ideas & Insights"
-          count={folderCounts.curiosities}
-          color="#5A8A8A"
-          icon={Sparkles}
-          isSelected={selectedFolder === 'curiosities'}
-          onClick={() => setSelectedFolder(selectedFolder === 'curiosities' ? 'all' : 'curiosities')}
-        />
-        <FolderCard
-          title="Random Notes"
-          count={folderCounts.gratitude}
-          color="#2D3561"
-          icon={Trophy}
-          isSelected={selectedFolder === 'gratitude'}
-          onClick={() => setSelectedFolder(selectedFolder === 'gratitude' ? 'all' : 'gratitude')}
-        />
-      </div>
-
-      {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-
-        {/* Notes List Column */}
-        <div className="lg:col-span-5 space-y-3">
-          <div className="flex items-center justify-between px-1">
-            <span className="text-xs font-bold uppercase tracking-wider text-white/40">
-              {selectedFolder === 'all' ? 'All Notes' : `${selectedFolder} Notes`}
-            </span>
-            <span className="text-xs text-[#E8843C] font-bold">{filteredNotes.length} notes</span>
-          </div>
-
-          <div className="space-y-2.5 max-h-[550px] overflow-y-auto scrollbar-thin">
-            {filteredNotes.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-10 text-white/20 rounded-2xl border border-dashed border-white/10">
-                <BookOpen size={28} className="mb-2" />
-                <p className="text-xs font-medium">No notes found</p>
-                <button onClick={handleCreateNewNote} className="text-[11px] text-[#E8843C] font-bold mt-1 hover:underline">+ Create a note</button>
-              </div>
-            ) : (
-              filteredNotes.map(entry => {
-                const isSelected = selectedNote?.id === entry.id;
-                const titleText = entry.title || entry.problem || 'Daily Note';
-                const dateInfo = formatDateDisplay(new Date(entry.date || entry.weekStart || Date.now()));
-
-                return (
-                  <button
-                    key={entry.id}
-                    onClick={() => setActiveEntryId(entry.id)}
-                    className={`w-full text-left p-4 rounded-2xl border transition-all duration-200 ${
-                      isSelected
-                        ? 'bg-gradient-to-r from-[#E8843C]/20 to-[#C9A961]/10 border-[#E8843C]/50 shadow-lg'
-                        : 'bg-white/[0.03] border-white/6 hover:bg-white/[0.06]'
-                    }`}
-                  >
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <h4 className="text-sm font-bold text-white truncate">{titleText}</h4>
-                        <p className="text-[10px] text-white/40 mt-0.5 font-medium">{dateInfo.short}</p>
-                      </div>
-                    </div>
-                  </button>
-                );
-              })
+          <div className="flex items-center gap-2">
+            {activeFolderId && (
+              <button
+                onClick={() => { setActiveFolderId(null); setActiveFile(null); }}
+                className="text-xs text-[#E8843C] font-bold hover:underline flex items-center gap-1 mr-1"
+              >
+                Folders <ChevronRight size={12} />
+              </button>
             )}
+            <h1 className="text-2xl lg:text-3xl font-extrabold text-white tracking-tight">
+              {activeFolderId ? currentFolder?.title : 'JotPad Explorer'}
+            </h1>
           </div>
+          <p className="text-xs text-white/40 mt-0.5">
+            {activeFolderId ? `${folderFiles.length} files in folder` : 'Manage your folders, notes & checklists'}
+          </p>
         </div>
 
-        {/* Note Detail Column */}
-        <div className="lg:col-span-7">
-          <NoteDetailView
-            entry={selectedNote}
-            onSave={handleSaveNote}
-            onDelete={handleDeleteNote}
-            onBack={null}
-          />
+        {/* Action Buttons */}
+        <div className="flex items-center gap-2">
+          {!activeFolderId ? (
+            <button
+              onClick={() => setShowAddFolder(true)}
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-2xl bg-white/8 text-white font-bold text-xs hover:bg-white/15 border border-white/10 transition-all"
+            >
+              <FolderPlus size={15} className="text-[#C9A961]" /> New Folder
+            </button>
+          ) : (
+            <button
+              onClick={() => handleCreateFile('todo')}
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-2xl bg-[#E8843C] text-white font-bold text-xs hover:bg-[#d4732b] shadow-lg transition-all"
+            >
+              <FilePlus size={15} /> New File
+            </button>
+          )}
         </div>
-
       </div>
 
-      {/* Floating Action '+' Button at Bottom Right */}
+      {/* Search Input */}
+      <div className="relative mb-6">
+        <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/30" />
+        <input
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          placeholder={activeFolderId ? `Search inside ${currentFolder?.title}…` : 'Search folders and notes…'}
+          className="w-full pl-10 pr-4 py-2.5 text-xs text-white placeholder-white/30 bg-white/5 border border-white/10 rounded-2xl outline-none focus:border-[#E8843C]"
+        />
+      </div>
+
+      {/* New Folder Modal / Inline Creator */}
+      {showAddFolder && (
+        <form onSubmit={handleCreateFolder} className="mb-6 p-4 rounded-3xl bg-[#121630] border border-white/12 space-y-3">
+          <div className="flex items-center justify-between">
+            <h4 className="text-xs font-bold text-[#C9A961] uppercase tracking-wider">Create New Folder</h4>
+            <button type="button" onClick={() => setShowAddFolder(false)} className="text-white/30 hover:text-white"><X size={14} /></button>
+          </div>
+          <div className="flex gap-2">
+            <input
+              value={newFolderName}
+              onChange={e => setNewFolderName(e.target.value)}
+              placeholder="Folder Name (e.g. Science, Recipes, Work…)"
+              autoFocus
+              className="flex-1 text-xs text-white bg-white/5 border border-white/10 rounded-xl px-3 py-2 outline-none focus:border-[#E8843C]"
+            />
+            <button type="submit" className="px-4 py-2 bg-[#E8843C] text-white font-bold text-xs rounded-xl shadow-md">
+              Create
+            </button>
+          </div>
+          <div className="flex items-center gap-2 pt-1">
+            <span className="text-[10px] text-white/40 font-semibold">Color:</span>
+            <div className="flex gap-2">
+              {FOLDER_COLORS.map(c => (
+                <button
+                  key={c}
+                  type="button"
+                  onClick={() => setNewFolderColor(c)}
+                  className="w-5 h-5 rounded-full transition-transform"
+                  style={{ backgroundColor: c, transform: newFolderColor === c ? 'scale(1.2)' : 'scale(1)' }}
+                />
+              ))}
+            </div>
+          </div>
+        </form>
+      )}
+
+      {/* Active File Editor Screen */}
+      {activeFile ? (
+        <FileEditor
+          file={activeFile}
+          onSave={handleSaveFile}
+          onDelete={handleDeleteFile}
+          onBack={() => setActiveFile(null)}
+        />
+      ) : activeFolderId ? (
+        /* Inside Folder Files Explorer */
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-white/40 uppercase tracking-wider">Files in {currentFolder?.title}</span>
+            <div className="flex gap-2">
+              <button onClick={() => handleCreateFile('todo')} className="text-xs font-bold text-[#E8843C] hover:underline">+ .todo</button>
+              <button onClick={() => handleCreateFile('txt')} className="text-xs font-bold text-[#C9A961] hover:underline">+ .txt</button>
+            </div>
+          </div>
+
+          {folderFiles.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 text-white/20 rounded-3xl border border-dashed border-white/10">
+              <BookOpen size={36} className="mb-2" />
+              <p className="text-xs font-medium">Folder is empty</p>
+              <button onClick={() => handleCreateFile('todo')} className="text-xs text-[#E8843C] font-bold mt-2 hover:underline">+ Create first file</button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {folderFiles.map(file => (
+                <div
+                  key={file.id}
+                  onClick={() => setActiveFile(file)}
+                  className="p-4 rounded-2xl bg-white/[0.03] border border-white/8 hover:border-[#E8843C]/40 hover:bg-white/[0.06] transition-all cursor-pointer flex flex-col justify-between min-h-[120px] group"
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center gap-2">
+                      {file.fileType === 'todo' ? (
+                        <CheckSquare size={16} className="text-[#E8843C]" />
+                      ) : (
+                        <FileText size={16} className="text-[#C9A961]" />
+                      )}
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-white/40">{file.fileType || 'note'}</span>
+                    </div>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); deleteNotebookEntry(file.id); }}
+                      className="opacity-0 group-hover:opacity-100 text-white/20 hover:text-red-400 transition-opacity"
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  </div>
+
+                  <div className="mt-3">
+                    <h4 className="text-sm font-bold text-white group-hover:text-[#C9A961] transition-colors truncate">
+                      {file.title || 'Untitled Note'}
+                    </h4>
+                    <p className="text-[10px] text-white/40 mt-1 font-medium">
+                      {formatDateDisplay(new Date(file.updatedAt || Date.now())).short}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      ) : (
+        /* Root Explorer: 2x2 or 4-column Folder Cards Grid */
+        <div>
+          <div className="flex items-center justify-between mb-4 px-1">
+            <span className="text-xs font-bold uppercase tracking-wider text-white/40">All Folders ({folders.length})</span>
+          </div>
+
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            {folders.map(f => (
+              <FolderCard
+                key={f.id}
+                folder={f}
+                count={fileCounts[f.id] || 0}
+                onOpen={(id) => setActiveFolderId(id)}
+                onRename={(id, title) => updateFolder(id, { title })}
+                onDelete={(id) => deleteFolder(id)}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Floating '+' Action Button */}
       <button
-        onClick={handleCreateNewNote}
-        title="Create New Note"
+        onClick={() => {
+          if (!activeFolderId && folders.length > 0) setActiveFolderId(folders[0].id);
+          handleCreateFile('todo');
+        }}
+        title="Quick Create File"
         className="fixed bottom-20 right-6 lg:bottom-10 lg:right-10 z-40 w-14 h-14 rounded-full bg-[#E8843C] text-white shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all"
         style={{ boxShadow: '0 8px 30px rgba(232,132,60,0.5)' }}
       >

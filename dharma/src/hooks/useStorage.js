@@ -2,6 +2,13 @@ import { useState, useEffect, useCallback } from 'react';
 
 const STORAGE_KEY = 'dharma_app_v1';
 
+const DEFAULT_FOLDERS = [
+  { id: 'f-1', title: 'Daily Notes', color: '#E8843C', icon: 'calendar' },
+  { id: 'f-2', title: 'Reflections', color: '#C9A961', icon: 'folder' },
+  { id: 'f-3', title: 'Ideas & Insights', color: '#5A8A8A', icon: 'sparkles' },
+  { id: 'f-4', title: 'Random Notes', color: '#2D3561', icon: 'trophy' },
+];
+
 function getInitialState() {
   const prefersDark = window.matchMedia?.('(prefers-color-scheme: dark)').matches ?? false;
   return {
@@ -19,6 +26,7 @@ function getInitialState() {
     pillars: null,
     logs: {},
     notebook: [],
+    folders: DEFAULT_FOLDERS,
     bookmarks: [],
     chapterProgress: [],
     intentions: {},
@@ -133,6 +141,28 @@ export function useStorage() {
     }));
   }, []);
 
+  const addFolder = useCallback((folder) => {
+    setState((s) => ({
+      ...s,
+      folders: [...(s.folders || []), folder],
+    }));
+  }, []);
+
+  const updateFolder = useCallback((id, updates) => {
+    setState((s) => ({
+      ...s,
+      folders: (s.folders || []).map((f) => (f.id === id ? { ...f, ...updates } : f)),
+    }));
+  }, []);
+
+  const deleteFolder = useCallback((id) => {
+    setState((s) => ({
+      ...s,
+      folders: (s.folders || []).filter((f) => f.id !== id),
+      notebook: (s.notebook || []).filter((e) => e.folderId !== id),
+    }));
+  }, []);
+
   const toggleBookmark = useCallback((shlokaId) => {
     setState((s) => ({
       ...s,
@@ -242,6 +272,9 @@ export function useStorage() {
     logTarget,
     addNotebookEntry,
     deleteNotebookEntry,
+    addFolder,
+    updateFolder,
+    deleteFolder,
     toggleBookmark,
     markChapterRead,
     setIntention,
