@@ -126,6 +126,13 @@ export function useStorage() {
     }));
   }, []);
 
+  const deleteNotebookEntry = useCallback((entryId) => {
+    setState((s) => ({
+      ...s,
+      notebook: s.notebook.filter((e) => e.id !== entryId),
+    }));
+  }, []);
+
   const toggleBookmark = useCallback((shlokaId) => {
     setState((s) => ({
       ...s,
@@ -234,6 +241,7 @@ export function useStorage() {
     setPillars,
     logTarget,
     addNotebookEntry,
+    deleteNotebookEntry,
     toggleBookmark,
     markChapterRead,
     setIntention,
