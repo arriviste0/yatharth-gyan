@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Tiro+Devanagari+Hindi&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -9,7 +11,7 @@
   }
 
   html {
-    font-family: 'Inter', system-ui, sans-serif;
+    font-family: 'Plus Jakarta Sans', 'Outfit', system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
@@ -19,64 +21,62 @@
     margin: 0;
     padding: 0;
     min-height: 100svh;
-    background: #F4F2EE;
-    color: #1a1a2e;
+    background: #FAF6F0;
+    color: #18191E;
     overflow-x: hidden;
   }
 
   .dark body {
-    background: #07070f;
-    color: #f0ede8;
+    background: #12141F;
+    color: #F5F3EF;
   }
 
-  /* Inputs always readable — browsers can override inherited color */
+  /* Inputs always readable */
   input:not([type='checkbox']):not([type='radio']):not([type='range']),
   textarea,
   select {
-    color: #1a1a2e;
+    color: #18191E;
   }
   .dark input:not([type='checkbox']):not([type='radio']):not([type='range']),
   .dark textarea,
   .dark select {
-    background-color: rgba(255, 255, 255, 0.07);
-    color: #f0ede8;
+    background-color: rgba(255, 255, 255, 0.06);
+    color: #F5F3EF;
     border-color: rgba(255, 255, 255, 0.12);
   }
   .dark input::placeholder,
   .dark textarea::placeholder {
-    color: rgba(255, 255, 255, 0.3);
+    color: rgba(255, 255, 255, 0.35);
   }
 
   #root {
     min-height: 100svh;
     width: 100%;
-    /* Mobile: constrain to phone width, centered */
     max-width: 480px;
     margin: 0 auto;
     position: relative;
-    background: #F4F2EE;
+    background: #FAF6F0;
   }
 
   .dark #root {
-    background: #07070f;
+    background: #12141F;
   }
 
-  /* Desktop: full-width flex so SideNav + content sit side-by-side */
   @media (min-width: 1024px) {
     #root {
       max-width: 100%;
       display: flex;
-      background: #F4F2EE;
+      background: #FAF6F0;
     }
     .dark #root {
-      background: #07070f;
+      background: #12141F;
     }
   }
 }
 
 @layer components {
   .font-verse {
-    font-family: 'Lora', 'Cormorant Garamond', Georgia, serif;
+    font-family: 'Lora', Georgia, serif;
   }
 
   .font-dev {
@@ -98,222 +98,80 @@
 
   @media (min-width: 1280px) {
     .page-container {
-      @apply px-12;
+      @apply px-14 pt-10 pb-12;
     }
   }
 
-  /* Glassmorphism card */
-  .card {
-    @apply rounded-2xl p-4;
-    background: rgba(255, 255, 255, 0.72);
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
-    border: 1px solid rgba(255, 255, 255, 0.55);
-    box-shadow: 0 1px 12px rgba(0, 0, 0, 0.05), 0 0 0 0.5px rgba(0,0,0,0.03);
-    /* Isolate GPU layer so backdrop-filter compositing doesn't bleed into
-       adjacent elements when nearby background-color values change */
-    isolation: isolate;
-  }
-
-  .dark .card {
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px solid rgba(255, 255, 255, 0.07);
-    box-shadow: 0 2px 20px rgba(0, 0, 0, 0.35);
-  }
-
-  .card-solid {
-    @apply rounded-2xl p-4 bg-white dark:bg-white/5;
+  /* Bento Cards */
+  .card-bento {
+    @apply rounded-3xl p-6 transition-all duration-300;
+    background: #FFFFFF;
     border: 1px solid rgba(0, 0, 0, 0.06);
+    box-shadow: 0 4px 20px -2px rgba(239, 90, 52, 0.05);
   }
 
-  .dark .card-solid {
-    border: 1px solid rgba(255, 255, 255, 0.07);
+  .dark .card-bento {
+    background: #191B28;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.4);
   }
 
-  /* Gradient text */
-  .gradient-text {
-    background: linear-gradient(135deg, #E8843C 0%, #C9A961 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+  /* Buttons */
+  .btn-coral {
+    background: linear-gradient(135deg, #EF5A34 0%, #E84D25 100%);
+    color: #FFFFFF;
+    font-weight: 700;
+    border-radius: 9999px;
+    padding: 0.75rem 1.75rem;
+    box-shadow: 0 4px 20px rgba(239, 90, 52, 0.35);
+    transition: all 0.2s ease;
+  }
+  .btn-coral:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 25px rgba(239, 90, 52, 0.45);
+    opacity: 0.96;
   }
 
-  .gradient-text-indigo {
-    background: linear-gradient(135deg, #2D3561 0%, #5B6BAF 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+  .btn-outline-dark {
+    border: 1.5px solid #18191E;
+    color: #18191E;
+    font-weight: 700;
+    border-radius: 9999px;
+    padding: 0.75rem 1.5rem;
+    transition: all 0.2s ease;
+  }
+  .btn-outline-dark:hover {
+    background: #18191E;
+    color: #FFFFFF;
   }
 
-  /* Pill badge */
-  .pill {
-    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+  .dark .btn-outline-dark {
+    border: 1.5px solid rgba(255, 255, 255, 0.3);
+    color: #FFFFFF;
   }
-
-  /* Section header */
-  .section-label {
-    @apply text-[11px] font-semibold text-stone-400 uppercase tracking-widest;
+  .dark .btn-outline-dark:hover {
+    background: #FFFFFF;
+    color: #18191E;
   }
 }
 
-@layer utilities {
-  .scrollbar-hide {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-  }
-  .scrollbar-hide::-webkit-scrollbar { display: none; }
-
-  .scrollbar-thin {
-    scrollbar-width: thin;
-    scrollbar-color: rgba(0,0,0,0.18) transparent;
-  }
-  .scrollbar-thin::-webkit-scrollbar { width: 4px; }
-  .scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
-  .scrollbar-thin::-webkit-scrollbar-thumb {
-    background: rgba(0,0,0,0.18);
-    border-radius: 4px;
-  }
-  .dark .scrollbar-thin {
-    scrollbar-color: rgba(255,255,255,0.15) transparent;
-  }
-  .dark .scrollbar-thin::-webkit-scrollbar-thumb {
-    background: rgba(255,255,255,0.15);
-  }
-
-  .safe-bottom { padding-bottom: env(safe-area-inset-bottom, 0px); }
+/* Animations */
+@keyframes marquee {
+  0% { transform: translateX(0%); }
+  100% { transform: translateX(-50%); }
 }
 
-/* ─── Page transitions ─────────────────────────────────────────────────────── */
-.page-transition {
-  animation: fadeSlideUp 0.22s ease-out both;
+.animate-marquee {
+  display: flex;
+  width: 200%;
+  animation: marquee 25s linear infinite;
 }
 
-@keyframes fadeSlideUp {
-  from { opacity: 0; transform: translateY(6px); }
-  to   { opacity: 1; transform: translateY(0); }
+@keyframes float-slow {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-8px); }
 }
 
-/* Direction-aware transitions (#46) */
-.page-forward {
-  animation: slideInFromRight 0.24s cubic-bezier(0.4,0,0.2,1) both;
-}
-.page-backward {
-  animation: slideInFromLeft 0.24s cubic-bezier(0.4,0,0.2,1) both;
-}
-
-@keyframes slideInFromRight {
-  from { opacity: 0; transform: translateX(24px); }
-  to   { opacity: 1; transform: translateX(0); }
-}
-@keyframes slideInFromLeft {
-  from { opacity: 0; transform: translateX(-24px); }
-  to   { opacity: 1; transform: translateX(0); }
-}
-
-/* Slide-up utility (#animate-slide-up) */
-.animate-slide-up {
-  animation: fadeSlideUp 0.18s ease-out both;
-}
-
-/* ─── Lotus bloom ───────────────────────────────────────────────────────────── */
-@keyframes petal-open {
-  0%   { transform: rotate(var(--petal-rot)) scaleY(0); transform-origin: bottom center; opacity: 0; }
-  100% { transform: rotate(var(--petal-rot)) scaleY(1); transform-origin: bottom center; opacity: 1; }
-}
-
-/* ─── Chakra / mandala ──────────────────────────────────────────────────────── */
-@keyframes chakra-spin {
-  from { transform: rotate(0deg); }
-  to   { transform: rotate(360deg); }
-}
-
-@keyframes breath-pulse {
-  0%, 100% { opacity: 0.35; transform: scale(1); }
-  50%       { opacity: 0.65; transform: scale(1.03); }
-}
-
-.chakra-rotate   { animation: chakra-spin 25s linear infinite; }
-.mandala-breathe { animation: breath-pulse 6s ease-in-out infinite; }
-
-/* ─── Sanskrit / verse text ─────────────────────────────────────────────────── */
-.verse-sanskrit {
-  font-family: 'Tiro Devanagari Hindi', serif;
-  font-size: 1.05rem;
-  line-height: 2;
-  color: #2D3561;
-}
-.dark .verse-sanskrit { color: #C9A961; }
-
-/* ─── Range input ───────────────────────────────────────────────────────────── */
-input[type='range'] {
-  -webkit-appearance: none;
-  appearance: none;
-  height: 4px;
-  border-radius: 2px;
-  background: #E8E0D0;
-  outline: none;
-}
-input[type='range']::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: #E8843C;
-  cursor: pointer;
-}
-
-/* ─── Heatmap ───────────────────────────────────────────────────────────────── */
-.heatmap-cell {
-  border-radius: 3px;
-  transition: transform 0.12s ease;
-  cursor: default;
-}
-.heatmap-cell:hover { transform: scale(1.4); }
-
-/* ─── Glass navigation ──────────────────────────────────────────────────────── */
-.glass-nav {
-  background: rgba(244, 242, 238, 0.88);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-top: 1px solid rgba(0, 0, 0, 0.06);
-}
-.dark .glass-nav {
-  background: rgba(7, 7, 15, 0.92);
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
-}
-
-/* ─── Gradient backgrounds ──────────────────────────────────────────────────── */
-.bg-hero-gradient {
-  background: linear-gradient(135deg, #1e2240 0%, #2d3561 50%, #1a1a3e 100%);
-}
-
-.bg-saffron-gradient {
-  background: linear-gradient(135deg, #E8843C 0%, #C9A961 100%);
-}
-
-/* ─── Circular progress ring entrance ───────────────────────────────────────── */
-@keyframes ringDraw {
-  from { stroke-dashoffset: var(--ring-circumference); }
-  to   { stroke-dashoffset: var(--ring-offset); }
-}
-
-/* ─── Smooth global transitions ─────────────────────────────────────────────── */
-/*
-  background-color is intentionally excluded here.
-  Applying bg transitions globally causes backdrop-filter (used on .card) to
-  re-composite on every hover/state change anywhere on the page, which produces
-  a floating semi-transparent grey ghost box. Elements that need a bg transition
-  should add transition-colors or transition-all explicitly.
-*/
-* {
-  transition-property: color, border-color;
-  transition-duration: 150ms;
-}
-
-html { scroll-behavior: smooth; }
-
-/* Prevent button/link focus outlines from appearing as grey boxes */
-button:focus:not(:focus-visible),
-a:focus:not(:focus-visible) {
-  outline: none;
+.animate-float {
+  animation: float-slow 4s ease-in-out infinite;
 }
