@@ -291,6 +291,12 @@ input[type='range']::-webkit-slider-thumb {
   background: linear-gradient(135deg, #E8843C 0%, #C9A961 100%);
 }
 
+/* ─── Circular progress ring entrance ───────────────────────────────────────── */
+@keyframes ringDraw {
+  from { stroke-dashoffset: var(--ring-circumference); }
+  to   { stroke-dashoffset: var(--ring-offset); }
+}
+
 /* ─── Smooth global transitions ─────────────────────────────────────────────── */
 /*
   background-color is intentionally excluded here.

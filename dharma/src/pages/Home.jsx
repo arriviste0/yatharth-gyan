@@ -1,6 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { Settings, Sparkles, Timer, LogIn, Check, Plus, Heart, Flame } from 'lucide-react';
+import {
+  Settings, Sparkles, Timer, LogIn, Check, Plus, Heart, Flame,
+  Moon, Utensils, Dumbbell, ChevronRight, ArrowRight, Zap,
+} from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell,
 } from 'recharts';
@@ -21,6 +24,12 @@ import ShankhaSVG from '../components/svgs/ShankhaSVG';
 
 const WEEKDAY_SHORT = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
+const PILLAR_ICONS = {
+  moon: Moon,
+  bowl: Utensils,
+  dumbbell: Dumbbell,
+};
+
 function getGreeting(name) {
   const h = new Date().getHours();
   const base =
@@ -30,6 +39,47 @@ function getGreeting(name) {
           h < 21 ? 'Good evening' :
             'Evening';
   return name ? `${base}, ${name}` : base;
+}
+
+/* ── Circular Progress Ring ───────────────────────────────────────── */
+function CircularProgress({ percentage, size = 120, strokeWidth = 8 }) {
+  const radius = (size - strokeWidth) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const offset = circumference - (percentage / 100) * circumference;
+  const center = size / 2;
+
+  return (
+    <svg width={size} height={size} className="transform -rotate-90">
+      {/* Background circle */}
+      <circle
+        cx={center}
+        cy={center}
+        r={radius}
+        stroke="rgba(255,255,255,0.08)"
+        strokeWidth={strokeWidth}
+        fill="none"
+      />
+      {/* Progress arc */}
+      <circle
+        cx={center}
+        cy={center}
+        r={radius}
+        stroke="url(#progressGrad)"
+        strokeWidth={strokeWidth}
+        fill="none"
+        strokeLinecap="round"
+        strokeDasharray={circumference}
+        strokeDashoffset={offset}
+        style={{ transition: 'stroke-dashoffset 0.8s cubic-bezier(0.4,0,0.2,1)' }}
+      />
+      <defs>
+        <linearGradient id="progressGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stopColor="#E8843C" />
+          <stop offset="100%" stopColor="#C9A961" />
+        </linearGradient>
+      </defs>
+    </svg>
+  );
 }
 
 /* ── Desktop-only Weekly Chart ─────────────────────────────────────── */
@@ -120,98 +170,267 @@ function WeekBarChart({ logs, pillars }) {
   );
 }
 
-/* ── Mobile Today Creative & Interactive View (lg:hidden) ────────── */
-function MobileTodayInteractive({ pillars, logs, logTarget, dateStr, onOpenFocus }) {
-  const dayLog = logs[dateStr] || {};
-  const activeTargets = pillars.flatMap((p) =>
-    p.targets.map((t) => ({
-      ...t,
-      pillarName: p.english,
-      pillarColor: p.color || '#E8843C',
-      done: !!dayLog[t.id]?.done,
-    }))
-  );
-
-  const completedCount = activeTargets.filter((t) => t.done).length;
-  const pct = activeTargets.length > 0 ? Math.round((completedCount / activeTargets.length) * 100) : 0;
+/* ── Pillar Category Card (mobile) ─────────────────────────────────── */
+function PillarCategoryCard({ pillar, dayLog }) {
+  const IconComp = PILLAR_ICONS[pillar.icon] || Zap;
+  const dailyTargets = pillar.targets.filter((t) => t.frequency === 'daily' || !t.frequency);
+  const doneCount = dailyTargets.filter((t) => dayLog[t.id]?.done).length;
+  const totalCount = dailyTargets.length;
+  const pct = totalCount > 0 ? Math.round((doneCount / totalCount) * 100) : 0;
 
   return (
-    <div className="block lg:hidden space-y-4 mb-5">
-      {/* Dynamic Mindful Lotus & Progress Orbit */}
-      <div className="relative overflow-hidden rounded-3xl p-5 bg-gradient-to-br from-[#1b1f3b] via-[#2a3158] to-[#3a4478] text-white shadow-xl">
-        <div className="flex items-center justify-between">
-          <div>
-            <span className="text-[10px] font-bold uppercase tracking-widest text-[#C9A961]">Today's Mindful Lotus</span>
-            <h3 className="text-xl font-extrabold mt-0.5">{completedCount} of {activeTargets.length} Completed</h3>
-            <p className="text-xs text-stone-300 mt-1">Tap targets below to bloom your practice</p>
-          </div>
-          <button
-            onClick={onOpenFocus}
-            className="relative flex items-center justify-center w-16 h-16 rounded-full bg-white/10 border-2 border-[#C9A961]/40 shadow-inner active:scale-95 transition-all"
-            title="Focus Timer"
-          >
-            <span className="text-xl font-bold text-[#C9A961]">{pct}%</span>
-          </button>
+    <div
+      className="relative overflow-hidden rounded-2xl p-4 flex flex-col justify-between min-h-[110px] transition-all active:scale-[0.97]"
+      style={{
+        background: `linear-gradient(145deg, ${pillar.color}18, ${pillar.color}08)`,
+        border: `1px solid ${pillar.color}20`,
+      }}
+    >
+      <div className="flex items-start justify-between">
+        <div
+          className="w-10 h-10 rounded-xl flex items-center justify-center"
+          style={{ background: `${pillar.color}20` }}
+        >
+          <IconComp size={18} style={{ color: pillar.color }} />
         </div>
-
-        {/* Dynamic lotus progress line */}
-        <div className="mt-4 h-2 rounded-full bg-white/10 overflow-hidden">
-          <div
-            className="h-full rounded-full bg-gradient-to-r from-[#E8843C] via-[#C9A961] to-[#5A8A8A] transition-all duration-500"
-            style={{ width: `${pct}%` }}
-          />
-        </div>
+        <span
+          className="text-[11px] font-bold px-2 py-0.5 rounded-full"
+          style={{ background: `${pillar.color}15`, color: pillar.color }}
+        >
+          {pct}%
+        </span>
       </div>
-
-      {/* Interactive Mobile Quick Check-off Cards */}
-      <div className="space-y-2.5">
-        <div className="flex items-center justify-between px-1">
-          <span className="text-xs font-bold uppercase tracking-widest text-stone-400">Quick Daily Check-off</span>
-          <span className="text-[11px] font-bold text-[#E8843C]">{completedCount}/{activeTargets.length} Done</span>
-        </div>
-
-        <div className="grid grid-cols-1 gap-2.5">
-          {activeTargets.map((target) => (
-            <button
-              key={target.id}
-              onClick={() => logTarget(dateStr, target.id, { done: !target.done, timestamp: Date.now() })}
-              className={`w-full flex items-center justify-between p-3.5 rounded-2xl border text-left transition-all active:scale-98 ${
-                target.done
-                  ? 'bg-stone-900/90 dark:bg-white/10 border-[#E8843C]/40 text-white shadow-md'
-                  : 'bg-white dark:bg-[#0f1428] border-black/5 dark:border-white/10 text-[#1a1a2e] dark:text-white hover:border-[#E8843C]/30'
-              }`}
-            >
-              <div className="flex items-center gap-3 min-w-0">
-                <div
-                  className="w-3.5 h-3.5 rounded-full shrink-0 shadow-sm"
-                  style={{ backgroundColor: target.pillarColor }}
-                />
-                <div className="min-w-0">
-                  <div className={`text-xs font-bold truncate ${target.done ? 'line-through opacity-70' : ''}`}>
-                    {target.name}
-                  </div>
-                  <div className="text-[10px] text-stone-400 uppercase tracking-wide">{target.pillarName}</div>
-                </div>
-              </div>
-
-              <div
-                className={`w-7 h-7 rounded-xl flex items-center justify-center transition-all ${
-                  target.done
-                    ? 'bg-gradient-to-r from-[#E8843C] to-[#C9A961] text-white shadow-md'
-                    : 'bg-stone-100 dark:bg-white/5 text-stone-300 border border-black/5 dark:border-white/10'
-                }`}
-              >
-                {target.done ? <Check size={14} strokeWidth={3} /> : <Plus size={14} />}
-              </div>
-            </button>
-          ))}
-        </div>
+      <div className="mt-3">
+        <h4 className="text-sm font-bold text-[#1a1a2e] dark:text-white">{pillar.english}</h4>
+        <p className="text-[10px] text-stone-400 mt-0.5 font-medium">{doneCount}/{totalCount} completed</p>
+      </div>
+      {/* Mini progress bar */}
+      <div className="mt-2 h-1 rounded-full overflow-hidden" style={{ background: `${pillar.color}15` }}>
+        <div
+          className="h-full rounded-full transition-all duration-500"
+          style={{ width: `${pct}%`, background: pillar.color }}
+        />
       </div>
     </div>
   );
 }
 
-/* ── Practice Progress Card ───────────────────────────────────────── */
+/* ── Mobile Today View ─────────────────────────────────────────────── */
+function MobileTodayView({ pillars, logs, logTarget, dateStr, streak, settings, onOpenFocus }) {
+  const dayLog = logs[dateStr] || {};
+  const activeTargets = useMemo(() =>
+    pillars.flatMap((p) =>
+      p.targets
+        .filter((t) => t.frequency === 'daily' || !t.frequency)
+        .map((t) => ({
+          ...t,
+          pillarName: p.english,
+          pillarColor: p.color || '#E8843C',
+          pillarIcon: p.icon,
+          done: !!dayLog[t.id]?.done,
+        }))
+    ), [pillars, dayLog]
+  );
+
+  const completedCount = activeTargets.filter((t) => t.done).length;
+  const totalCount = activeTargets.length;
+  const pct = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
+  const allDone = completedCount === totalCount && totalCount > 0;
+
+  // Separate done and pending
+  const pendingTargets = activeTargets.filter((t) => !t.done);
+  const doneTargets = activeTargets.filter((t) => t.done);
+
+  return (
+    <div className="block lg:hidden space-y-5 mb-5">
+
+      {/* ── Hero Progress Card with Circular Ring ──────────────── */}
+      <div
+        className="relative overflow-hidden rounded-3xl p-6"
+        style={{ background: 'linear-gradient(145deg, #1b1f3b 0%, #2a3158 50%, #3a4478 100%)' }}
+      >
+        {/* Decorative circles */}
+        <div
+          className="absolute -top-8 -right-8 w-32 h-32 rounded-full opacity-[0.04]"
+          style={{ background: 'radial-gradient(circle, #C9A961, transparent)' }}
+        />
+        <div
+          className="absolute -bottom-12 -left-12 w-40 h-40 rounded-full opacity-[0.03]"
+          style={{ background: 'radial-gradient(circle, #E8843C, transparent)' }}
+        />
+
+        <div className="relative z-10 flex items-center justify-between">
+          <div className="flex-1">
+            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#C9A961]/70">
+              Today's Progress
+            </span>
+            <h2 className="text-xl font-extrabold text-white mt-1 leading-tight">
+              {allDone ? 'All done! 🪷' : `${totalCount - completedCount} tasks remaining`}
+            </h2>
+            <p className="text-[11px] text-white/40 mt-1.5 leading-relaxed">
+              {allDone
+                ? 'Your practice blooms today — rest well.'
+                : 'Tap each target to check it off.'
+              }
+            </p>
+
+            {/* Streak + Stats Row */}
+            <div className="flex items-center gap-3 mt-4">
+              {!settings.silentMode && streak > 0 && (
+                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full" style={{ background: 'rgba(232,132,60,0.15)' }}>
+                  <Flame size={11} className="text-[#E8843C]" />
+                  <span className="text-[10px] font-bold text-[#E8843C]">{streak}d streak</span>
+                </div>
+              )}
+              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full" style={{ background: 'rgba(201,169,97,0.12)' }}>
+                <Check size={10} className="text-[#C9A961]" />
+                <span className="text-[10px] font-bold text-[#C9A961]">{completedCount} done</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Circular Progress Ring */}
+          <div className="relative flex items-center justify-center ml-4">
+            <CircularProgress percentage={pct} size={100} strokeWidth={7} />
+            <div className="absolute inset-0 flex flex-col items-center justify-center">
+              <span className="text-2xl font-extrabold text-white tabular-nums">{pct}%</span>
+              <span className="text-[9px] text-white/40 font-medium -mt-0.5">complete</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Pillar Category Cards ──────────────────────────────── */}
+      <div>
+        <div className="flex items-center justify-between px-1 mb-3">
+          <span className="text-xs font-bold uppercase tracking-widest text-stone-400">Your Pillars</span>
+          <Link to="/sadhana" className="text-[10px] font-bold text-[#E8843C] flex items-center gap-0.5">
+            View all <ChevronRight size={10} />
+          </Link>
+        </div>
+        <div className="grid grid-cols-3 gap-2.5">
+          {pillars.map((pillar) => (
+            <PillarCategoryCard key={pillar.id} pillar={pillar} dayLog={dayLog} />
+          ))}
+        </div>
+      </div>
+
+      {/* ── Active Tasks Checklist ─────────────────────────────── */}
+      <div>
+        <div className="flex items-center justify-between px-1 mb-3">
+          <span className="text-xs font-bold uppercase tracking-widest text-stone-400">
+            {pendingTargets.length > 0 ? 'Pending Tasks' : 'Completed'}
+          </span>
+          <span className="text-[11px] font-bold tabular-nums" style={{ color: '#E8843C' }}>
+            {completedCount}/{totalCount}
+          </span>
+        </div>
+
+        <div className="space-y-2">
+          {/* Pending targets first */}
+          {pendingTargets.map((target) => {
+            const Icon = PILLAR_ICONS[target.pillarIcon] || Zap;
+            return (
+              <button
+                key={target.id}
+                onClick={() => logTarget(dateStr, target.id, { done: true, timestamp: Date.now() })}
+                className="w-full flex items-center gap-3 p-3.5 rounded-2xl border text-left transition-all duration-200 active:scale-[0.97]
+                  bg-white dark:bg-[#0f1428] border-black/5 dark:border-white/8
+                  hover:border-[#E8843C]/25 hover:shadow-sm"
+              >
+                {/* Pillar icon */}
+                <div
+                  className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
+                  style={{ background: `${target.pillarColor}15` }}
+                >
+                  <Icon size={15} style={{ color: target.pillarColor }} />
+                </div>
+
+                {/* Text */}
+                <div className="flex-1 min-w-0">
+                  <div className="text-[13px] font-semibold text-[#1a1a2e] dark:text-white truncate">
+                    {target.name}
+                  </div>
+                  <div className="text-[10px] text-stone-400 font-medium uppercase tracking-wide mt-0.5">
+                    {target.pillarName}
+                  </div>
+                </div>
+
+                {/* Checkbox circle */}
+                <div
+                  className="w-7 h-7 rounded-full flex items-center justify-center shrink-0 border-2 transition-all"
+                  style={{ borderColor: `${target.pillarColor}30` }}
+                >
+                  <Plus size={12} style={{ color: target.pillarColor, opacity: 0.5 }} />
+                </div>
+              </button>
+            );
+          })}
+
+          {/* Completed targets */}
+          {doneTargets.map((target) => {
+            const Icon = PILLAR_ICONS[target.pillarIcon] || Zap;
+            return (
+              <button
+                key={target.id}
+                onClick={() => logTarget(dateStr, target.id, { done: false, timestamp: Date.now() })}
+                className="w-full flex items-center gap-3 p-3.5 rounded-2xl border text-left transition-all duration-200 active:scale-[0.97]
+                  bg-stone-50 dark:bg-white/[0.03] border-stone-100 dark:border-[#C9A961]/15"
+              >
+                <div
+                  className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
+                  style={{ background: 'rgba(201,169,97,0.1)' }}
+                >
+                  <Icon size={15} style={{ color: target.pillarColor, opacity: 0.5 }} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-[13px] font-semibold text-stone-400 dark:text-stone-500 line-through truncate">
+                    {target.name}
+                  </div>
+                  <div className="text-[10px] text-stone-300 dark:text-stone-600 font-medium uppercase tracking-wide mt-0.5">
+                    {target.pillarName}
+                  </div>
+                </div>
+                <div
+                  className="w-7 h-7 rounded-full flex items-center justify-center shrink-0 transition-all"
+                  style={{ background: 'linear-gradient(135deg, #E8843C, #C9A961)' }}
+                >
+                  <Check size={13} color="white" strokeWidth={3} />
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* ── Quick Access Banner ────────────────────────────────── */}
+      <Link
+        to="/drishti"
+        className="flex items-center justify-between p-4 rounded-2xl transition-all active:scale-[0.98]"
+        style={{
+          background: 'linear-gradient(135deg, rgba(232,132,60,0.08), rgba(201,169,97,0.06))',
+          border: '1px solid rgba(232,132,60,0.12)',
+        }}
+      >
+        <div className="flex items-center gap-3">
+          <div
+            className="w-10 h-10 rounded-xl flex items-center justify-center"
+            style={{ background: 'rgba(232,132,60,0.12)' }}
+          >
+            <Sparkles size={16} style={{ color: '#E8843C' }} />
+          </div>
+          <div>
+            <h4 className="text-[13px] font-bold text-[#1a1a2e] dark:text-white">View Full Dashboard</h4>
+            <p className="text-[10px] text-stone-400 mt-0.5">Monthly grid, health logs & analytics</p>
+          </div>
+        </div>
+        <ArrowRight size={16} className="text-[#E8843C] shrink-0" />
+      </Link>
+    </div>
+  );
+}
+
+/* ── Practice Progress Card (Desktop) ─────────────────────────────── */
 function PracticeProgressCard({ done, total, completion, pillars, logs }) {
   const today = todayKey();
   const dayLog = logs[today] || {};
@@ -381,11 +600,6 @@ export default function Home({ onOpenFocus, onOpenProfile }) {
           <h1 className="text-2xl font-bold text-[#1a1a2e] dark:text-white leading-tight">
             {getGreeting(settings.name)}
           </h1>
-          {!settings.silentMode && streak > 0 && (
-            <p className="text-xs text-stone-400 mt-0.5">
-              <span style={{ color: '#E8843C' }} className="font-semibold">{streak} day</span> streak
-            </p>
-          )}
         </div>
         <div className="flex items-center gap-2 pt-1">
           {completion >= 1 && total > 0 && <ShankhaSVG size={26} color="#C9A961" />}
@@ -403,12 +617,14 @@ export default function Home({ onOpenFocus, onOpenProfile }) {
         </div>
       </div>
 
-      {/* ── Mobile Creative & Interactive Today Section (lg:hidden) ── */}
-      <MobileTodayInteractive
+      {/* ── Mobile Creative Today View (lg:hidden) ────────────── */}
+      <MobileTodayView
         pillars={pillars}
         logs={logs}
         logTarget={logTarget}
         dateStr={today}
+        streak={streak}
+        settings={settings}
         onOpenFocus={onOpenFocus}
       />
 
@@ -441,8 +657,8 @@ export default function Home({ onOpenFocus, onOpenProfile }) {
         </div>
       )}
 
-      {/* ── Dashboard Quick Access Banner ──────────────────────────── */}
-      <div className="mt-6 pt-4 border-t border-black/5 dark:border-white/5">
+      {/* ── Dashboard Quick Access Banner (Desktop) ──────────────── */}
+      <div className="mt-6 pt-4 border-t border-black/5 dark:border-white/5 hidden lg:block">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-gradient-to-r from-[#1e2240] to-[#2d3561] p-4 sm:p-5 rounded-2xl text-white shadow-md">
           <div>
             <span className="text-[10px] font-bold uppercase tracking-widest text-[#C9A961]">Habit Matrix & Health</span>
