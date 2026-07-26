@@ -111,28 +111,26 @@ export default function DynamicIsland({ onOpenFocus, onOpenProfile }) {
                 <Timer size={11} /> Focus
               </button>
 
-              {/* Profile / Sign In Button inside Collapsed Island */}
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  if (onOpenProfile) onOpenProfile();
-                }}
-                title={user ? user.name : 'Sign in'}
-                className="flex items-center gap-1 text-[10px] sm:text-[11px] font-extrabold text-stone-200 bg-white/10 hover:bg-white/20 border border-white/15 px-2.5 py-1 rounded-full shrink-0 hover:scale-105 active:scale-95 transition-all"
-              >
-                {user ? (
-                  user.avatarPhoto ? (
+              {/* Profile Avatar Button inside Collapsed Island (only when logged in) */}
+              {user && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (onOpenProfile) onOpenProfile();
+                  }}
+                  title={user.name}
+                  className="flex items-center gap-1 text-[10px] sm:text-[11px] font-extrabold text-stone-200 bg-white/10 hover:bg-white/20 border border-white/15 px-2 py-1 rounded-full shrink-0 hover:scale-105 active:scale-95 transition-all"
+                >
+                  {user.avatarPhoto ? (
                     <img src={user.avatarPhoto} alt={user.name} className="w-3.5 h-3.5 rounded-full object-cover shrink-0" />
                   ) : (
                     <span className="w-3.5 h-3.5 rounded-full bg-[#F05A36] text-white flex items-center justify-center text-[7px] font-black shrink-0">
                       {user.name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase()}
                     </span>
-                  )
-                ) : (
-                  <LogIn size={11} className="text-[#F05A36] shrink-0" />
-                )}
-                <span className="truncate max-w-[55px] sm:max-w-[70px]">{user ? user.name.split(' ')[0] : 'Sign In'}</span>
-              </button>
+                  )}
+                  <span className="truncate max-w-[55px] sm:max-w-[70px]">{user.name.split(' ')[0]}</span>
+                </button>
+              )}
 
               <ChevronDown size={12} className="text-white/40 ml-0.5" />
             </div>
