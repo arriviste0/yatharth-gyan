@@ -45,6 +45,7 @@ export default function DynamicIsland({ onOpenFocus }) {
           onClick={() => setExpanded(!expanded)}
           style={{
             transformOrigin: 'top center',
+            borderRadius: expanded ? '28px' : '24px',
             boxShadow: expanded
               ? '0 30px 80px -10px rgba(0,0,0,0.7), 0 0 60px -5px rgba(240,90,54,0.35)'
               : '0 12px 35px -5px rgba(0,0,0,0.45), 0 0 18px rgba(240,90,54,0.2)',
@@ -52,8 +53,8 @@ export default function DynamicIsland({ onOpenFocus }) {
           }}
           className={`relative overflow-hidden cursor-pointer select-none backdrop-blur-2xl border transition-all duration-500 ease-[cubic-bezier(0.34,1.4,0.64,1)] active:scale-[0.98] ${
             expanded
-              ? 'w-full max-w-md rounded-[28px] p-5 bg-[#181926]/95 border-[#F05A36]/40 text-white ring-1 ring-[#F05A36]/30'
-              : 'w-auto max-w-[92vw] sm:max-w-sm rounded-full px-4 sm:px-5 py-2.5 bg-[#181926]/90 hover:bg-[#202334] border-[#F05A36]/30 text-white hover:border-[#F05A36]/60'
+              ? 'w-full max-w-md p-5 bg-[#181926]/95 border-[#F05A36]/40 text-white ring-1 ring-[#F05A36]/30'
+              : 'w-auto max-w-[92vw] sm:max-w-sm px-4 sm:px-5 py-2.5 bg-[#181926]/90 hover:bg-[#202334] border-[#F05A36]/30 text-white hover:border-[#F05A36]/60'
           }`}
         >
           {/* Ambient Top Glow Line */}
