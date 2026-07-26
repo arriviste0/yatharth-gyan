@@ -771,6 +771,35 @@ function DesktopActivityFeed({ logs, pillars, dateStr }) {
   );
 }
 
+/* ── Profile Header Button ───────────────────────────────────────── */
+function ProfileHeaderButton({ onOpenProfile }) {
+  const { user } = useAuth();
+  if (!user) {
+    return (
+      <button onClick={onOpenProfile}
+        className="w-9 h-9 rounded-xl flex items-center justify-center text-stone-400 hover:text-[#E8843C] transition-colors bg-black/5 dark:bg-white/5" title="Sign in">
+        <LogIn size={17} />
+      </button>
+    );
+  }
+  if (user.avatarPhoto) {
+    return (
+      <button onClick={onOpenProfile} title={user.name}
+        className="w-9 h-9 rounded-full overflow-hidden transition-all hover:scale-105">
+        <img src={user.avatarPhoto} alt={user.name} className="w-full h-full object-cover" />
+      </button>
+    );
+  }
+  const initials = user.name.split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase();
+  return (
+    <button onClick={onOpenProfile} title={user.name}
+      className="w-9 h-9 rounded-full flex items-center justify-center font-bold text-xs text-white transition-all hover:scale-105"
+      style={{ background: user.avatarColor || '#E8843C' }}>
+      {initials}
+    </button>
+  );
+}
+
 /* ═══════════════════════════════════════════════════════════════════ *
  *  MAIN PAGE                                                         *
  * ═══════════════════════════════════════════════════════════════════ */
