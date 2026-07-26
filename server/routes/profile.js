@@ -23,7 +23,7 @@ router.put('/', requireAuth, async (req, res) => {
       updates.avatarPhoto = avatarPhoto;
     }
 
-    const user = await User.findByIdAndUpdate(req.user._id, updates, { new: true }).select('-passwordHash');
+    const user = await User.findByIdAndUpdate(req.user._id, updates, { returnDocument: 'after' }).select('-passwordHash');
     res.json({ user });
   } catch (err) {
     res.status(500).json({ error: err.message });

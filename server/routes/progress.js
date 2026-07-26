@@ -22,7 +22,7 @@ router.put('/', requireAuth, async (req, res) => {
     const doc = await Progress.findOneAndUpdate(
       { userId: req.user._id },
       { data, syncedAt: new Date() },
-      { upsert: true, new: true }
+      { upsert: true, returnDocument: 'after' }
     );
     res.json({ syncedAt: doc.syncedAt });
   } catch (err) {
