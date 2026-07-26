@@ -1,16 +1,18 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Flame, Timer, X, Droplets, Sparkles, ChevronDown, Calendar as CalendarIcon } from 'lucide-react';
+import { Flame, Timer, X, Droplets, Sparkles, ChevronDown, Calendar as CalendarIcon, LogIn } from 'lucide-react';
 import { useStorage } from '../hooks/useStorage';
+import { useAuth } from '../context/AuthContext';
 import { DEFAULT_PILLARS } from '../data/defaultPillars';
 import { getTodayCompletedCount, getCurrentStreak } from '../utils/streakUtils';
 import { todayKey } from '../utils/dateUtils';
 import PracticeCalendarModal from './PracticeCalendarModal';
 
-export default function DynamicIsland({ onOpenFocus }) {
+export default function DynamicIsland({ onOpenFocus, onOpenProfile }) {
   const [expanded, setExpanded] = useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
   const { state, logMetric } = useStorage();
+  const { user } = useAuth();
   const navigate = useNavigate();
 
   const pillars = state.pillars || DEFAULT_PILLARS;
@@ -98,16 +100,39 @@ export default function DynamicIsland({ onOpenFocus }) {
 
             <div className="w-px h-3.5 bg-white/15 shrink-0" />
 
-            <div className="flex items-center gap-1 shrink-0">
+            <div className="flex items-center gap-1.5 shrink-0">
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   if (onOpenFocus) onOpenFocus();
                 }}
-                className="flex items-center gap-1 text-[10px] sm:text-[11px] text-white bg-[#F05A36] px-3 py-1 rounded-full hover:scale-105 active:scale-95 transition-all shadow-md font-bold"
+                className="flex items-center gap-1 text-[10px] sm:text-[11px] text-white bg-[#F05A36] px-2.5 py-1 rounded-full hover:scale-105 active:scale-95 transition-all shadow-md font-bold"
               >
                 <Timer size={11} /> Focus
               </button>
+
+              {/* Profile / Sign In Button inside Collapsed Island */}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (onOpenProfile) onOpenProfile();
+                }}
+                title={user ? user.name : 'Sign in'}
+                className="w-6 h-6 rounded-full overflow-hidden shrink-0 border border-white/20 flex items-center justify-center bg-white/10 text-white hover:scale-105 active:scale-95 transition-all"
+              >
+                {user ? (
+                  user.avatarPhoto ? (
+                    <img src={user.avatarPhoto} alt={user.name} className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="text-[8px] font-extrabold" style={{ color: user.avatarColor || '#F05A36' }}>
+                      {user.name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase()}
+                    </span>
+                  )
+                ) : (
+                  <LogIn size={11} className="text-stone-300" />
+                )}
+              </button>
+
               <ChevronDown size={12} className="text-white/40 ml-0.5" />
             </div>
           </div>
@@ -137,12 +162,42 @@ export default function DynamicIsland({ onOpenFocus }) {
                     <p className="text-xs sm:text-sm font-extrabold text-white">{streak} Days Continuous Practice</p>
                   </div>
                 </button>
-                <button
-                  onClick={(e) => { e.stopPropagation(); setExpanded(false); }}
-                  className="w-7 h-7 rounded-full flex items-center justify-center bg-white/10 text-white/60 hover:text-white hover:bg-white/20 transition-all"
-                >
-                  <X size={14} />
-                </button>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setExpanded(false);
+                      if (onOpenProfile) onOpenProfile();
+                    }}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/15 text-white transition-all text-xs font-bold border border-white/10"
+                  >
+                    {user ? (
+                      <>
+                        <div className="w-4 h-4 rounded-full overflow-hidden bg-[#F05A36] text-white flex items-center justify-center text-[8px] font-extrabold shrink-0">
+                          {user.avatarPhoto ? (
+                            <img src={user.avatarPhoto} alt={user.name} className="w-full h-full object-cover" />
+                          ) : (
+                            user.name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase()
+                          )}
+                        </div>
+                        <span className="truncate max-w-[70px]">{user.name.split(' ')[0]}</span>
+                      </>
+                    ) : (
+                      <>
+                        <LogIn size={13} className="text-[#F05A36]" />
+                        <span>Sign in</span>
+                      </>
+                    )}
+                  </button>
+
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setExpanded(false); }}
+                    className="w-7 h-7 rounded-full flex items-center justify-center bg-white/10 text-white/60 hover:text-white hover:bg-white/20 transition-all"
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
               </div>
 
               {/* Quick Stats Grid inside Dynamic Island */}

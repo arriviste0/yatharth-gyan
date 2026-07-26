@@ -111,7 +111,7 @@ function AppShell({ children, onOpenFocus, onOpenProfile }) {
 
   return (
     <div className="flex min-h-screen w-full relative">
-      <DynamicIsland onOpenFocus={onOpenFocus} />
+      <DynamicIsland onOpenFocus={onOpenFocus} onOpenProfile={onOpenProfile} />
       <SideNav onOpenFocus={onOpenFocus} onOpenProfile={onOpenProfile} />
       <div className="flex-1 min-w-0 relative pt-12 lg:pt-14"
         onTouchStart={handleTouchStart}
@@ -120,7 +120,7 @@ function AppShell({ children, onOpenFocus, onOpenProfile }) {
           className={direction === 'forward' ? 'page-forward' : 'page-backward'}>
           {children}
         </div>
-        <BottomNav />
+        <BottomNav onOpenProfile={onOpenProfile} />
       </div>
     </div>
   );

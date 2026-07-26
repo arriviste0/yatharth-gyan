@@ -18,8 +18,9 @@ const NAV_ITEMS = [
 ];
 
 /* ── Mobile bottom bar ──────────────────────────────────────────────────────── */
-export default function BottomNav() {
+export default function BottomNav({ onOpenProfile }) {
   const location = useLocation();
+  const { user } = useAuth();
 
   return (
     <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md glass-nav safe-bottom z-50 lg:hidden">
@@ -47,6 +48,32 @@ export default function BottomNav() {
             </NavLink>
           );
         })}
+
+        {/* Mobile Profile / Sign In Button */}
+        <button
+          onClick={onOpenProfile}
+          className="flex-1 flex flex-col items-center justify-center gap-1 py-1.5 rounded-2xl transition-all duration-200 relative"
+        >
+          {user ? (
+            user.avatarPhoto ? (
+              <div className="w-5 h-5 rounded-full overflow-hidden border border-[#F05A36]/60 shadow-sm">
+                <img src={user.avatarPhoto} alt={user.name} className="w-full h-full object-cover" />
+              </div>
+            ) : (
+              <div
+                className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-extrabold text-white shadow-sm"
+                style={{ background: user.avatarColor || '#F05A36' }}
+              >
+                {user.name.split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase()}
+              </div>
+            )
+          ) : (
+            <LogIn size={19} strokeWidth={1.7} style={{ color: '#9CA3AF' }} />
+          )}
+          <span className="text-[9px] font-bold tracking-wide text-stone-400">
+            {user ? 'Profile' : 'Sign in'}
+          </span>
+        </button>
       </div>
     </nav>
   );
