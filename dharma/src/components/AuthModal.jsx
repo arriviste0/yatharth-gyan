@@ -75,36 +75,13 @@ export default function AuthModal({ onClose, onSuccess }) {
           </p>
         </div>
 
-        {/* Google sign-in */}
-        {googleClientId ? (
-          <div className="mb-4 space-y-3">
-            <div className="flex justify-center">
-              <GoogleLogin
-                onSuccess={handleGoogleSuccess}
-                onError={() => setError('Google OAuth client error (deleted/expired). Please sign in below using your Name & Email.')}
-                theme="filled_black"
-                shape="pill"
-                text="continue_with"
-                size="large"
-              />
-            </div>
-            <div className="relative my-4">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t" style={{ borderColor: 'rgba(255,255,255,0.08)' }} />
-              </div>
-              <div className="relative flex justify-center">
-                <span className="px-3 text-[10px] uppercase tracking-widest text-stone-400 font-bold"
-                  style={{ background: '#131325' }}>or use email</span>
-              </div>
-            </div>
-          </div>
-        ) : (
-          <div className="mb-4 text-center">
-            <p className="text-xs text-amber-400 font-semibold bg-amber-950/30 p-2.5 rounded-xl border border-amber-500/20">
-              Sign in below using your Name and Email to sync all data with MongoDB.
-            </p>
-          </div>
-        )}
+        {/* Notice for deleted Google Client ID */}
+        <div className="mb-4 text-center">
+          <p className="text-[11px] text-amber-300 font-medium bg-amber-950/40 p-2.5 rounded-xl border border-amber-500/25 leading-relaxed">
+            💡 Google OAuth Client was deleted in Google Cloud. <br/>
+            <strong>Sign in or Register with Email below</strong> for instant access & MongoDB sync!
+          </p>
+        </div>
 
         {/* Tab toggle */}
         <div className="flex gap-1 rounded-xl p-1 mb-5" style={{ background: 'rgba(255,255,255,0.05)' }}>
@@ -113,11 +90,11 @@ export default function AuthModal({ onClose, onSuccess }) {
             { id: 'register', label: 'Register', Icon: UserPlus },
           ].map(({ id, label, Icon }) => (
             <button key={id} onClick={() => { setMode(id); setError(''); }}
-              className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-semibold transition-all ${mode === id
-                  ? 'bg-white/10 text-white'
-                  : 'text-stone-500 hover:text-stone-300'
+              className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-bold transition-all ${mode === id
+                  ? 'bg-accent text-white shadow-md'
+                  : 'text-stone-400 hover:text-white'
                 }`}>
-              <Icon size={12} />{label}
+              <Icon size={13} />{label}
             </button>
           ))}
         </div>
