@@ -4,6 +4,15 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --color-accent: #F05A36;
+  --color-accent-hover: #d94a28;
+  --color-accent-light: rgba(240, 90, 54, 0.12);
+  --color-accent-border: rgba(240, 90, 54, 0.3);
+  --color-accent-shadow: rgba(240, 90, 54, 0.35);
+  --color-secondary: #C9A961;
+}
+
 @layer base {
   * {
     box-sizing: border-box;
@@ -43,7 +52,7 @@
     background: rgba(255, 255, 255, 0.15);
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: #F05A36;
+    background: var(--color-accent);
   }
   
   .no-scrollbar {
@@ -131,6 +140,17 @@
     }
   }
 
+  /* Dynamic Accent Color Utility Classes */
+  .bg-accent {
+    background-color: var(--color-accent) !important;
+  }
+  .text-accent {
+    color: var(--color-accent) !important;
+  }
+  .border-accent {
+    border-color: var(--color-accent) !important;
+  }
+
   /* Reference Bento Card Styling */
   .card-bento {
     @apply rounded-3xl p-6 transition-all duration-300;
@@ -148,19 +168,19 @@
   /* Reference Button Styles */
   .btn-coral,
   .btn-primary-coral {
-    background: #F05A36;
+    background: var(--color-accent);
     color: #FFFFFF;
     font-weight: 800;
     border-radius: 9999px;
     padding: 0.65rem 1.6rem;
-    box-shadow: 0 4px 20px rgba(240, 90, 54, 0.35);
+    box-shadow: 0 4px 20px var(--color-accent-shadow);
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   }
   .btn-coral:hover,
   .btn-primary-coral:hover {
-    background: #d94a28;
+    background: var(--color-accent-hover);
     transform: translateY(-1px);
-    box-shadow: 0 6px 25px rgba(240, 90, 54, 0.45);
+    box-shadow: 0 6px 25px var(--color-accent-shadow);
   }
 
   .btn-outline-dark,

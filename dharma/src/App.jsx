@@ -141,14 +141,47 @@ function AppInner() {
     document.documentElement.classList.toggle('dark', settings.theme === 'dark');
     
     const ACCENT_MAP = {
-      saffron: { primary: '#F05A36', secondary: '#C9A961' },
-      ocean:   { primary: '#0EA5E9', secondary: '#38BDF8' },
-      forest:  { primary: '#10B981', secondary: '#34D399' },
-      rose:    { primary: '#F43F5E', secondary: '#FB7185' },
+      saffron: {
+        primary: '#F05A36',
+        hover: '#d94a28',
+        light: 'rgba(240, 90, 54, 0.12)',
+        border: 'rgba(240, 90, 54, 0.3)',
+        shadow: 'rgba(240, 90, 54, 0.35)',
+        secondary: '#C9A961',
+      },
+      ocean: {
+        primary: '#0EA5E9',
+        hover: '#0284c7',
+        light: 'rgba(14, 165, 233, 0.12)',
+        border: 'rgba(14, 165, 233, 0.3)',
+        shadow: 'rgba(14, 165, 233, 0.35)',
+        secondary: '#38BDF8',
+      },
+      forest: {
+        primary: '#10B981',
+        hover: '#059669',
+        light: 'rgba(16, 185, 129, 0.12)',
+        border: 'rgba(16, 185, 129, 0.3)',
+        shadow: 'rgba(16, 185, 129, 0.35)',
+        secondary: '#34D399',
+      },
+      rose: {
+        primary: '#F43F5E',
+        hover: '#e11d48',
+        light: 'rgba(244, 63, 94, 0.12)',
+        border: 'rgba(244, 63, 94, 0.3)',
+        shadow: 'rgba(244, 63, 94, 0.35)',
+        secondary: '#FB7185',
+      },
     };
+
     const preset = ACCENT_MAP[settings.accentColor] || ACCENT_MAP.saffron;
     document.documentElement.style.setProperty('--color-accent', preset.primary);
-    document.documentElement.style.setProperty('--color-accent-secondary', preset.secondary);
+    document.documentElement.style.setProperty('--color-accent-hover', preset.hover);
+    document.documentElement.style.setProperty('--color-accent-light', preset.light);
+    document.documentElement.style.setProperty('--color-accent-border', preset.border);
+    document.documentElement.style.setProperty('--color-accent-shadow', preset.shadow);
+    document.documentElement.style.setProperty('--color-secondary', preset.secondary);
   }, [settings.theme, settings.accentColor]);
 
   useEffect(() => {

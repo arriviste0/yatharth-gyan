@@ -33,16 +33,16 @@ export default function BottomNav({ onOpenProfile }) {
               key={path}
               to={path}
               className="flex-1 flex flex-col items-center justify-center gap-1 py-1.5 rounded-2xl transition-all duration-200 relative"
-              style={isActive ? { background: 'rgba(240, 90, 54, 0.12)' } : {}}
+              style={isActive ? { background: 'var(--color-accent-light)' } : {}}
             >
               <Icon
                 size={19}
                 strokeWidth={isActive ? 2.4 : 1.7}
-                style={{ color: isActive ? '#F05A36' : '#9CA3AF' }}
+                style={{ color: isActive ? 'var(--color-accent)' : '#9CA3AF' }}
               />
               <span
                 className="text-[9px] font-bold tracking-wide"
-                style={{ color: isActive ? '#F05A36' : '#9CA3AF' }}
+                style={{ color: isActive ? 'var(--color-accent)' : '#9CA3AF' }}
               >
                 {label}
               </span>
@@ -142,20 +142,20 @@ export function SideNav({ onOpenFocus, onOpenProfile }) {
 
       {/* Today's status card */}
       <div className="mb-5 px-4 py-3.5 rounded-3xl bg-white dark:bg-[#181926] border border-black/5 dark:border-white/8 shadow-sm">
-        <div className="text-[10px] font-extrabold text-[#F05A36] uppercase tracking-widest mb-2">
+        <div className="text-[10px] font-extrabold text-accent uppercase tracking-widest mb-2">
           {dateInfo.dayEn.slice(0, 3)} · {dateInfo.short}
         </div>
         {/* Mini progress bar */}
         <div className="h-2 rounded-full bg-black/5 dark:bg-white/8 mb-2 overflow-hidden">
           <div
-            className="h-full rounded-full transition-all duration-700 bg-[#F05A36]"
+            className="h-full rounded-full transition-all duration-700 bg-accent"
             style={{ width: `${pct}%` }}
           />
         </div>
         <div className="flex items-center justify-between text-xs">
           <span className="font-bold text-stone-500 dark:text-stone-400">{done}/{total} done</span>
           {!settings.silentMode && streak > 0 && (
-            <span className="font-extrabold text-[#F05A36]">
+            <span className="font-extrabold text-accent">
               🔥 {streak}d
             </span>
           )}
@@ -172,7 +172,7 @@ export function SideNav({ onOpenFocus, onOpenProfile }) {
               to={path}
               className={`flex items-center gap-3 px-4 py-3 rounded-full text-sm font-extrabold transition-all duration-200 ${
                 isActive
-                  ? 'bg-[#F05A36] text-white shadow-md shadow-[#F05A36]/30'
+                  ? 'bg-accent text-white shadow-md shadow-accent'
                   : 'text-stone-600 dark:text-stone-300 hover:bg-black/5 dark:hover:bg-white/5'
               }`}
             >
