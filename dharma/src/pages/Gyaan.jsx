@@ -13,17 +13,17 @@ const SUGGEST_THEMES = ['duty', 'fear', 'grief', 'attachment', 'action', 'peace'
 /* ── 18-cell chapter grid (#31) ───────────────────────────────── */
 function ChapterGrid({ progress }) {
   return (
-    <div className="grid gap-1" style={{ gridTemplateColumns: 'repeat(18, 1fr)' }}>
+    <div className="flex items-center gap-1 flex-wrap justify-end">
       {chapters.map((ch) => {
         const done = progress.includes(ch.number);
         return (
           <div key={ch.number}
-            title={`Ch. ${ch.number}: ${ch.english_name}`}
-            className="aspect-square rounded-sm flex items-center justify-center text-[7px] font-bold transition-all"
-            style={{
-              background: done ? '#F05A36' : 'rgba(240,90,54,0.12)',
-              color: done ? 'white' : '#F05A36',
-            }}>
+            title={`Ch. ${ch.number}: ${ch.english_name} (${done ? 'Read' : 'Unread'})`}
+            className={`w-5 h-5 rounded-lg flex items-center justify-center text-[10px] font-extrabold transition-all cursor-pointer ${
+              done
+                ? 'bg-[#F05A36] text-white shadow-sm scale-105'
+                : 'bg-black/5 dark:bg-white/8 text-stone-400 dark:text-stone-400 hover:border-[#F05A36] hover:text-[#F05A36]'
+            }`}>
             {ch.number}
           </div>
         );
@@ -260,11 +260,11 @@ function ReadingPlan({ chapterProgress, readingPlanStart, onSetStart }) {
     <div className="space-y-3">
       <div className="flex items-center justify-between mb-1">
         <div>
-          <p className="text-sm font-semibold text-[#1a1a2e] dark:text-white">Week {currentWeek + 1} of 18</p>
-          <p className="text-xs text-stone-400">Started {startDate.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</p>
+          <p className="text-sm font-bold text-[#18191E] dark:text-white">Week {currentWeek + 1} of 18</p>
+          <p className="text-xs text-stone-400 font-medium">Started {startDate.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</p>
         </div>
-        <div className="w-24 h-1.5 rounded-full bg-stone-100 dark:bg-white/10">
-          <div className="h-full rounded-full" style={{ width: `${((currentWeek + 1) / 18) * 100}%`, background: 'linear-gradient(90deg,#C9A961,#E8843C)' }} />
+        <div className="w-28 h-2 rounded-full bg-black/5 dark:bg-white/10 overflow-hidden">
+          <div className="h-full rounded-full bg-[#F05A36] transition-all" style={{ width: `${((currentWeek + 1) / 18) * 100}%` }} />
         </div>
       </div>
 
@@ -278,29 +278,30 @@ function ReadingPlan({ chapterProgress, readingPlanStart, onSetStart }) {
 
         return (
           <div key={ch.number}
-            className={`flex items-start gap-3 p-3 rounded-xl transition-all ${
-              isCurrent ? 'border-2' : 'border'
-            }`}
-            style={{
-              borderColor: isCurrent ? '#E8843C' : 'rgba(0,0,0,0.07)',
-              background: isCurrent ? 'rgba(232,132,60,0.05)' : isRead ? 'rgba(201,169,97,0.05)' : 'transparent',
-            }}>
-            <div className="w-8 h-8 rounded-xl flex-shrink-0 flex items-center justify-center font-dev font-bold text-sm"
-              style={{ background: isRead ? 'linear-gradient(135deg,#C9A961,#E8843C)' : isPast ? 'rgba(0,0,0,0.06)' : 'rgba(45,53,97,0.08)', color: isRead ? 'white' : '#2D3561' }}>
+            className={`flex items-start gap-3 p-3.5 rounded-2xl transition-all border ${
+              isCurrent
+                ? 'border-[#F05A36] bg-[#F05A36]/8 shadow-sm'
+                : isRead
+                ? 'border-black/5 dark:border-white/8 bg-black/[0.02] dark:bg-white/[0.03]'
+                : 'border-black/5 dark:border-white/5 bg-transparent'
+            }`}>
+            <div className={`w-9 h-9 rounded-xl flex-shrink-0 flex items-center justify-center font-dev font-extrabold text-sm ${
+              isRead ? 'bg-[#F05A36] text-white' : 'bg-black/5 dark:bg-white/8 text-stone-600 dark:text-stone-300'
+            }`}>
               {ch.devanagari}
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-start justify-between gap-1">
                 <div>
-                  <div className="font-dev text-xs font-semibold text-[#1a1a2e] dark:text-white">{ch.sanskrit_name}</div>
-                  <div className="text-[10px] text-stone-400">{ch.english_name}</div>
+                  <div className="font-dev text-xs font-bold text-[#18191E] dark:text-white">{ch.sanskrit_name}</div>
+                  <div className="text-[10px] text-stone-400 font-medium">{ch.english_name}</div>
                 </div>
                 <div className="flex-shrink-0 flex items-center gap-1">
-                  {isCurrent && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full text-white" style={{ background: '#E8843C' }}>THIS WEEK</span>}
-                  {isRead && <CheckCircle2 size={13} style={{ color: '#C9A961' }} />}
+                  {isCurrent && <span className="text-[9px] font-extrabold px-2 py-0.5 rounded-full text-white bg-[#F05A36]">THIS WEEK</span>}
+                  {isRead && <CheckCircle2 size={15} className="text-emerald-500" />}
                 </div>
               </div>
-              <div className="text-[10px] text-stone-400 mt-0.5">Week {weekNum + 1} · {weekLabel}</div>
+              <div className="text-[10px] text-stone-400 mt-0.5 font-medium">Week {weekNum + 1} · {weekLabel}</div>
             </div>
           </div>
         );
@@ -347,41 +348,42 @@ export default function Gyaan() {
 
   return (
     <div className="page-container page-transition">
-      <div className="flex items-start justify-between mb-4">
+      <div className="flex items-center justify-between mb-5 flex-wrap gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-[#1a1a2e] dark:text-white">Wisdom</h1>
-          <div className="text-sm text-stone-400">Gita · 18 Chapters</div>
+          <h1 className="text-2xl font-extrabold text-[#18191E] dark:text-white">Wisdom</h1>
+          <div className="text-xs text-stone-400 font-medium">Bhagavad Gita · 18 Chapters</div>
         </div>
-        <div className="text-right">
-          <div className="text-xs text-stone-400 mb-1">{chapterProgress.length}/18 read</div>
-          {/* 18-cell grid (#31) */}
+        <div className="text-right space-y-1.5">
+          <div className="text-xs font-extrabold text-[#18191E] dark:text-white flex items-center gap-1.5 justify-end">
+            <span className="w-2 h-2 rounded-full bg-[#F05A36]" />
+            {chapterProgress.length}/18 Chapters Read
+          </div>
+          {/* 18-cell grid */}
           <ChapterGrid progress={chapterProgress} />
         </div>
       </div>
 
       {/* Chapter of the day (#30) */}
-      <div className="card mb-4 flex items-center gap-3 py-3"
-        style={{ background: 'rgba(201,169,97,0.06)', border: '1px solid rgba(201,169,97,0.2)' }}>
-        <div className="w-10 h-10 rounded-xl flex-shrink-0 flex items-center justify-center font-dev font-bold text-base"
-          style={{ background: chapterProgress.includes(chapterOfDay?.number) ? 'linear-gradient(135deg,#C9A961,#E8843C)' : 'rgba(45,53,97,0.10)', color: chapterProgress.includes(chapterOfDay?.number) ? 'white' : '#2D3561' }}>
+      <div className="card-bento mb-6 p-4 rounded-3xl bg-gradient-to-r from-[#F05A36]/12 via-[#F05A36]/6 to-transparent border border-[#F05A36]/25 shadow-sm flex items-center gap-4">
+        <div className="w-12 h-12 rounded-2xl flex-shrink-0 flex items-center justify-center font-dev font-extrabold text-xl bg-[#F05A36] text-white shadow-md">
           {chapterOfDay?.devanagari}
         </div>
         <div className="flex-1 min-w-0">
-          <div className="text-[9px] font-bold text-[#C9A961] uppercase tracking-widest mb-0.5">Chapter of the Day</div>
-          <div className="font-dev text-sm font-semibold text-[#1a1a2e] dark:text-white truncate">{chapterOfDay?.sanskrit_name}</div>
-          <div className="text-[10px] text-stone-400 truncate">{chapterOfDay?.english_name}</div>
+          <div className="text-[10px] font-extrabold text-[#F05A36] uppercase tracking-widest mb-0.5">Chapter of the Day</div>
+          <div className="font-dev text-base font-extrabold text-[#18191E] dark:text-white truncate">{chapterOfDay?.sanskrit_name}</div>
+          <div className="text-xs text-stone-500 dark:text-stone-300 truncate font-medium">{chapterOfDay?.english_name}</div>
         </div>
-        <BookOpen size={16} className="text-stone-300 flex-shrink-0" />
+        <BookOpen size={20} className="text-[#F05A36] flex-shrink-0 opacity-80" />
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 rounded-xl p-1 mb-5 overflow-x-auto" style={{ background: 'rgba(0,0,0,0.05)' }}>
+      <div className="flex gap-1.5 rounded-2xl p-1.5 mb-6 bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/8 overflow-x-auto">
         {TABS.map((t) => (
           <button key={t.id} onClick={() => setTab(t.id)}
-            className={`flex-shrink-0 flex-1 py-2 rounded-lg text-xs font-semibold transition-all whitespace-nowrap ${
+            className={`flex-shrink-0 flex-1 py-2 px-3 rounded-xl text-xs font-extrabold transition-all whitespace-nowrap ${
               tab === t.id
-                ? 'bg-white dark:bg-[#2D3561] text-[#1a1a2e] dark:text-white shadow-sm'
-                : 'text-stone-400'
+                ? 'bg-[#F05A36] text-white shadow-sm'
+                : 'text-stone-500 dark:text-stone-400 hover:text-[#18191E] dark:hover:text-white'
             }`}>
             {t.label}
           </button>
