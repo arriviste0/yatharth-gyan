@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Sparkles, CheckCircle2, Zap, RefreshCw, Trophy, AlertCircle, ArrowRight, BarChart2, PieChart as PieIcon } from 'lucide-react';
+import { Sparkles, CheckCircle2, Zap, RefreshCw, Trophy, AlertCircle, ArrowRight, BarChart2, PieChart as PieIcon, Activity } from 'lucide-react';
 import { ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip } from 'recharts';
 import { useStorage } from '../hooks/useStorage';
 import { DEFAULT_PILLARS } from '../data/defaultPillars';
@@ -21,11 +21,11 @@ export default function AIDailyReportCard() {
   const [loading, setLoading] = useState(false);
   const [reportText, setReportText] = useState(null);
 
-  // Construct dynamic items array derived from user's ACTUAL performed tasks
+  // Dynamic payload derived from actual performed user tasks
   const dailyPayload = useMemo(() => {
     const items = [];
 
-    // 1. Hydration (from user logged water)
+    // 1. Water Intake
     const water = dayMetrics.water || 0;
     const waterVal = water >= 1000 ? +(water / 1000).toFixed(1) : water;
     items.push({
@@ -37,7 +37,7 @@ export default function AIDailyReportCard() {
       pct: Math.min(100, Math.round((waterVal / 3.0) * 100)),
     });
 
-    // 2. Pillar-based User Performed Tasks & Progress
+    // 2. Performed tasks per pillar
     pillars.forEach((p) => {
       const doneCount = p.targets.filter(t => dayLog[t.id]?.done).length;
       const totalCount = p.targets.length;
@@ -53,7 +53,7 @@ export default function AIDailyReportCard() {
       });
     });
 
-    // 3. Overall Practice Summary
+    // 3. Overall Practice Targets
     const allTargets = pillars.flatMap(p => p.targets);
     const totalDone = allTargets.filter(t => dayLog[t.id]?.done).length;
     const totalPct = allTargets.length > 0 ? Math.round((totalDone / allTargets.length) * 100) : 0;
@@ -73,7 +73,7 @@ export default function AIDailyReportCard() {
     };
   }, [pillars, dayLog, dayMetrics, today]);
 
-  // Chart datasets
+  // Recharts Data
   const barChartData = useMemo(() => {
     return dailyPayload.items.map(item => ({
       name: item.name,
@@ -89,12 +89,60 @@ export default function AIDailyReportCard() {
     }));
   }, [dailyPayload]);
 
+  // Clean structured parser for report text
+  const parsedSections = useMemo(() => {
+    if (!reportText) return null;
+
+    const rawLines = reportText.split('\n').map(l => l.trim()).filter(Boolean);
+    let summary = null;
+    let categoryItems = [];
+    let bestWin = null;
+    let worthAttention = null;
+    let tomorrowTips = [];
+
+    let currentMode = null;
+
+    rawLines.forEach((line) => {
+      // Remove raw markdown symbols, leading digits like 1. 2. 3. 4., leading asterisks
+      const cleaned = line
+        .replace(/^[\d#*-\s]+/, '')
+        .replace(/\*\*/g, '')
+        .replace(/Powered by Groq AI/gi, '')
+        .trim();
+
+      const lower = line.toLowerCase();
+
+      if (lower.includes('today\'s summary') || lower.includes('summary:')) {
+        summary = cleaned.replace(/^today's summary:?/i, '').replace(/^\d+\.\s*/, '').trim();
+        currentMode = 'summary';
+      } else if (lower.includes('best win')) {
+        bestWin = cleaned.replace(/^best win:?/i, '').replace(/^\d+\.\s*/, '').trim();
+        currentMode = 'bestWin';
+      } else if (lower.includes('worth attention')) {
+        worthAttention = cleaned.replace(/^worth attention:?/i, '').replace(/^\d+\.\s*/, '').trim();
+        currentMode = 'worthAttention';
+      } else if (lower.includes('for tomorrow') || lower.includes('suggestions for tomorrow')) {
+        currentMode = 'tomorrow';
+      } else if (lower.includes('category breakdown') || lower.includes('breakdown:')) {
+        currentMode = 'category';
+      } else if (currentMode === 'tomorrow') {
+        if (cleaned) tomorrowTips.push(cleaned);
+      } else if (currentMode === 'category') {
+        if (cleaned) categoryItems.push(cleaned);
+      } else if (!summary) {
+        summary = cleaned;
+      }
+    });
+
+    return { summary, categoryItems, bestWin, worthAttention, tomorrowTips };
+  }, [reportText]);
+
   async function handleUnlockAndAnalyze() {
     setIsUnlocked(true);
     setLoading(true);
     try {
       const res = await getDailyReportAI(dailyPayload);
-      setReportText(cleanReportText(res.report));
+      setReportText(res.report);
     } catch (e) {
       console.error('Failed to generate report:', e);
     } finally {
@@ -102,37 +150,27 @@ export default function AIDailyReportCard() {
     }
   }
 
-  // Clean markdown tags & hash headers
-  function cleanReportText(text) {
-    if (!text) return '';
-    return text
-      .replace(/#/g, '')
-      .replace(/\*\*/g, '')
-      .replace(/Powered by Groq AI/gi, '')
-      .trim();
-  }
-
   const dateDisplay = formatDateDisplay(new Date());
 
   return (
-    <div className="relative card-bento p-5 lg:p-6 bg-gradient-to-br from-white via-white to-orange-50/30 dark:from-[#181926] dark:via-[#181926] dark:to-[#F05A36]/10 border border-black/5 dark:border-[#F05A36]/20 shadow-xl overflow-hidden min-h-[320px]">
+    <div className="relative rounded-[28px] p-5 lg:p-6 bg-gradient-to-br from-white via-white to-orange-50/30 dark:from-[#181926] dark:via-[#181926] dark:to-[#F05A36]/10 border border-black/5 dark:border-[#F05A36]/20 shadow-xl overflow-hidden min-h-[320px]">
       
-      {/* Centered Blur Overlay when locked */}
+      {/* Glassmorphism Blur Overlay when locked - matching rounded-[28px] */}
       {!isUnlocked && (
-        <div className="absolute inset-0 z-30 flex flex-col items-center justify-center p-6 bg-black/10 dark:bg-black/50 backdrop-blur-md transition-all duration-500">
-          <div className="w-12 h-12 rounded-2xl bg-[#F05A36] text-white flex items-center justify-center shadow-lg shadow-[#F05A36]/40 mb-3 animate-pulse">
-            <Sparkles size={24} />
+        <div className="absolute inset-0 z-30 flex flex-col items-center justify-center p-6 bg-black/20 dark:bg-black/60 backdrop-blur-lg rounded-[28px] transition-all duration-500">
+          <div className="w-13 h-13 rounded-2xl bg-[#F05A36] text-white flex items-center justify-center shadow-xl shadow-[#F05A36]/40 mb-3.5 animate-pulse">
+            <Sparkles size={26} />
           </div>
-          <h4 className="text-base sm:text-lg font-extrabold text-[#18191E] dark:text-white mb-1">
+          <h4 className="text-base sm:text-lg font-extrabold text-white mb-1 tracking-tight">
             Full Body & Practice AI Analysis
           </h4>
-          <p className="text-xs text-stone-600 dark:text-stone-300 font-medium mb-5 text-center max-w-sm">
-            Click below to generate a clean AI performance report based on your logged tasks & daily KPIs.
+          <p className="text-xs text-stone-200 font-medium mb-5 text-center max-w-sm">
+            Analyze your daily tasks, nutrition, hydration & practice KPIs with Groq AI
           </p>
           <button
             onClick={handleUnlockAndAnalyze}
             disabled={loading}
-            className="btn-coral px-7 py-3 text-xs font-extrabold shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center gap-2"
+            className="btn-coral px-8 py-3 text-xs font-extrabold shadow-2xl hover:scale-105 active:scale-95 transition-all flex items-center gap-2"
           >
             {loading ? <RefreshCw size={16} className="animate-spin" /> : <Zap size={16} />}
             <span>{loading ? 'Analyzing Your Tasks…' : 'Analyze Day with AI'}</span>
@@ -141,7 +179,7 @@ export default function AIDailyReportCard() {
       )}
 
       {/* Main Card Content (Blurred if locked) */}
-      <div className={`space-y-5 transition-all duration-500 ${!isUnlocked ? 'filter blur-md pointer-events-none select-none opacity-40' : ''}`}>
+      <div className={`space-y-6 transition-all duration-500 ${!isUnlocked ? 'filter blur-md pointer-events-none select-none opacity-40' : ''}`}>
         
         {/* Top Header */}
         <div className="flex items-center justify-between flex-wrap gap-3">
@@ -154,7 +192,7 @@ export default function AIDailyReportCard() {
                 Practice & Body AI Analysis
               </h3>
               <p className="text-xs text-stone-500 dark:text-stone-400 font-medium">
-                Live performance data from your logged tasks & metrics
+                Live performance metrics from your performed daily tasks
               </p>
             </div>
           </div>
@@ -163,7 +201,7 @@ export default function AIDailyReportCard() {
             <button
               onClick={handleUnlockAndAnalyze}
               disabled={loading}
-              className="btn-coral flex items-center gap-2 text-xs font-extrabold px-3 py-1.5 shadow-md hover:scale-105 active:scale-95 transition-all disabled:opacity-50"
+              className="btn-coral flex items-center gap-2 text-xs font-extrabold px-3.5 py-1.5 shadow-md hover:scale-105 active:scale-95 transition-all disabled:opacity-50"
             >
               {loading ? <RefreshCw size={13} className="animate-spin" /> : <Zap size={13} />}
               <span>Re-Analyze</span>
@@ -171,8 +209,32 @@ export default function AIDailyReportCard() {
           )}
         </div>
 
-        {/* Charts Split View: Target Completion Bar Chart + Donut Pie Chart */}
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-4 p-4 rounded-3xl bg-black/[0.02] dark:bg-white/[0.03] border border-black/5 dark:border-white/8">
+        {/* Dynamic Metric Snapshot Cards with progress bars */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
+          {dailyPayload.items.map((item, i) => (
+            <div key={i} className="p-3 rounded-2xl bg-black/[0.02] dark:bg-white/5 border border-black/5 dark:border-white/8 space-y-1.5">
+              <div className="flex items-center justify-between">
+                <span className="text-[9px] font-extrabold text-stone-400 uppercase tracking-wider block truncate">
+                  {item.name}
+                </span>
+                <span className="w-2 h-2 rounded-full" style={{ backgroundColor: CHART_COLORS[i % CHART_COLORS.length] }} />
+              </div>
+              <div className="text-xs font-extrabold text-[#18191E] dark:text-white tabular-nums">
+                {item.value} {item.unit}
+                <span className="text-[10px] text-stone-400 font-normal ml-1">/ {item.goal}</span>
+              </div>
+              <div className="w-full h-1.5 rounded-full bg-black/5 dark:bg-white/10 overflow-hidden">
+                <div
+                  className="h-full rounded-full transition-all duration-500"
+                  style={{ width: `${item.pct}%`, backgroundColor: CHART_COLORS[i % CHART_COLORS.length] }}
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Charts Split View: Bar Chart + Donut Pie Chart */}
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-5 p-4 rounded-3xl bg-black/[0.02] dark:bg-white/[0.03] border border-black/5 dark:border-white/8">
           
           {/* Left 7 Cols: Bar Chart */}
           <div className="md:col-span-7 space-y-2">
@@ -247,75 +309,57 @@ export default function AIDailyReportCard() {
           </div>
         </div>
 
-        {/* Dynamic Metric Badges */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-2">
-          {dailyPayload.items.map((item, i) => (
-            <div key={i} className="p-2.5 rounded-2xl bg-black/[0.02] dark:bg-white/5 border border-black/5 dark:border-white/8 space-y-1">
-              <div className="flex items-center justify-between">
-                <span className="text-[9px] font-extrabold text-stone-400 uppercase tracking-wider block truncate">
-                  {item.name}
-                </span>
-                <span className="w-2 h-2 rounded-full" style={{ backgroundColor: CHART_COLORS[i % CHART_COLORS.length] }} />
-              </div>
-              <div className="text-xs font-extrabold text-[#18191E] dark:text-white tabular-nums">
-                {item.value} {item.unit}
-                <span className="text-[10px] text-stone-400 font-normal ml-1">/ {item.goal}</span>
-              </div>
-              <div className="w-full h-1 rounded-full bg-black/5 dark:bg-white/10 overflow-hidden">
-                <div
-                  className="h-full rounded-full"
-                  style={{ width: `${item.pct}%`, backgroundColor: CHART_COLORS[i % CHART_COLORS.length] }}
-                />
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Scannable AI Report Content */}
-        {reportText && (
-          <div className="mt-3 p-4.5 rounded-3xl bg-black/[0.03] dark:bg-white/[0.04] border border-black/5 dark:border-white/10 space-y-3 animate-fade-in">
-            <div className="flex items-center justify-between border-b border-black/5 dark:border-white/10 pb-2.5">
+        {/* Scannable Clean AI Report Content */}
+        {parsedSections && (
+          <div className="mt-4 p-5 rounded-3xl bg-black/[0.03] dark:bg-white/[0.04] border border-black/5 dark:border-white/10 space-y-4 animate-fade-in">
+            <div className="flex items-center justify-between border-b border-black/5 dark:border-white/10 pb-3">
               <span className="text-xs font-extrabold text-[#F05A36] uppercase tracking-wider flex items-center gap-1.5">
-                <Trophy size={14} /> AI Analysis Summary ({dateDisplay.short})
+                <Trophy size={14} /> Comprehensive Daily AI Analysis ({dateDisplay.short})
               </span>
             </div>
 
-            <div className="space-y-2.5 text-xs sm:text-sm font-medium text-[#18191E] dark:text-stone-200 leading-relaxed">
-              {reportText.split('\n').filter(l => l.trim()).map((line, idx) => {
-                const lower = line.toLowerCase();
-                if (lower.includes('today\'s summary') || lower.includes('summary:')) {
-                  return (
-                    <div key={idx} className="p-3 rounded-2xl bg-[#F05A36]/10 border border-[#F05A36]/25 text-[#18191E] dark:text-white font-bold">
-                      💡 {line.replace(/today's summary:?/i, '').trim()}
-                    </div>
-                  );
-                }
-                if (lower.includes('best win')) {
-                  return (
-                    <div key={idx} className="p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/25 text-emerald-700 dark:text-emerald-300 font-bold flex items-center gap-2">
-                      <CheckCircle2 size={16} className="shrink-0 text-emerald-500" />
-                      <span>{line}</span>
-                    </div>
-                  );
-                }
-                if (lower.includes('worth attention')) {
-                  return (
-                    <div key={idx} className="p-3 rounded-2xl bg-amber-500/10 border border-amber-500/25 text-amber-800 dark:text-amber-300 font-bold flex items-center gap-2">
-                      <AlertCircle size={16} className="shrink-0 text-amber-500" />
-                      <span>{line}</span>
-                    </div>
-                  );
-                }
-                if (line.trim().startsWith('-') || line.trim().match(/^\d+\./)) {
-                  return (
-                    <div key={idx} className="flex items-start gap-2 pl-2">
-                      <ArrowRight size={13} className="text-[#F05A36] shrink-0 mt-1" />
-                      <span>{line.replace(/^[-*\d.]+\s*/, '')}</span>
-                    </div>
-                  );
-                }
-                return <p key={idx} className="font-semibold text-stone-700 dark:text-stone-300">{line}</p>;
-              })}
+            <div className="space-y-3.5 text-xs sm:text-sm font-medium leading-relaxed">
+              
+              {/* Summary Pill */}
+              {parsedSections.summary && (
+                <div className="p-3.5 rounded-2xl bg-[#F05A36]/10 border border-[#F05A36]/25 text-[#18191E] dark:text-white font-bold flex items-center gap-2.5">
+                  <span className="text-base">💡</span>
+                  <span>{parsedSections.summary}</span>
+                </div>
+              )}
+
+              {/* Best Win */}
+              {parsedSections.bestWin && (
+                <div className="p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/25 text-emerald-700 dark:text-emerald-300 font-bold flex items-center gap-2.5">
+                  <CheckCircle2 size={18} className="shrink-0 text-emerald-500" />
+                  <span>Best Win: {parsedSections.bestWin}</span>
+                </div>
+              )}
+
+              {/* Worth Attention */}
+              {parsedSections.worthAttention && (
+                <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/25 text-amber-800 dark:text-amber-300 font-bold flex items-center gap-2.5">
+                  <AlertCircle size={18} className="shrink-0 text-amber-500" />
+                  <span>Worth Attention: {parsedSections.worthAttention}</span>
+                </div>
+              )}
+
+              {/* Tomorrow Action Tips */}
+              {parsedSections.tomorrowTips.length > 0 && (
+                <div className="space-y-2 pt-1">
+                  <span className="text-xs font-extrabold text-stone-500 dark:text-stone-400 uppercase tracking-wider block">
+                    Action Steps for Tomorrow:
+                  </span>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {parsedSections.tomorrowTips.map((tip, idx) => (
+                      <div key={idx} className="p-3 rounded-2xl bg-black/[0.02] dark:bg-white/5 border border-black/5 dark:border-white/8 flex items-start gap-2.5 text-stone-700 dark:text-stone-200">
+                        <ArrowRight size={14} className="text-[#F05A36] shrink-0 mt-0.5" />
+                        <span>{tip}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}
