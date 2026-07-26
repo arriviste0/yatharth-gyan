@@ -212,15 +212,6 @@ export default function AIDailyReportCard() {
 
     items.push({
       category: 'Nutrition',
-      name: 'Protein Intake',
-      value: proteinToday,
-      unit: 'g',
-      goal: proteinGoal,
-      pct: proteinGoal > 0 ? Math.min(100, Math.round((proteinToday / proteinGoal) * 100)) : 0,
-    });
-
-    items.push({
-      category: 'Nutrition',
       name: 'Avg Daily Protein',
       value: avgProtein,
       unit: 'g/day',
