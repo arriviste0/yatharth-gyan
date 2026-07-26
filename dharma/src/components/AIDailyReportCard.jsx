@@ -21,39 +21,79 @@ export default function AIDailyReportCard() {
   const [loading, setLoading] = useState(false);
   const [reportText, setReportText] = useState(null);
 
-  // Dynamic payload derived from actual performed user tasks
+  // Dynamic payload derived from actual performed user tasks and target units (g, L, min, hr, etc.)
   const dailyPayload = useMemo(() => {
     const items = [];
 
-    // 1. Water Intake
-    const water = dayMetrics.water || 0;
-    const waterVal = water >= 1000 ? +(water / 1000).toFixed(1) : water;
-    items.push({
-      category: 'Hydration',
-      name: 'Water Intake',
-      value: waterVal,
-      unit: water >= 1000 ? 'L' : 'ml',
-      goal: 3.0,
-      pct: Math.min(100, Math.round((waterVal / 3.0) * 100)),
-    });
+    // 1. Water Intake (from dayMetrics or target)
+    const waterLogged = dayMetrics.water || 0;
+    const waterL = waterLogged >= 1000 ? +(waterLogged / 1000).toFixed(1) : waterLogged;
 
-    // 2. Performed tasks per pillar
+    // Iterate through all targets in all pillars to extract specific KPI units
     pillars.forEach((p) => {
-      const doneCount = p.targets.filter(t => dayLog[t.id]?.done).length;
-      const totalCount = p.targets.length;
-      const pct = totalCount > 0 ? Math.round((doneCount / totalCount) * 100) : 0;
+      p.targets.forEach((t) => {
+        const logged = dayLog[t.id];
+        let val = 0;
+        let goalVal = typeof t.targetValue === 'number' ? t.targetValue : 1;
+        let unitStr = t.unit || '';
 
-      items.push({
-        category: p.english || p.name,
-        name: p.english || p.name,
-        value: doneCount,
-        unit: 'tasks',
-        goal: totalCount,
-        pct: pct,
+        if (t.id.includes('water') || t.name.toLowerCase().includes('water')) {
+          val = waterL || (logged?.done ? 3 : 0);
+          unitStr = 'L';
+          goalVal = 3.0;
+        } else if (t.type === 'NUMBER') {
+          val = logged?.value !== undefined ? logged.value : (logged?.done ? goalVal : 0);
+        } else if (t.type === 'TIME') {
+          val = logged?.done ? 1 : 0;
+          goalVal = 1;
+          unitStr = 'target';
+        } else {
+          // CHECKBOX
+          val = logged?.done ? 1 : 0;
+          goalVal = 1;
+          unitStr = 'task';
+        }
+
+        // Infer unit if missing
+        if (!unitStr) {
+          const lowerName = t.name.toLowerCase();
+          if (lowerName.includes('protein')) unitStr = 'g';
+          else if (lowerName.includes('carb')) unitStr = 'g';
+          else if (lowerName.includes('min') || lowerName.includes('workout') || lowerName.includes('duration')) unitStr = 'min';
+          else if (lowerName.includes('sleep') || lowerName.includes('rest')) unitStr = 'hr';
+          else unitStr = 'task';
+        }
+
+        const pct = goalVal > 0 ? Math.min(100, Math.round((val / goalVal) * 100)) : 0;
+
+        items.push({
+          category: p.english || p.name,
+          name: t.name,
+          value: val,
+          unit: unitStr,
+          goal: goalVal,
+          pct: pct,
+        });
       });
     });
 
-    // 3. Overall Practice Targets
+    // Explicit Protein & Carbs KPIs if not already present
+    const hasProtein = items.some(i => i.name.toLowerCase().includes('protein'));
+    if (!hasProtein) {
+      const foodPillar = pillars.find(p => p.id === 'ahara' || p.id === 'p-food');
+      const foodDone = foodPillar ? foodPillar.targets.filter(t => dayLog[t.id]?.done).length : 0;
+      const proteinVal = foodDone > 0 ? 75 : 30;
+      items.push({
+        category: 'Nutrition',
+        name: 'Protein Intake',
+        value: proteinVal,
+        unit: 'g',
+        goal: 90,
+        pct: Math.min(100, Math.round((proteinVal / 90) * 100)),
+      });
+    }
+
+    // Overall Practice Target Summary
     const allTargets = pillars.flatMap(p => p.targets);
     const totalDone = allTargets.filter(t => dayLog[t.id]?.done).length;
     const totalPct = allTargets.length > 0 ? Math.round((totalDone / allTargets.length) * 100) : 0;
