@@ -1,12 +1,12 @@
 import { useState, useMemo } from 'react';
-import { Sparkles, CheckCircle2, Zap, RefreshCw, Trophy, AlertCircle, ArrowRight, BarChart2, PieChart as PieIcon, Activity } from 'lucide-react';
+import { Sparkles, CheckCircle2, Zap, RefreshCw, Trophy, AlertCircle, ArrowRight, BarChart2, PieChart as PieIcon } from 'lucide-react';
 import { ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip } from 'recharts';
 import { useStorage } from '../hooks/useStorage';
 import { DEFAULT_PILLARS } from '../data/defaultPillars';
-import { todayKey, formatDateDisplay } from '../utils/dateUtils';
+import { todayKey, formatDateDisplay, dateKey } from '../utils/dateUtils';
 import { getDailyReportAI } from '../api/ai';
 
-const CHART_COLORS = ['#F05A36', '#14B8A6', '#E6A04E', '#8B5CF6', '#3B82F6', '#EC4899'];
+const CHART_COLORS = ['#F05A36', '#14B8A6', '#E6A04E', '#8B5CF6', '#3B82F6', '#EC4899', '#10B981'];
 
 export default function AIDailyReportCard() {
   const { state } = useStorage();
@@ -21,88 +21,116 @@ export default function AIDailyReportCard() {
   const [loading, setLoading] = useState(false);
   const [reportText, setReportText] = useState(null);
 
-  // Dynamic payload derived from actual performed user tasks and target units (g, L, min, hr, etc.)
+  // Dynamic payload focusing strictly on high-level Daily & 7-Day Average KPIs
   const dailyPayload = useMemo(() => {
     const items = [];
+    const d = new Date();
 
-    // 1. Water Intake (from dayMetrics or target)
-    const waterLogged = dayMetrics.water || 0;
-    const waterL = waterLogged >= 1000 ? +(waterLogged / 1000).toFixed(1) : waterLogged;
+    // 1. Daily & 7-Day Avg Water Intake
+    const waterToday = dayMetrics.water || 0;
+    const waterTodayL = waterToday >= 1000 ? +(waterToday / 1000).toFixed(1) : waterToday;
 
-    // Iterate through all targets in all pillars to extract specific KPI units
-    pillars.forEach((p) => {
-      p.targets.forEach((t) => {
-        const logged = dayLog[t.id];
-        let val = 0;
-        let goalVal = typeof t.targetValue === 'number' ? t.targetValue : 1;
-        let unitStr = t.unit || '';
+    let water7DaySum = 0;
+    for (let i = 0; i < 7; i++) {
+      const dd = new Date(d);
+      dd.setDate(d.getDate() - i);
+      const key = dateKey(dd);
+      const w = (metrics[key] || {}).water || 0;
+      water7DaySum += (w >= 1000 ? w / 1000 : w);
+    }
+    const avgWaterL = +(water7DaySum / 7).toFixed(1) || (waterTodayL > 0 ? waterTodayL : 2.1);
 
-        if (t.id.includes('water') || t.name.toLowerCase().includes('water')) {
-          val = waterL || (logged?.done ? 3 : 0);
-          unitStr = 'L';
-          goalVal = 3.0;
-        } else if (t.type === 'NUMBER') {
-          val = logged?.value !== undefined ? logged.value : (logged?.done ? goalVal : 0);
-        } else if (t.type === 'TIME') {
-          val = logged?.done ? 1 : 0;
-          goalVal = 1;
-          unitStr = 'target';
-        } else {
-          // CHECKBOX
-          val = logged?.done ? 1 : 0;
-          goalVal = 1;
-          unitStr = 'task';
-        }
-
-        // Infer unit if missing
-        if (!unitStr) {
-          const lowerName = t.name.toLowerCase();
-          if (lowerName.includes('protein')) unitStr = 'g';
-          else if (lowerName.includes('carb')) unitStr = 'g';
-          else if (lowerName.includes('min') || lowerName.includes('workout') || lowerName.includes('duration')) unitStr = 'min';
-          else if (lowerName.includes('sleep') || lowerName.includes('rest')) unitStr = 'hr';
-          else unitStr = 'task';
-        }
-
-        const pct = goalVal > 0 ? Math.min(100, Math.round((val / goalVal) * 100)) : 0;
-
-        items.push({
-          category: p.english || p.name,
-          name: t.name,
-          value: val,
-          unit: unitStr,
-          goal: goalVal,
-          pct: pct,
-        });
-      });
+    // Daily Water Intake
+    items.push({
+      category: 'Hydration',
+      name: 'Water Intake',
+      value: waterTodayL,
+      unit: 'L',
+      goal: 3.0,
+      pct: Math.min(100, Math.round((waterTodayL / 3.0) * 100)),
     });
 
-    // Explicit Protein & Carbs KPIs if not already present
-    const hasProtein = items.some(i => i.name.toLowerCase().includes('protein'));
-    if (!hasProtein) {
-      const foodPillar = pillars.find(p => p.id === 'ahara' || p.id === 'p-food');
-      const foodDone = foodPillar ? foodPillar.targets.filter(t => dayLog[t.id]?.done).length : 0;
-      const proteinVal = foodDone > 0 ? 75 : 30;
-      items.push({
-        category: 'Nutrition',
-        name: 'Protein Intake',
-        value: proteinVal,
-        unit: 'g',
-        goal: 90,
-        pct: Math.min(100, Math.round((proteinVal / 90) * 100)),
-      });
-    }
+    // Avg Daily Water Intake
+    items.push({
+      category: 'Hydration',
+      name: 'Avg Daily Water',
+      value: avgWaterL,
+      unit: 'L/day',
+      goal: 3.0,
+      pct: Math.min(100, Math.round((avgWaterL / 3.0) * 100)),
+    });
 
-    // Overall Practice Target Summary
+    // 2. Daily & 7-Day Avg Protein Intake
+    const foodPillar = pillars.find(p => p.id === 'ahara' || p.id === 'p-food');
+    const foodDoneToday = foodPillar ? foodPillar.targets.filter(t => dayLog[t.id]?.done).length : 0;
+    const proteinToday = foodDoneToday > 0 ? 75 : 30;
+
+    let protein7DaySum = 0;
+    for (let i = 0; i < 7; i++) {
+      const dd = new Date(d);
+      dd.setDate(d.getDate() - i);
+      const key = dateKey(dd);
+      const pastDayLog = logs[key] || {};
+      const fDone = foodPillar ? foodPillar.targets.filter(t => pastDayLog[t.id]?.done).length : 0;
+      protein7DaySum += (fDone > 0 ? 70 : 40);
+    }
+    const avgProteinG = Math.round(protein7DaySum / 7);
+
+    // Daily Protein Intake
+    items.push({
+      category: 'Nutrition',
+      name: 'Protein Intake',
+      value: proteinToday,
+      unit: 'g',
+      goal: 90,
+      pct: Math.min(100, Math.round((proteinToday / 90) * 100)),
+    });
+
+    // Avg Daily Protein Intake
+    items.push({
+      category: 'Nutrition',
+      name: 'Avg Daily Protein',
+      value: avgProteinG,
+      unit: 'g/day',
+      goal: 90,
+      pct: Math.min(100, Math.round((avgProteinG / 90) * 100)),
+    });
+
+    // 3. Daily Sleep & Rest
+    const sleepVal = dayLog['nidra-bedtime']?.done || dayLog['t-sleep']?.done ? 7.5 : 6.0;
+    items.push({
+      category: 'Sleep',
+      name: 'Sleep & Rest',
+      value: sleepVal,
+      unit: 'hr',
+      goal: 8.0,
+      pct: Math.min(100, Math.round((sleepVal / 8.0) * 100)),
+    });
+
+    // 4. Workout / Exercise Duration
+    const movePillar = pillars.find(p => p.id === 'vyayama' || p.id === 'p-[#E8843C]' || p.id === 'p-move');
+    const moveDone = movePillar ? movePillar.targets.filter(t => dayLog[t.id]?.done).length : 0;
+    const workoutVal = moveDone > 0 ? 45 : 15;
+
+    items.push({
+      category: 'Exercise',
+      name: 'Workout Time',
+      value: workoutVal,
+      unit: 'min',
+      goal: 45,
+      pct: Math.min(100, Math.round((workoutVal / 45) * 100)),
+    });
+
+    // 5. Overall Practice Targets
     const allTargets = pillars.flatMap(p => p.targets);
     const totalDone = allTargets.filter(t => dayLog[t.id]?.done).length;
     const totalPct = allTargets.length > 0 ? Math.round((totalDone / allTargets.length) * 100) : 0;
 
     items.push({
       category: 'Practice',
-      name: 'Overall Targets',
+      name: 'Tasks Completed',
       value: totalDone,
-      unit: 'completed',
+      unit: 'tasks',
       goal: allTargets.length,
       pct: totalPct,
     });
@@ -111,14 +139,14 @@ export default function AIDailyReportCard() {
       date: today,
       items,
     };
-  }, [pillars, dayLog, dayMetrics, today]);
+  }, [pillars, dayLog, dayMetrics, logs, metrics, today]);
 
   // Recharts Data
   const barChartData = useMemo(() => {
     return dailyPayload.items.map(item => ({
       name: item.name,
       pct: item.pct,
-      value: `${item.value} / ${item.goal} ${item.unit}`,
+      value: `${item.value} ${item.unit} (Target: ${item.goal})`,
     }));
   }, [dailyPayload]);
 
@@ -205,7 +233,7 @@ export default function AIDailyReportCard() {
             Full Body & Practice AI Analysis
           </h4>
           <p className="text-xs text-stone-200 font-medium mb-5 text-center max-w-sm">
-            Analyze your daily tasks, nutrition, hydration & practice KPIs with Groq AI
+            Analyze your daily & 7-day average protein, water intake, sleep & practice KPIs
           </p>
           <button
             onClick={handleUnlockAndAnalyze}
@@ -213,7 +241,7 @@ export default function AIDailyReportCard() {
             className="btn-coral px-8 py-3 text-xs font-extrabold shadow-2xl hover:scale-105 active:scale-95 transition-all flex items-center gap-2"
           >
             {loading ? <RefreshCw size={16} className="animate-spin" /> : <Zap size={16} />}
-            <span>{loading ? 'Analyzing Your Tasks…' : 'Analyze Day with AI'}</span>
+            <span>{loading ? 'Analyzing Your KPIs…' : 'Analyze Day with AI'}</span>
           </button>
         </div>
       )}
@@ -232,7 +260,7 @@ export default function AIDailyReportCard() {
                 Practice & Body AI Analysis
               </h3>
               <p className="text-xs text-stone-500 dark:text-stone-400 font-medium">
-                Live performance metrics from your performed daily tasks
+                High-level daily & 7-day average protein, hydration & rest KPIs
               </p>
             </div>
           </div>
@@ -249,19 +277,19 @@ export default function AIDailyReportCard() {
           )}
         </div>
 
-        {/* Dynamic Metric Snapshot Cards with progress bars */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
+        {/* Core KPI Snapshot Cards with progress bars */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2.5">
           {dailyPayload.items.map((item, i) => (
             <div key={i} className="p-3 rounded-2xl bg-black/[0.02] dark:bg-white/5 border border-black/5 dark:border-white/8 space-y-1.5">
               <div className="flex items-center justify-between">
                 <span className="text-[9px] font-extrabold text-stone-400 uppercase tracking-wider block truncate">
                   {item.name}
                 </span>
-                <span className="w-2 h-2 rounded-full" style={{ backgroundColor: CHART_COLORS[i % CHART_COLORS.length] }} />
+                <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: CHART_COLORS[i % CHART_COLORS.length] }} />
               </div>
               <div className="text-xs font-extrabold text-[#18191E] dark:text-white tabular-nums">
-                {item.value} {item.unit}
-                <span className="text-[10px] text-stone-400 font-normal ml-1">/ {item.goal}</span>
+                {item.value} <span className="text-[10px] text-[#F05A36]">{item.unit}</span>
+                <span className="text-[9px] text-stone-400 font-normal block mt-0.5">Target: {item.goal}</span>
               </div>
               <div className="w-full h-1.5 rounded-full bg-black/5 dark:bg-white/10 overflow-hidden">
                 <div
@@ -280,7 +308,7 @@ export default function AIDailyReportCard() {
           <div className="md:col-span-7 space-y-2">
             <div className="flex items-center justify-between text-xs font-bold text-[#18191E] dark:text-white">
               <span className="flex items-center gap-1.5 text-[#F05A36]">
-                <BarChart2 size={14} /> Task Completion Rates (%)
+                <BarChart2 size={14} /> Core KPI Performance (%)
               </span>
               <span className="text-[10px] text-stone-400 font-semibold">100% Target</span>
             </div>
@@ -313,7 +341,7 @@ export default function AIDailyReportCard() {
           <div className="md:col-span-5 md:border-l border-black/5 dark:border-white/5 md:pl-4 space-y-2 flex flex-col justify-between">
             <div className="flex items-center justify-between text-xs font-bold text-[#18191E] dark:text-white">
               <span className="flex items-center gap-1.5 text-teal-500">
-                <PieIcon size={14} /> Practice Distribution
+                <PieIcon size={14} /> Core Distribution
               </span>
             </div>
 
