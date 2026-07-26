@@ -3,10 +3,10 @@ import { Moon, Sun, Download, Upload, Trash2, ChevronRight, User, Bell, FileText
 import { useStorage } from '../hooks/useStorage';
 
 const ACCENT_COLORS = [
-  { id: 'saffron', label: 'Saffron',    primary: '#E8843C', secondary: '#C9A961' },
-  { id: 'ocean',   label: 'Ocean',      primary: '#2563EB', secondary: '#0EA5E9' },
-  { id: 'forest',  label: 'Forest',     primary: '#059669', secondary: '#34D399' },
-  { id: 'rose',    label: 'Rose',       primary: '#E11D48', secondary: '#FB7185' },
+  { id: 'saffron', label: 'Saffron',    primary: '#F05A36', secondary: '#C9A961' },
+  { id: 'ocean',   label: 'Ocean',      primary: '#0EA5E9', secondary: '#38BDF8' },
+  { id: 'forest',  label: 'Forest',     primary: '#10B981', secondary: '#34D399' },
+  { id: 'rose',    label: 'Rose',       primary: '#F43F5E', secondary: '#FB7185' },
 ];
 
 function ToggleRow({ label, description, enabled, onChange }) {
@@ -160,23 +160,30 @@ export default function Settings() {
 
             {/* Accent color */}
             <div>
-              <p className="text-xs text-stone-400 mb-2">Accent colour</p>
-              <div className="flex gap-2">
-                {ACCENT_COLORS.map((c) => (
-                  <button key={c.id} onClick={() => updateSettings({ accentColor: c.id })}
-                    className="flex-1 flex flex-col items-center gap-1.5 py-2 rounded-xl border transition-all"
-                    style={{
-                      borderColor: accentColor === c.id ? c.primary : 'rgba(0,0,0,0.08)',
-                      background: accentColor === c.id ? c.primary + '10' : 'transparent',
-                    }}>
-                    <div className="w-5 h-5 rounded-full" style={{ background: `linear-gradient(135deg, ${c.primary}, ${c.secondary})` }} />
-                    <span className="text-[9px] font-semibold" style={{ color: accentColor === c.id ? c.primary : '#9CA3AF' }}>{c.label}</span>
-                  </button>
-                ))}
+              <p className="text-xs font-bold text-stone-500 dark:text-stone-300 mb-2">Accent colour</p>
+              <div className="grid grid-cols-4 gap-2">
+                {ACCENT_COLORS.map((c) => {
+                  const isActive = accentColor === c.id;
+                  return (
+                    <button
+                      key={c.id}
+                      onClick={() => updateSettings({ accentColor: c.id })}
+                      className={`flex flex-col items-center gap-1.5 py-2.5 px-2 rounded-2xl border transition-all duration-200 ${
+                        isActive
+                          ? 'bg-[#F05A36]/10 shadow-sm scale-105'
+                          : 'border-black/5 dark:border-white/10 bg-black/[0.02] dark:bg-white/[0.03] hover:bg-black/[0.04] dark:hover:bg-white/[0.06]'
+                      }`}
+                      style={{ borderColor: isActive ? c.primary : undefined }}
+                    >
+                      <div className="w-6 h-6 rounded-full shadow-sm" style={{ background: `linear-gradient(135deg, ${c.primary}, ${c.secondary})` }} />
+                      <span className="text-[10px] font-extrabold" style={{ color: isActive ? c.primary : undefined }}>{c.label}</span>
+                    </button>
+                  );
+                })}
               </div>
-              {accentColor !== 'saffron' && (
-                <p className="text-[10px] text-stone-400 mt-2 italic">Accent colour applies on next reload.</p>
-              )}
+              <p className="text-[10px] text-stone-500 dark:text-stone-400 mt-2 font-medium">
+                Accent Theme: <span className="font-extrabold text-[#F05A36] uppercase">{accentColor}</span> active live.
+              </p>
             </div>
           </div>
 

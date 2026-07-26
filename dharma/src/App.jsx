@@ -139,7 +139,17 @@ function AppInner() {
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', settings.theme === 'dark');
-  }, [settings.theme]);
+    
+    const ACCENT_MAP = {
+      saffron: { primary: '#F05A36', secondary: '#C9A961' },
+      ocean:   { primary: '#0EA5E9', secondary: '#38BDF8' },
+      forest:  { primary: '#10B981', secondary: '#34D399' },
+      rose:    { primary: '#F43F5E', secondary: '#FB7185' },
+    };
+    const preset = ACCENT_MAP[settings.accentColor] || ACCENT_MAP.saffron;
+    document.documentElement.style.setProperty('--color-accent', preset.primary);
+    document.documentElement.style.setProperty('--color-accent-secondary', preset.secondary);
+  }, [settings.theme, settings.accentColor]);
 
   useEffect(() => {
     const mq = window.matchMedia('(prefers-color-scheme: dark)');
