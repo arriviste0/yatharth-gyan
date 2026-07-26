@@ -485,7 +485,7 @@ export default function Drishti() {
                         ? 'text-white'
                         : 'text-stone-400 bg-stone-100 dark:bg-white/5'
                       }`}
-                    style={heatmapRange === r ? { background: '#E8843C' } : {}}>
+                    style={heatmapRange === r ? { background: 'var(--color-accent)' } : {}}>
                     {r}d
                   </button>
                 ))}
@@ -510,7 +510,7 @@ export default function Drishti() {
                 <div className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: '#C9A961' }} /> Complete
               </div>
               <div className="flex items-center gap-1">
-                <div className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: '#E8843C' }} /> Partial
+                <div className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: 'var(--color-accent)' }} /> Partial
               </div>
             </div>
           </div>
@@ -520,8 +520,8 @@ export default function Drishti() {
             <div className="card mb-4">
               <div className="text-sm font-semibold text-[#1a1a2e] dark:text-white mb-3">Focus Practice</div>
               <div className="grid grid-cols-3 gap-2">
-                <div className="rounded-xl p-3 text-center" style={{ background: 'rgba(232,132,60,0.07)' }}>
-                  <div className="text-xl font-bold tabular-nums" style={{ color: '#E8843C' }}>{focusStats.sessions}</div>
+                <div className="rounded-xl p-3 text-center" style={{ background: 'var(--color-accent-light)' }}>
+                  <div className="text-xl font-bold tabular-nums" style={{ color: 'var(--color-accent)' }}>{focusStats.sessions}</div>
                   <div className="text-[10px] text-stone-400 mt-0.5">sessions</div>
                 </div>
                 <div className="rounded-xl p-3 text-center" style={{ background: 'rgba(45,53,97,0.07)' }}>
