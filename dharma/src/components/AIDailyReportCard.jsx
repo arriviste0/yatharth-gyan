@@ -1,9 +1,12 @@
 import { useState, useMemo } from 'react';
-import { Sparkles, Flame, CheckCircle2, Droplets, Dumbbell, Moon, Utensils, Zap, RefreshCw, Trophy, AlertCircle, ArrowRight, Activity } from 'lucide-react';
+import { Sparkles, Flame, CheckCircle2, Droplets, Dumbbell, Moon, Utensils, Zap, RefreshCw, Trophy, AlertCircle, ArrowRight, Activity, PieChart as PieIcon, BarChart2 } from 'lucide-react';
+import { ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip } from 'recharts';
 import { useStorage } from '../hooks/useStorage';
 import { DEFAULT_PILLARS } from '../data/defaultPillars';
 import { todayKey, formatDateDisplay } from '../utils/dateUtils';
 import { getDailyReportAI } from '../api/ai';
+
+const CHART_COLORS = ['#F05A36', '#14B8A6', '#E6A04E', '#8B5CF6', '#3B82F6'];
 
 export default function AIDailyReportCard() {
   const { state } = useStorage();
@@ -24,75 +27,100 @@ export default function AIDailyReportCard() {
 
     // 1. Hydration
     const water = dayMetrics.water || 0;
+    const waterVal = water >= 1000 ? +(water / 1000).toFixed(1) : water;
     items.push({
       category: 'Hydration',
       name: 'Water Intake',
-      value: water >= 1000 ? +(water / 1000).toFixed(1) : water,
+      value: waterVal,
       unit: water >= 1000 ? 'L' : 'ml',
       goal: 3.0,
+      pct: Math.min(100, Math.round((waterVal / 3.0) * 100)),
     });
 
     // 2. Sleep
     const sleepTarget = pillars.flatMap(p => p.targets).find(t => t.id === 't-sleep');
-    if (sleepTarget) {
-      items.push({
-        category: 'Sleep',
-        name: 'Sleep & Rest',
-        value: dayLog['t-sleep']?.done ? 8 : 6,
-        unit: 'hr',
-        goal: 8,
-      });
-    }
+    const sleepVal = dayLog['t-sleep']?.done ? 8 : 6;
+    items.push({
+      category: 'Sleep',
+      name: 'Sleep & Rest',
+      value: sleepVal,
+      unit: 'hr',
+      goal: 8,
+      pct: Math.min(100, Math.round((sleepVal / 8) * 100)),
+    });
 
     // 3. Nutrition & Food
     const foodPillar = pillars.find(p => p.id === 'p-food');
-    if (foodPillar) {
-      const foodDone = foodPillar.targets.filter(t => dayLog[t.id]?.done).length;
-      items.push({
-        category: 'Nutrition',
-        name: 'Protein & Healthy Meals',
-        value: foodDone > 0 ? 75 : 40,
-        unit: 'g',
-        goal: 90,
-      });
-      items.push({
-        category: 'Nutrition',
-        name: 'Clean Carbs',
-        value: foodDone > 1 ? 220 : 150,
-        unit: 'g',
-        goal: 250,
-      });
-    }
+    const foodDone = foodPillar ? foodPillar.targets.filter(t => dayLog[t.id]?.done).length : 1;
+    const proteinVal = foodDone > 0 ? 75 : 40;
+    const carbVal = foodDone > 1 ? 220 : 150;
+
+    items.push({
+      category: 'Nutrition',
+      name: 'Protein',
+      value: proteinVal,
+      unit: 'g',
+      goal: 90,
+      pct: Math.min(100, Math.round((proteinVal / 90) * 100)),
+    });
+    items.push({
+      category: 'Nutrition',
+      name: 'Clean Carbs',
+      value: carbVal,
+      unit: 'g',
+      goal: 250,
+      pct: Math.min(100, Math.round((carbVal / 250) * 100)),
+    });
 
     // 4. Tasks & Practice
     const allTargets = pillars.flatMap(p => p.targets);
     const doneTargets = allTargets.filter(t => dayLog[t.id]?.done).length;
+    const taskPct = allTargets.length > 0 ? Math.round((doneTargets / allTargets.length) * 100) : 0;
+
     items.push({
       category: 'Tasks',
-      name: 'Daily Targets Completed',
+      name: 'Daily Targets',
       value: doneTargets,
-      unit: 'targets',
+      unit: 'done',
       goal: allTargets.length,
+      pct: taskPct,
     });
 
-    // 5. Exercise / Physical Active
+    // 5. Exercise / Active
     const movePillar = pillars.find(p => p.id === 'p-[#E8843C]' || p.english === 'Move & Body' || p.id === 'p-move');
-    if (movePillar) {
-      const moveDone = movePillar.targets.filter(t => dayLog[t.id]?.done).length;
-      items.push({
-        category: 'Exercise',
-        name: 'Physical Activity & Workout',
-        value: moveDone * 20,
-        unit: 'min',
-        goal: 45,
-      });
-    }
+    const moveDone = movePillar ? movePillar.targets.filter(t => dayLog[t.id]?.done).length : 1;
+    const workoutVal = moveDone * 20;
+
+    items.push({
+      category: 'Exercise',
+      name: 'Workout Time',
+      value: workoutVal,
+      unit: 'min',
+      goal: 45,
+      pct: Math.min(100, Math.round((workoutVal / 45) * 100)),
+    });
 
     return {
       date: today,
       items,
     };
   }, [pillars, dayLog, dayMetrics, today]);
+
+  // Chart data formatting
+  const barChartData = useMemo(() => {
+    return dailyPayload.items.map(item => ({
+      name: item.name,
+      pct: item.pct,
+      value: `${item.value} / ${item.goal} ${item.unit}`,
+    }));
+  }, [dailyPayload]);
+
+  const pieChartData = useMemo(() => {
+    return dailyPayload.items.map(item => ({
+      name: item.name,
+      value: item.pct,
+    }));
+  }, [dailyPayload]);
 
   async function handleGenerateReport() {
     setLoading(true);
@@ -110,7 +138,7 @@ export default function AIDailyReportCard() {
   const dateDisplay = formatDateDisplay(new Date());
 
   return (
-    <div className="card-bento p-5 lg:p-6 space-y-5 bg-gradient-to-br from-white via-white to-orange-50/30 dark:from-[#181926] dark:via-[#181926] dark:to-[#F05A36]/10 border border-black/5 dark:border-[#F05A36]/20 shadow-xl">
+    <div className="card-bento p-5 lg:p-6 space-y-6 bg-gradient-to-br from-white via-white to-orange-50/30 dark:from-[#181926] dark:via-[#181926] dark:to-[#F05A36]/10 border border-black/5 dark:border-[#F05A36]/20 shadow-xl">
       
       {/* Top Banner & Trigger */}
       <div className="flex items-center justify-between flex-wrap gap-3">
@@ -123,12 +151,12 @@ export default function AIDailyReportCard() {
               <h3 className="text-base sm:text-lg font-extrabold text-[#18191E] dark:text-white">
                 Full Body & Practice AI Report
               </h3>
-              <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-[#F05A36] text-white">
-                AI Skill
+              <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-[#F05A36] text-white">
+                AI Skill + Charts
               </span>
             </div>
             <p className="text-xs text-stone-500 dark:text-stone-400 mt-0.5 font-medium">
-              Analyze sleep, nutrition (protein/carbs), hydration & daily tasks with Groq AI
+              Sleep, Protein, Carbs, Water & Target KPIs with interactive visualizations & Groq AI
             </p>
           </div>
         </div>
@@ -152,16 +180,103 @@ export default function AIDailyReportCard() {
         </button>
       </div>
 
+      {/* KPI Visualizations: Bar Chart + Donut Pie Chart Split */}
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-5 p-4 rounded-3xl bg-black/[0.02] dark:bg-white/[0.03] border border-black/5 dark:border-white/8">
+        
+        {/* Left 7 Cols: KPI Target Completion Bar Chart */}
+        <div className="md:col-span-7 space-y-2">
+          <div className="flex items-center justify-between text-xs font-bold text-[#18191E] dark:text-white">
+            <span className="flex items-center gap-1.5 text-[#F05A36]">
+              <BarChart2 size={15} /> Daily KPI Target Completion (%)
+            </span>
+            <span className="text-[10px] text-stone-400 font-semibold">Target: 100%</span>
+          </div>
+
+          <ResponsiveContainer width="100%" height={150}>
+            <BarChart data={barChartData} margin={{ top: 5, right: 10, left: -20, bottom: 20 }}>
+              <XAxis dataKey="name" tick={{ fontSize: 9, fill: '#9CA3AF' }} interval={0} angle={-15} textAnchor="end" />
+              <YAxis domain={[0, 100]} tick={{ fontSize: 9, fill: '#9CA3AF' }} axisLine={false} tickLine={false} />
+              <Tooltip
+                content={({ active, payload }) => {
+                  if (!active || !payload?.length) return null;
+                  const item = payload[0].payload;
+                  return (
+                    <div className="bg-[#181926] border border-white/10 rounded-xl px-3 py-1.5 shadow-xl text-[11px] font-bold text-white">
+                      {item.name}: {item.pct}% achieved ({item.value})
+                    </div>
+                  );
+                }}
+              />
+              <Bar dataKey="pct" radius={[6, 6, 0, 0]}>
+                {barChartData.map((entry, index) => (
+                  <Cell key={`bar-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+
+        {/* Right 5 Cols: Macro & KPI Distribution Pie Chart */}
+        <div className="md:col-span-5 md:border-l border-black/5 dark:border-white/5 md:pl-4 space-y-2 flex flex-col justify-between">
+          <div className="flex items-center justify-between text-xs font-bold text-[#18191E] dark:text-white">
+            <span className="flex items-center gap-1.5 text-teal-500">
+              <PieIcon size={15} /> KPI Balance Pie
+            </span>
+            <span className="text-[10px] text-stone-400 font-semibold">Distribution</span>
+          </div>
+
+          <div className="flex items-center justify-center relative">
+            <ResponsiveContainer width="100%" height={150}>
+              <PieChart>
+                <Pie
+                  data={pieChartData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={35}
+                  outerRadius={55}
+                  paddingAngle={4}
+                  dataKey="value"
+                >
+                  {pieChartData.map((entry, index) => (
+                    <Cell key={`pie-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip
+                  content={({ active, payload }) => {
+                    if (!active || !payload?.length) return null;
+                    return (
+                      <div className="bg-[#181926] border border-white/10 rounded-xl px-3 py-1.5 shadow-xl text-[11px] font-bold text-white">
+                        {payload[0].name}: {payload[0].value}% of target
+                      </div>
+                    );
+                  }}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      </div>
+
       {/* KPI Quick Snapshot Cards (Sleep, Protein, Carbs, Water, Tasks) */}
-      <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5 pt-1">
+      <div className="grid grid-cols-2 sm:grid-cols-6 gap-2.5">
         {dailyPayload.items.map((item, i) => (
           <div key={i} className="p-3 rounded-2xl bg-black/[0.02] dark:bg-white/5 border border-black/5 dark:border-white/8 space-y-1">
-            <span className="text-[9px] font-extrabold text-stone-400 uppercase tracking-wider block truncate">
-              {item.name}
-            </span>
+            <div className="flex items-center justify-between">
+              <span className="text-[9px] font-extrabold text-stone-400 uppercase tracking-wider block truncate">
+                {item.name}
+              </span>
+              <span className="w-2 h-2 rounded-full" style={{ backgroundColor: CHART_COLORS[i % CHART_COLORS.length] }} />
+            </div>
             <div className="text-sm font-extrabold text-[#18191E] dark:text-white tabular-nums">
               {item.value} {item.unit}
               {item.goal && <span className="text-[10px] text-stone-400 font-normal ml-1">/ {item.goal}{item.unit}</span>}
+            </div>
+            {/* Progress bar */}
+            <div className="w-full h-1.5 rounded-full bg-black/5 dark:bg-white/10 overflow-hidden">
+              <div
+                className="h-full rounded-full transition-all duration-500"
+                style={{ width: `${item.pct}%`, backgroundColor: CHART_COLORS[i % CHART_COLORS.length] }}
+              />
             </div>
           </div>
         ))}
