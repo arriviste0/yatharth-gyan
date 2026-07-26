@@ -466,7 +466,7 @@ function DesktopTaskManager({ pillars, logs, logTarget, dateStr, setPillars }) {
   }
 
   return (
-    <div className="card-bento p-5">
+    <div id="daily-targets" className="card-bento p-5">
       {/* Header */}
       <div className="pb-4">
         <div className="flex items-center justify-between mb-4">
