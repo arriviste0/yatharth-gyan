@@ -76,7 +76,6 @@ function TargetForm({ initial, onSave, onCancel }) {
     setType(t.type);
     setTargetValue(t.targetValue != null ? String(t.targetValue) : '0');
     setUnit(t.unit || '');
-    setComparison(t.comparison || 'gte');
     setSubMetrics(t.subMetrics ? JSON.parse(JSON.stringify(t.subMetrics)) : []);
     setShowTemplates(false);
   }
@@ -88,7 +87,7 @@ function TargetForm({ initial, onSave, onCancel }) {
         id: `sub-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
         name: '',
         targetValue: 0,
-        unit: 'g',
+        unit: type === 'DURATION' ? 'min' : 'g',
         comparison: 'gte'
       }
     ]);
@@ -262,10 +261,12 @@ function TargetForm({ initial, onSave, onCancel }) {
             <div className="flex items-center justify-between">
               <div>
                 <span className="text-xs font-extrabold text-accent uppercase tracking-wider">
-                  Multiple Sub-Metrics
+                  {type === 'DURATION' ? 'Multiple Duration Sessions / Time Blocks' : 'Multiple Quantities (Names & Units)'}
                 </span>
                 <p className="text-[10px] text-stone-400 font-medium">
-                  Track specific breakdown sub-fields (e.g. Protein, Carbs, Calories for meals)
+                  {type === 'DURATION'
+                    ? 'Track specific activity time blocks (e.g. Cardio 20m, Lifting 30m, Yoga 15m)'
+                    : 'Track multiple items with custom names & units (e.g. Protein g, Carbs g, Water L, Calories)'}
                 </p>
               </div>
               <button
@@ -273,7 +274,7 @@ function TargetForm({ initial, onSave, onCancel }) {
                 onClick={addSubMetric}
                 className="text-xs font-bold text-accent hover:underline flex items-center gap-1 shrink-0 ml-2"
               >
-                <Plus size={14} /> Add Sub-Metric
+                <Plus size={14} /> {type === 'DURATION' ? 'Add Time Block' : 'Add Quantity'}
               </button>
             </div>
 
@@ -285,7 +286,7 @@ function TargetForm({ initial, onSave, onCancel }) {
                       <input
                         value={sub.name}
                         onChange={(e) => updateSubMetric(idx, 'name', e.target.value)}
-                        placeholder="e.g. Protein, Carbs"
+                        placeholder={type === 'DURATION' ? 'e.g. Cardio, Lifting' : 'e.g. Protein, Carbs'}
                         className="w-full text-xs font-bold text-[#18191E] dark:text-white bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl px-2.5 py-2 outline-none"
                       />
                     </div>
@@ -303,7 +304,7 @@ function TargetForm({ initial, onSave, onCancel }) {
                       <input
                         value={sub.unit}
                         onChange={(e) => updateSubMetric(idx, 'unit', e.target.value)}
-                        placeholder="Unit"
+                        placeholder={type === 'DURATION' ? 'min, hr' : 'g, L, kcal'}
                         className="w-full text-xs font-bold text-[#18191E] dark:text-white bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl px-2 py-2 outline-none"
                       />
                     </div>
