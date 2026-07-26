@@ -20,16 +20,17 @@ const ICON_MAP = {
 };
 
 const TARGET_TYPES = [
-  { id: 'CHECKBOX',     label: 'Checklist', desc: 'Simple Yes / No habit toggle' },
-  { id: 'NUMBER',       label: 'Quantity',  desc: 'Water L, Protein g, Steps, Pages...' },
-  { id: 'DURATION',     label: 'Duration',  desc: 'Workout mins, Meditate mins, Sleep hrs' },
-  { id: 'MULTI_METRIC', label: 'Multi-Metric', desc: 'Lunch (Protein + Carbs + Calories)' },
+  { id: 'CHECKBOX', label: 'Checklist', desc: 'Simple Yes / No habit toggle' },
+  { id: 'NUMBER',   label: 'Quantity',  desc: 'Water L, Protein g, Steps, Meals...' },
+  { id: 'DURATION', label: 'Duration',  desc: 'Workout mins, Meditate mins, Sleep hrs' },
 ];
 
 const TARGET_TEMPLATES = [
   {
     name: 'Lunch (Protein + Carbs + Cals)',
-    type: 'MULTI_METRIC',
+    type: 'NUMBER',
+    targetValue: 1,
+    unit: 'meal',
     subMetrics: [
       { id: 'sub-prot', name: 'Protein', targetValue: 40, unit: 'g', comparison: 'gte' },
       { id: 'sub-carbs', name: 'Carbs', targetValue: 60, unit: 'g', comparison: 'lte' },
@@ -38,7 +39,9 @@ const TARGET_TEMPLATES = [
   },
   {
     name: 'Full Workout (Mins + Cals)',
-    type: 'MULTI_METRIC',
+    type: 'DURATION',
+    targetValue: 45,
+    unit: 'min',
     subMetrics: [
       { id: 'sub-dur', name: 'Duration', targetValue: 45, unit: 'min', comparison: 'gte' },
       { id: 'sub-cal', name: 'Calories Burned', targetValue: 350, unit: 'kcal', comparison: 'gte' },
@@ -56,7 +59,7 @@ const QUICK_UNITS = ['g', 'L', 'ml', 'min', 'hr', 'kcal', 'steps', 'pages', 'ses
 /* ── Target Form (add OR edit) ─────────────────────────────────────── */
 function TargetForm({ initial, onSave, onCancel }) {
   const [name,        setName]        = useState(initial?.name        ?? '');
-  const [type,        setType]        = useState(initial?.type === 'TIME' ? 'DURATION' : (initial?.type ?? 'CHECKBOX'));
+  const [type,        setType]        = useState(initial?.type === 'TIME' || initial?.type === 'MULTI_METRIC' ? 'NUMBER' : (initial?.type ?? 'CHECKBOX'));
   const [targetValue, setTargetValue] = useState(initial?.targetValue != null && typeof initial.targetValue === 'number' ? String(initial.targetValue) : '0');
   const [unit,        setUnit]        = useState(initial?.unit        ?? '');
   const [comparison,  setComparison]  = useState(initial?.comparison  ?? 'gte');
@@ -104,7 +107,7 @@ function TargetForm({ initial, onSave, onCancel }) {
   function handleSave(e) {
     e.preventDefault();
     if (!name.trim()) return;
-    const cleanSub = subMetrics.filter(s => s.name.trim().length > 0);
+    const cleanSub = (type === 'NUMBER' || type === 'DURATION') ? subMetrics.filter(s => s.name.trim().length > 0) : [];
     onSave({
       id: initial?.id ?? `custom-${Date.now()}`,
       name: name.trim(),
@@ -162,20 +165,14 @@ function TargetForm({ initial, onSave, onCancel }) {
         <label className="block text-[11px] font-extrabold uppercase tracking-wider text-stone-500 dark:text-stone-400 mb-1.5">
           Tracking Type
         </label>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+        <div className="grid grid-cols-3 gap-2">
           {TARGET_TYPES.map((t) => (
             <button
               key={t.id}
               type="button"
               onClick={() => {
                 setType(t.id);
-                if (t.id === 'CHECKBOX') { setTargetValue('0'); setUnit(''); }
-                if (t.id === 'MULTI_METRIC' && subMetrics.length === 0) {
-                  setSubMetrics([
-                    { id: `sub-${Date.now()}-1`, name: 'Protein', targetValue: 30, unit: 'g', comparison: 'gte' },
-                    { id: `sub-${Date.now()}-2`, name: 'Carbs', targetValue: 50, unit: 'g', comparison: 'lte' },
-                  ]);
-                }
+                if (t.id === 'CHECKBOX') { setTargetValue('0'); setUnit(''); setSubMetrics([]); }
               }}
               className={`p-3 rounded-2xl text-left transition-all border ${
                 type === t.id
@@ -194,138 +191,145 @@ function TargetForm({ initial, onSave, onCancel }) {
 
       {/* Target Value & Unit Configuration for NUMBER / DURATION */}
       {(type === 'NUMBER' || type === 'DURATION') && (
-        <div className="space-y-3 p-4 rounded-2xl bg-black/[0.02] dark:bg-white/[0.02] border border-black/5 dark:border-white/5">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div>
-              <label className="block text-[10px] font-extrabold uppercase tracking-wider text-stone-400 mb-1">
-                Target Value (Goal)
-              </label>
-              <input
-                type="number"
-                step="any"
-                value={targetValue}
-                onChange={(e) => setTargetValue(e.target.value)}
-                placeholder="0"
-                className={fieldCls}
-              />
-            </div>
-            <div>
-              <label className="block text-[10px] font-extrabold uppercase tracking-wider text-stone-400 mb-1">
-                Unit (g, L, min...)
-              </label>
-              <input
-                value={unit}
-                onChange={(e) => setUnit(e.target.value)}
-                placeholder="e.g. g, L, min, hrs"
-                className={fieldCls}
-              />
-            </div>
-            <div>
-              <label className="block text-[10px] font-extrabold uppercase tracking-wider text-stone-400 mb-1">
-                Comparison Goal
-              </label>
-              <select
-                value={comparison}
-                onChange={(e) => setComparison(e.target.value)}
-                className={`${fieldCls} cursor-pointer`}
-              >
-                <option value="gte">≥ At least (Min Goal)</option>
-                <option value="lte">≤ At most (Max Limit)</option>
-              </select>
-            </div>
-          </div>
-
-          {/* Quick Unit Suggestion Chips */}
-          <div>
-            <span className="text-[10px] font-extrabold uppercase tracking-wider text-stone-400 mr-2">Quick Units:</span>
-            <div className="inline-flex gap-1.5 flex-wrap mt-1">
-              {QUICK_UNITS.map((u) => (
-                <button
-                  key={u}
-                  type="button"
-                  onClick={() => setUnit(u)}
-                  className={`text-[11px] font-bold px-2.5 py-1 rounded-full transition-all border ${
-                    unit === u
-                      ? 'bg-accent text-white border-accent'
-                      : 'bg-black/5 dark:bg-white/5 border-black/5 dark:border-white/10 text-stone-500 hover:text-accent'
-                  }`}
-                >
-                  {u}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Multi-Metric Sub-Fields Section */}
-      {(type === 'MULTI_METRIC' || subMetrics.length > 0) && (
-        <div className="space-y-3 p-4 rounded-2xl bg-black/[0.02] dark:bg-white/[0.02] border border-accent/20">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-extrabold text-accent uppercase tracking-wider">
-              Sub-Metrics (Carbs, Protein, Calories...)
-            </span>
-            <button
-              type="button"
-              onClick={addSubMetric}
-              className="text-xs font-bold text-accent hover:underline flex items-center gap-1"
-            >
-              <Plus size={14} /> Add Sub-Metric
-            </button>
-          </div>
-
-          <div className="space-y-2">
-            {subMetrics.map((sub, idx) => (
-              <div key={sub.id || idx} className="grid grid-cols-12 gap-2 items-center bg-white dark:bg-[#181926] p-3 rounded-xl border border-black/5 dark:border-white/10">
-                <div className="col-span-4">
-                  <input
-                    value={sub.name}
-                    onChange={(e) => updateSubMetric(idx, 'name', e.target.value)}
-                    placeholder="e.g. Protein, Carbs"
-                    className="w-full text-xs font-bold text-[#18191E] dark:text-white bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl px-2.5 py-2 outline-none"
-                  />
-                </div>
-                <div className="col-span-3">
-                  <input
-                    type="number"
-                    step="any"
-                    value={sub.targetValue}
-                    onChange={(e) => updateSubMetric(idx, 'targetValue', parseFloat(e.target.value) || 0)}
-                    placeholder="Goal"
-                    className="w-full text-xs font-bold text-[#18191E] dark:text-white bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl px-2.5 py-2 outline-none"
-                  />
-                </div>
-                <div className="col-span-2">
-                  <input
-                    value={sub.unit}
-                    onChange={(e) => updateSubMetric(idx, 'unit', e.target.value)}
-                    placeholder="Unit"
-                    className="w-full text-xs font-bold text-[#18191E] dark:text-white bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl px-2 py-2 outline-none"
-                  />
-                </div>
-                <div className="col-span-2">
-                  <select
-                    value={sub.comparison}
-                    onChange={(e) => updateSubMetric(idx, 'comparison', e.target.value)}
-                    className="w-full text-[11px] font-bold text-[#18191E] dark:text-white bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl px-1.5 py-2 outline-none"
-                  >
-                    <option value="gte">≥ Min</option>
-                    <option value="lte">≤ Max</option>
-                  </select>
-                </div>
-                <div className="col-span-1 text-center">
-                  <button
-                    type="button"
-                    onClick={() => removeSubMetric(idx)}
-                    className="text-stone-400 hover:text-red-500 transition-colors p-1"
-                  >
-                    <Trash2 size={14} />
-                  </button>
-                </div>
+        <>
+          <div className="space-y-3 p-4 rounded-2xl bg-black/[0.02] dark:bg-white/[0.02] border border-black/5 dark:border-white/5">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div>
+                <label className="block text-[10px] font-extrabold uppercase tracking-wider text-stone-400 mb-1">
+                  Target Value (Goal)
+                </label>
+                <input
+                  type="number"
+                  step="any"
+                  value={targetValue}
+                  onChange={(e) => setTargetValue(e.target.value)}
+                  placeholder="0"
+                  className={fieldCls}
+                />
               </div>
-            ))}
+              <div>
+                <label className="block text-[10px] font-extrabold uppercase tracking-wider text-stone-400 mb-1">
+                  Unit (g, L, min...)
+                </label>
+                <input
+                  value={unit}
+                  onChange={(e) => setUnit(e.target.value)}
+                  placeholder="e.g. g, L, min, hrs"
+                  className={fieldCls}
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] font-extrabold uppercase tracking-wider text-stone-400 mb-1">
+                  Comparison Goal
+                </label>
+                <select
+                  value={comparison}
+                  onChange={(e) => setComparison(e.target.value)}
+                  className={`${fieldCls} cursor-pointer`}
+                >
+                  <option value="gte">≥ At least (Min Goal)</option>
+                  <option value="lte">≤ At most (Max Limit)</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Quick Unit Suggestion Chips */}
+            <div>
+              <span className="text-[10px] font-extrabold uppercase tracking-wider text-stone-400 mr-2">Quick Units:</span>
+              <div className="inline-flex gap-1.5 flex-wrap mt-1">
+                {QUICK_UNITS.map((u) => (
+                  <button
+                    key={u}
+                    type="button"
+                    onClick={() => setUnit(u)}
+                    className={`text-[11px] font-bold px-2.5 py-1 rounded-full transition-all border ${
+                      unit === u
+                        ? 'bg-accent text-white border-accent'
+                        : 'bg-black/5 dark:bg-white/5 border-black/5 dark:border-white/10 text-stone-500 hover:text-accent'
+                    }`}
+                  >
+                    {u}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
-        </div>
+
+          {/* Sub-Metrics Section inside Quantity & Duration */}
+          <div className="space-y-3 p-4 rounded-2xl bg-black/[0.02] dark:bg-white/[0.02] border border-accent/20">
+            <div className="flex items-center justify-between">
+              <div>
+                <span className="text-xs font-extrabold text-accent uppercase tracking-wider">
+                  Multiple Sub-Metrics
+                </span>
+                <p className="text-[10px] text-stone-400 font-medium">
+                  Track specific breakdown sub-fields (e.g. Protein, Carbs, Calories for meals)
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={addSubMetric}
+                className="text-xs font-bold text-accent hover:underline flex items-center gap-1 shrink-0 ml-2"
+              >
+                <Plus size={14} /> Add Sub-Metric
+              </button>
+            </div>
+
+            {subMetrics.length > 0 && (
+              <div className="space-y-2 pt-1">
+                {subMetrics.map((sub, idx) => (
+                  <div key={sub.id || idx} className="grid grid-cols-12 gap-2 items-center bg-white dark:bg-[#181926] p-3 rounded-xl border border-black/5 dark:border-white/10">
+                    <div className="col-span-4">
+                      <input
+                        value={sub.name}
+                        onChange={(e) => updateSubMetric(idx, 'name', e.target.value)}
+                        placeholder="e.g. Protein, Carbs"
+                        className="w-full text-xs font-bold text-[#18191E] dark:text-white bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl px-2.5 py-2 outline-none"
+                      />
+                    </div>
+                    <div className="col-span-3">
+                      <input
+                        type="number"
+                        step="any"
+                        value={sub.targetValue}
+                        onChange={(e) => updateSubMetric(idx, 'targetValue', parseFloat(e.target.value) || 0)}
+                        placeholder="Goal"
+                        className="w-full text-xs font-bold text-[#18191E] dark:text-white bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl px-2.5 py-2 outline-none"
+                      />
+                    </div>
+                    <div className="col-span-2">
+                      <input
+                        value={sub.unit}
+                        onChange={(e) => updateSubMetric(idx, 'unit', e.target.value)}
+                        placeholder="Unit"
+                        className="w-full text-xs font-bold text-[#18191E] dark:text-white bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl px-2 py-2 outline-none"
+                      />
+                    </div>
+                    <div className="col-span-2">
+                      <select
+                        value={sub.comparison}
+                        onChange={(e) => updateSubMetric(idx, 'comparison', e.target.value)}
+                        className="w-full text-[11px] font-bold text-[#18191E] dark:text-white bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl px-1.5 py-2 outline-none"
+                      >
+                        <option value="gte">≥ Min</option>
+                        <option value="lte">≤ Max</option>
+                      </select>
+                    </div>
+                    <div className="col-span-1 text-center">
+                      <button
+                        type="button"
+                        onClick={() => removeSubMetric(idx)}
+                        className="text-stone-400 hover:text-red-500 transition-colors p-1"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </>
       )}
 
       {/* Action Buttons */}
