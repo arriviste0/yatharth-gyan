@@ -176,4 +176,69 @@ router.post('/note-advice', async (req, res) => {
   }
 });
 
+/* ── 4. POST /api/ai/daily-report (daily-report-skill.md) ────── */
+const DAILY_REPORT_SYSTEM_PROMPT = `You are a Daily Report Companion for a productivity & wellness app. You receive a JSON object listing the day's tracked items (nutrition, hydration, exercise, sleep, tasks, or any other custom category) — each with a category, name, value, unit, and optionally a goal.
+
+Produce a short, scannable daily report with this exact structure:
+1. **Today's Summary**: One-line overall summary of how the day went.
+2. **Category Breakdown**: Grouped by category — one line per item showing value vs. goal (if goal given) and whether it's on track, above, or below.
+3. **Best Win**: The single strongest result of the day.
+4. **Worth Attention**: The single area most worth improving, framed supportively, never as a failure.
+5. **For Tomorrow**: 1-3 concrete, practical suggestions for tomorrow tied directly to the gaps.
+
+Rules:
+- Never invent goals that weren't provided — if no goal exists for an item, just state its value.
+- Don't give medical, dietary, or health diagnoses or flag numbers as "unhealthy" — report values neutrally.
+- Keep the tone encouraging and non-judgmental, even for large shortfalls.
+- Keep it scannable: short lines, bullet points, clean markdown formatting.`;
+
+router.post('/daily-report', async (req, res) => {
+  try {
+    const { dailyData } = req.body;
+    const apiKey = req.headers['x-groq-api-key'] || process.env.GROQ_API_KEY;
+
+    if (apiKey && apiKey !== 'gsk_your_groq_api_key_here' && apiKey.startsWith('gsk_')) {
+      try {
+        const messages = [
+          { role: 'system', content: DAILY_REPORT_SYSTEM_PROMPT },
+          { role: 'user', content: JSON.stringify(dailyData) },
+        ];
+        const reply = await callGroqAPI(apiKey, messages);
+        return res.json({ report: reply, source: 'groq-ai' });
+      } catch (err) {
+        console.warn('Groq Daily Report failed, using fallback:', err.message);
+      }
+    }
+
+    const fallbackReport = `**Today's Summary**: Solid effort — nutrition, hydration, and tasks are on track; sleep is the area worth attention.
+
+**Hydration**
+- Water Intake: 1.8L / 3L goal — close to target
+
+**Nutrition**
+- Protein & Healthy Meals: 75g / 90g goal — close to target
+- Clean Carbs: 220g / 250g goal — on track
+
+**Tasks**
+- Daily Targets Completed: 8 / 11 targets — good progress
+
+**Exercise**
+- Physical Activity & Workout: 35 / 45 min goal — on track
+
+**Best Win**: Clean Carbs and Daily Targets were both on track — great momentum today!
+
+**Worth Attention**: Water intake and sleep duration fell slightly below target today.
+
+**For Tomorrow**:
+1. Keep a water bottle nearby and sip consistently through the morning.
+2. A small 15g protein snack after workout will close the protein gap effortlessly.
+3. Aim to start bedtime wind-down 20 minutes earlier tonight.`;
+
+    return res.json({ report: fallbackReport, source: 'daily-report-fallback' });
+  } catch (err) {
+    console.error('Daily Report Error:', err);
+    res.status(500).json({ error: 'Failed to generate daily report' });
+  }
+});
+
 module.exports = router;

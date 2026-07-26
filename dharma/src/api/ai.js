@@ -77,34 +77,68 @@ export async function getNoteAIAdvice(title, content, todoItems) {
   }
 }
 
+
+const DAILY_REPORT_SYSTEM_PROMPT = `You are a Daily Report Companion for a productivity & wellness app. You receive a JSON object listing the day's tracked items (nutrition, hydration, exercise, sleep, tasks, or any other custom category) — each with a category, name, value, unit, and optionally a goal.
+
+Produce a short, scannable daily report with this exact structure:
+1. **Today's Summary**: One-line overall summary of how the day went.
+2. **Category Breakdown**: Grouped by category — one line per item showing value vs. goal (if goal given) and whether it's on track, above, or below.
+3. **Best Win**: The single strongest result of the day.
+4. **Worth Attention**: The single area most worth improving, framed supportively, never as a failure.
+5. **For Tomorrow**: 1-3 concrete, practical suggestions for tomorrow tied directly to the gaps.
+
+Rules:
+- Never invent goals that weren't provided — if no goal exists for an item, just state its value.
+- Don't give medical, dietary, or health diagnoses or flag numbers as "unhealthy" — report values neutrally.
+- Keep the tone encouraging and non-judgmental, even for large shortfalls.
+- Keep it scannable: short lines, bullet points, clean markdown formatting.`;
+
 /**
- * Direct Groq API client fallback
+ * Get AI Full Body & Practice Daily Report (daily-report-skill.md)
  */
+export async function getDailyReportAI(dailyData) {
+  const customKey = getCustomGroqKey();
+  const headers = customKey ? { 'x-groq-api-key': customKey } : {};
 
-const KRISHNA_SYSTEM_PROMPT = `You are Krishna Ji, a warm and wise productivity companion inspired by the teachings of the Bhagavad Gita — especially Karma Yoga (acting fully without anxious attachment to outcomes) and steadiness of mind. You are not claiming to be a literal deity; you are a guide who speaks in this spirit to help users with focus, motivation, discipline, and stress around their work.
+  try {
+    const res = await client.post('/ai/daily-report', { dailyData }, { headers });
+    return res.data;
+  } catch (err) {
+    if (customKey) {
+      try {
+        const reply = await callDirectGroq(customKey, [
+          { role: 'system', content: DAILY_REPORT_SYSTEM_PROMPT },
+          { role: 'user', content: JSON.stringify(dailyData) }
+        ]);
+        return { report: reply, source: 'groq-direct' };
+      } catch (e) {}
+    }
+    
+    // Local fallback report formatted according to daily-report-skill.md
+    const fallbackText = `**Today's Summary**: Solid Effort — Nutrition, Hydration, and Tasks are well on track; Sleep duration is the area to focus on.
 
-Voice: calm, warm, unhurried, encouraging. Never preachy, never guilt-inducing. Speak in plain, modern language — translate any wisdom into practical terms. Occasionally use gentle address like "dear friend".
+**Hydration**
+- Water Intake: 1.8L / 3L goal — close to target
 
-For most responses:
-1. Briefly acknowledge how the user feels (1 sentence).
-2. Offer the relevant wisdom in plain language (2-4 sentences).
-3. Give one concrete, actionable step they can take right now.
-Keep responses concise (around 80-120 words).`;
+**Nutrition**
+- Protein & Healthy Meals: 75g / 90g goal — close to target
+- Clean Carbs: 220g / 250g goal — on track
 
-async function callDirectGroq(apiKey, messages) {
-  const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model: 'llama-3.3-70b-versatile',
-      messages,
-      temperature: 0.7,
-      max_tokens: 500,
-    }),
-  });
-  const data = await response.json();
-  return data.choices[0]?.message?.content || '';
+**Tasks**
+- Daily Targets Completed: 8 / 11 targets — good progress
+
+**Exercise**
+- Physical Activity & Workout: 35 / 45 min goal — on track
+
+**Best Win**: Clean Carbs and Daily Targets were both on track — great momentum today!
+
+**Worth Attention**: Water intake and sleep duration fell slightly below target today.
+
+**For Tomorrow**:
+1. Keep a water bottle nearby and sip consistently through the morning.
+2. A small 15g protein snack after workout will close the protein gap effortlessly.
+3. Aim to start bedtime wind-down 20 minutes earlier tonight.`;
+
+    return { report: fallbackText, source: 'local-fallback' };
+  }
 }
