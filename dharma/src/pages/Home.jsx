@@ -522,14 +522,14 @@ function DesktopTaskManager({ pillars, logs, logTarget, dateStr, setPillars }) {
             <input
               value={editName}
               onChange={(e) => setEditName(e.target.value)}
-              className="flex-1 text-sm text-white bg-white/5 border border-white/8 rounded-xl px-3 py-2 outline-none focus:border-[#E8843C]/40 placeholder-white/20"
+              className="flex-1 text-sm text-[#18191E] dark:text-white bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl px-3 py-2 outline-none focus:border-[#F05A36] placeholder-stone-400"
               placeholder="Target name"
             />
             {(editingTarget.type === 'NUMBER' || editingTarget.type === 'TIME') && (
               <input
                 value={editValue}
                 onChange={(e) => setEditValue(e.target.value)}
-                className="w-24 text-sm text-white bg-white/5 border border-white/8 rounded-xl px-3 py-2 outline-none focus:border-[#E8843C]/40 placeholder-white/20"
+                className="w-24 text-sm text-[#18191E] dark:text-white bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl px-3 py-2 outline-none focus:border-[#F05A36] placeholder-stone-400"
                 placeholder={editingTarget.type === 'TIME' ? 'HH:MM' : 'Value'}
               />
             )}
@@ -724,23 +724,23 @@ function DesktopActivityFeed({ logs, pillars, dateStr }) {
       <div className="flex items-center justify-between mb-4">
         <div>
           <h3 className="text-base font-bold text-[#18191E] dark:text-white">Activity Feed</h3>
-          <p className="text-[11px] text-stone-400 dark:text-white/30 mt-0.5">Recent completions today</p>
+          <p className="text-[11px] text-stone-500 dark:text-stone-400 mt-0.5 font-medium">Recent completions today</p>
         </div>
-        <span className="text-[10px] font-extrabold px-2.5 py-1 rounded-full bg-black/5 dark:bg-white/5 text-stone-500 dark:text-white/40">
+        <span className="text-[10px] font-extrabold px-2.5 py-1 rounded-full bg-black/5 dark:bg-white/5 text-stone-700 dark:text-stone-300 border border-black/5 dark:border-white/10">
           {activities.length} entries
         </span>
       </div>
 
       {activities.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-8 text-stone-300 dark:text-white/20">
-          <Activity size={28} className="mb-2 text-stone-300 dark:text-white/20" />
-          <span className="text-xs font-medium">No completions yet today</span>
-          <span className="text-[10px] text-stone-400 mt-0.5">Complete a target to see it here</span>
+        <div className="flex flex-col items-center justify-center py-8 text-stone-500 dark:text-stone-400">
+          <Activity size={28} className="mb-2 text-stone-400 dark:text-stone-500" />
+          <span className="text-xs font-semibold text-stone-700 dark:text-stone-300">No completions yet today</span>
+          <span className="text-[11px] text-stone-500 dark:text-stone-400 mt-0.5 font-medium">Complete a target to see it here</span>
         </div>
       ) : (
-        <div className="space-y-1 max-h-[300px] overflow-y-auto no-scrollbar">
+        <div className="space-y-1.5 max-h-[300px] overflow-y-auto no-scrollbar">
           {/* Table header */}
-          <div className="flex items-center gap-3 px-3 py-2 text-[10px] font-extrabold text-stone-400 uppercase tracking-wider">
+          <div className="flex items-center gap-3 px-3 py-2 text-[10px] font-extrabold text-stone-500 dark:text-stone-400 uppercase tracking-wider">
             <span className="flex-1">Target</span>
             <span className="w-20 text-center">Pillar</span>
             <span className="w-16 text-right">Time</span>
@@ -750,16 +750,16 @@ function DesktopActivityFeed({ logs, pillars, dateStr }) {
             const time = new Date(a.timestamp);
             const timeStr = time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
             return (
-              <div key={a.id} className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-white/[0.02] hover:bg-white/[0.04] transition-all">
+              <div key={a.id} className="flex items-center gap-3 px-3 py-2.5 rounded-2xl bg-black/[0.02] dark:bg-white/[0.03] hover:bg-black/[0.04] dark:hover:bg-white/[0.06] transition-all border border-black/5 dark:border-white/5">
                 <div className="flex items-center gap-2 flex-1 min-w-0">
-                  <div className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: a.pillarColor }} />
-                  <span className="text-xs font-medium text-white truncate">{a.name}</span>
+                  <div className="w-2 h-2 rounded-full shrink-0" style={{ background: a.pillarColor }} />
+                  <span className="text-xs font-extrabold text-[#18191E] dark:text-white truncate">{a.name}</span>
                 </div>
-                <span className="w-20 text-center text-[10px] font-semibold px-2 py-0.5 rounded-md shrink-0"
+                <span className="w-20 text-center text-[10px] font-extrabold px-2 py-0.5 rounded-full shrink-0"
                   style={{ background: `${a.pillarColor}15`, color: a.pillarColor }}>
                   {a.pillarName}
                 </span>
-                <span className="w-16 text-right text-[10px] text-stone-400 tabular-nums font-medium shrink-0">
+                <span className="w-16 text-right text-[10px] text-stone-600 dark:text-stone-300 tabular-nums font-semibold shrink-0">
                   {timeStr}
                 </span>
               </div>

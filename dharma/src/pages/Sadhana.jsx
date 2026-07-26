@@ -57,9 +57,9 @@ function TargetForm({ initial, onSave, onCancel }) {
   const [showTemplates, setShowTemplates] = useState(false);
 
   const fieldCls =
-    'w-full text-sm text-[#1a1a2e] dark:text-white placeholder-white/30 ' +
-    'bg-white/5 border border-black/10 dark:border-white/10 ' +
-    'rounded-xl px-3.5 py-2.5 outline-none focus:border-[#E8843C] transition-colors';
+    'w-full text-sm text-[#18191E] dark:text-white placeholder-stone-400 ' +
+    'bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 ' +
+    'rounded-xl px-3.5 py-2.5 outline-none focus:border-[#F05A36] transition-colors';
 
   function applyTemplate(t) {
     setName(t.name);
