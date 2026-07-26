@@ -156,8 +156,8 @@ export default function MonthlyTracker() {
       {/* ── Top Header Controls ─────────────────────────────────────────────── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-[#0f1428]/95 border border-white/10 p-5 rounded-3xl shadow-xl backdrop-blur-md">
         <div className="flex items-center gap-3">
-          <div className="w-11 h-11 rounded-2xl flex items-center justify-center font-bold text-lg shadow-lg"
-            style={{ background: 'linear-gradient(135deg, #E8843C, #C9A961)', color: '#fff' }}>
+          <div className="w-11 h-11 rounded-2xl flex items-center justify-center font-bold text-lg shadow-lg text-white"
+            style={{ background: 'var(--color-accent)' }}>
             <Calendar size={22} />
           </div>
           <div>
@@ -166,7 +166,7 @@ export default function MonthlyTracker() {
                 {MONTHS[month]} {year}
               </h2>
               <span className="px-3 py-0.5 rounded-full text-xs font-bold shadow-sm"
-                style={{ background: 'rgba(232,132,60,0.18)', color: '#E8843C', border: '1px solid rgba(232,132,60,0.3)' }}>
+                style={{ background: 'var(--color-accent-light)', color: 'var(--color-accent)', border: '1px solid var(--color-accent-border)' }}>
                 {monthAveragePct}% avg completion
               </span>
             </div>

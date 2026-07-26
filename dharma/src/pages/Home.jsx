@@ -286,7 +286,7 @@ function LogValueModal({ target, dateStr, onLog, onClose }) {
                     key={mult}
                     type="button"
                     onClick={() => setVal(String(preset))}
-                    className="text-xs font-bold px-2.5 py-1 rounded-xl bg-black/5 dark:bg-white/5 hover:bg-[#F05A36]/10 hover:text-[#F05A36] dark:hover:text-[#F05A36] transition-all text-stone-600 dark:text-stone-300"
+                    className="text-xs font-bold px-3 py-1.5 rounded-full bg-black/5 dark:bg-white/5 hover:bg-accent hover:text-white dark:hover:bg-accent dark:hover:text-white transition-all text-stone-600 dark:text-stone-300 border border-black/5 dark:border-white/10"
                   >
                     {preset} {unit}
                   </button>
@@ -299,8 +299,7 @@ function LogValueModal({ target, dateStr, onLog, onClose }) {
           <div className="flex gap-2 pt-2">
             <button
               type="submit"
-              className="flex-1 py-3 rounded-2xl text-xs font-extrabold uppercase tracking-wider text-white shadow-lg transition-all active:scale-[0.98]"
-              style={{ background: 'linear-gradient(135deg, #F05A36, #C9A961)' }}
+              className="flex-1 btn-coral py-3.5 px-6 text-xs font-extrabold uppercase tracking-wider shadow-md hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2"
             >
               {isDone ? 'Update Log' : 'Log & Complete'}
             </button>
@@ -308,7 +307,7 @@ function LogValueModal({ target, dateStr, onLog, onClose }) {
               <button
                 type="button"
                 onClick={handleClear}
-                className="px-4 py-3 rounded-2xl text-xs font-bold uppercase tracking-wider text-red-500 hover:bg-red-500/10 border border-red-500/20 transition-all"
+                className="btn-secondary-outline px-5 py-3.5 text-xs font-extrabold uppercase tracking-wider text-red-500 hover:bg-red-500 hover:text-white border-red-500/30 transition-all rounded-full"
               >
                 Clear Log
               </button>

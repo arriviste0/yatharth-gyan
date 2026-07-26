@@ -168,12 +168,11 @@ function TargetForm({ initial, onSave, onCancel }) {
 
       <div className="flex gap-2 pt-1">
         <button type="submit"
-          className="flex-1 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider text-white transition-all active:scale-[0.98] shadow-md"
-          style={{ background: 'linear-gradient(135deg,#E8843C,#C9A961)' }}>
+          className="flex-1 btn-coral py-3 px-6 text-xs font-extrabold uppercase tracking-wider text-white shadow-md hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center">
           {initial?.id ? 'Save Changes' : 'Add Target'}
         </button>
         <button type="button" onClick={onCancel}
-          className="px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider text-stone-400 hover:text-white border border-black/8 dark:border-white/10">
+          className="btn-secondary-outline px-5 py-3 text-xs font-extrabold uppercase tracking-wider text-stone-400 hover:text-white rounded-full">
           Cancel
         </button>
       </div>

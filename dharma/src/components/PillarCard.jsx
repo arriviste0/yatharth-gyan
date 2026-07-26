@@ -142,15 +142,14 @@ function TargetRow({ target, logEntry, onLog }) {
               )}
               <button
                 type="submit"
-                className="flex-shrink-0 h-10 px-4 rounded-xl text-white text-sm font-semibold transition-all active:scale-95"
-                style={{ background: '#E8843C' }}
+                className="flex-shrink-0 h-10 px-5 rounded-full text-white text-xs font-extrabold uppercase tracking-wider transition-all active:scale-95 bg-accent hover:bg-accent-hover shadow-md"
               >
                 Log
               </button>
               <button
                 type="button"
                 onClick={() => setOpen(false)}
-                className="flex-shrink-0 h-10 px-3 rounded-xl text-stone-400 text-sm border border-stone-200 dark:border-white/10 transition-all"
+                className="flex-shrink-0 h-10 px-3 rounded-full text-stone-400 text-sm border border-stone-200 dark:border-white/10 transition-all hover:text-white"
               >
                 ✕
               </button>
@@ -167,15 +166,14 @@ function TargetRow({ target, logEntry, onLog }) {
               />
               <button
                 type="submit"
-                className="flex-shrink-0 h-10 px-4 rounded-xl text-white text-sm font-semibold transition-all active:scale-95"
-                style={{ background: '#E8843C' }}
+                className="flex-shrink-0 h-10 px-5 rounded-full text-white text-xs font-extrabold uppercase tracking-wider transition-all active:scale-95 bg-accent hover:bg-accent-hover shadow-md"
               >
                 Log
               </button>
               <button
                 type="button"
                 onClick={() => setOpen(false)}
-                className="flex-shrink-0 h-10 px-3 rounded-xl text-stone-400 text-sm border border-stone-200 dark:border-white/10 transition-all"
+                className="flex-shrink-0 h-10 px-3 rounded-full text-stone-400 text-sm border border-stone-200 dark:border-white/10 transition-all hover:text-white"
               >
                 ✕
               </button>
