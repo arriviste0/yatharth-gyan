@@ -386,6 +386,25 @@ function isInputRequired(target) {
   return false;
 }
 
+function formatLoggedSummary(target) {
+  if (!target || !target.logEntry) return null;
+  const subVals = target.logEntry.subValues;
+  if (subVals && Object.keys(subVals).length > 0) {
+    const parts = [];
+    (target.subMetrics || []).forEach(sub => {
+      const idKey = sub.id || sub.name;
+      if (subVals[idKey] != null) {
+        parts.push(`${sub.name} ${subVals[idKey]}${sub.unit || ''}`);
+      }
+    });
+    if (parts.length > 0) return parts.join(' · ');
+  }
+  if (target.logEntry.value != null && typeof target.logEntry.value !== 'boolean') {
+    return `${target.logEntry.value}${target.unit ? ` ${target.unit}` : ''}`;
+  }
+  return 'Done';
+}
+
 /* ── Mobile Today View ─────────────────────────────────────────────── */
 function MobileTodayView({ pillars, logs, metrics = {}, logTarget, dateStr, streak, settings, onOpenFocus }) {
   const [loggingTarget, setLoggingTarget] = useState(null);
