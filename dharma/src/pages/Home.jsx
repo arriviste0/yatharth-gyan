@@ -331,7 +331,7 @@ function isInputRequired(target) {
 }
 
 /* ── Mobile Today View ─────────────────────────────────────────────── */
-function MobileTodayView({ pillars, logs, logTarget, dateStr, streak, settings, onOpenFocus }) {
+function MobileTodayView({ pillars, logs, metrics = {}, logTarget, dateStr, streak, settings, onOpenFocus }) {
   const [loggingTarget, setLoggingTarget] = useState(null);
   const dayLog = logs[dateStr] || {};
   const activeTargets = useMemo(() =>
@@ -402,6 +402,9 @@ function MobileTodayView({ pillars, logs, logTarget, dateStr, streak, settings, 
           {pillars.map((pillar) => <PillarCategoryCard key={pillar.id} pillar={pillar} dayLog={dayLog} />)}
         </div>
       </div>
+
+      {/* Today's Live KPIs for Mobile */}
+      <DesktopTodayLiveKPIs pillars={pillars} logs={logs} metrics={metrics} dateStr={dateStr} />
 
       {/* Task Checklist */}
       <div>
@@ -846,6 +849,142 @@ function DesktopWeeklyChart({ logs, pillars }) {
   );
 }
 
+/* ── Today's Live Health & Practice KPIs ─────────────────────────── */
+function DesktopTodayLiveKPIs({ pillars, logs, metrics = {}, dateStr }) {
+  const dayLog = logs[dateStr] || {};
+  const dayMetrics = metrics[dateStr] || {};
+
+  const safeParseNumber = (val) => {
+    if (val === null || val === undefined || typeof val === 'boolean') return NaN;
+    if (typeof val === 'string' && val.includes(':')) return NaN;
+    const num = parseFloat(val);
+    return isNaN(num) ? NaN : num;
+  };
+
+  const kpis = useMemo(() => {
+    const items = [];
+
+    // Scan all targets with units or numeric/duration targets
+    pillars.forEach((p) => {
+      p.targets.forEach((t) => {
+        const name = (t.name || '').toLowerCase();
+        const unit = (t.unit || '').toLowerCase();
+        const isNumOrDur = t.type === 'NUMBER' || t.type === 'DURATION' || (unit && unit.length > 0) || name.includes('protein') || name.includes('water') || name.includes('sleep') || name.includes('workout');
+        if (!isNumOrDur) return;
+
+        const goalNum = safeParseNumber(t.targetValue);
+        const logVal = dayLog[t.id]?.value != null ? safeParseNumber(dayLog[t.id].value) : null;
+        const isDone = !!dayLog[t.id]?.done;
+
+        let displayVal = 0;
+        if (logVal !== null && !isNaN(logVal)) {
+          displayVal = logVal;
+        } else if (isDone && !isNaN(goalNum)) {
+          displayVal = goalNum;
+        }
+
+        const goal = !isNaN(goalNum) && goalNum > 0 ? goalNum : 0;
+        const pct = goal > 0 ? Math.min(100, Math.round((displayVal / goal) * 100)) : (isDone ? 100 : 0);
+        const IconComp = PILLAR_ICONS[p.icon] || Zap;
+
+        items.push({
+          id: t.id,
+          name: t.name,
+          pillarName: p.english,
+          pillarColor: p.color || '#F05A36',
+          icon: IconComp,
+          value: displayVal,
+          goal: goal,
+          unit: t.unit || '',
+          pct: pct,
+          isDone: isDone,
+        });
+      });
+    });
+
+    // Fallback: Add water metric if present in dayMetrics but not in items
+    const waterEntry = items.find(i => i.name.toLowerCase().includes('water'));
+    if (!waterEntry && dayMetrics.water) {
+      const w = safeParseNumber(dayMetrics.water);
+      if (!isNaN(w)) {
+        items.unshift({
+          id: 'metric-water',
+          name: "Today's Water Intake",
+          pillarName: 'Hydration',
+          pillarColor: '#00A8FF',
+          icon: Soup,
+          value: w >= 1000 ? +(w / 1000).toFixed(1) : w,
+          goal: 3,
+          unit: 'L',
+          pct: Math.min(100, Math.round(((w >= 1000 ? w / 1000 : w) / 3) * 100)),
+          isDone: w >= 3000,
+        });
+      }
+    }
+
+    return items;
+  }, [pillars, dayLog, dayMetrics]);
+
+  if (kpis.length === 0) return null;
+
+  return (
+    <div className="card-bento p-5 space-y-3.5">
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-base font-bold text-[#18191E] dark:text-white">Today's Live KPIs</h3>
+          <p className="text-[11px] text-stone-400 dark:text-white/40 mt-0.5 font-medium">Real-time practice & health metrics</p>
+        </div>
+        <span className="text-[10px] font-extrabold px-2.5 py-1 rounded-full bg-accent/15 text-accent border border-accent/20">
+          Live Daily
+        </span>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {kpis.map((kpi) => {
+          const IconComp = kpi.icon;
+          return (
+            <div
+              key={kpi.id}
+              className="p-3.5 rounded-2xl bg-black/[0.02] dark:bg-white/[0.03] border border-black/5 dark:border-white/5 flex flex-col justify-between space-y-2 hover:border-black/10 dark:hover:border-white/10 transition-all"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 min-w-0">
+                  <div className="w-7 h-7 rounded-xl flex items-center justify-center shrink-0" style={{ background: `${kpi.pillarColor}18` }}>
+                    <IconComp size={13} style={{ color: kpi.pillarColor }} />
+                  </div>
+                  <span className="text-xs font-bold text-[#18191E] dark:text-white truncate">{kpi.name}</span>
+                </div>
+                {kpi.goal > 0 && (
+                  <span className="text-[10px] font-extrabold text-stone-400 dark:text-stone-500 shrink-0">
+                    Goal: {kpi.goal} {kpi.unit}
+                  </span>
+                )}
+              </div>
+
+              <div className="flex items-baseline justify-between">
+                <div className="text-xl font-extrabold tabular-nums text-[#18191E] dark:text-white">
+                  {kpi.value} <span className="text-xs font-semibold text-stone-400">{kpi.unit}</span>
+                </div>
+                <span className="text-xs font-extrabold tabular-nums" style={{ color: kpi.pillarColor }}>
+                  {kpi.pct}%
+                </span>
+              </div>
+
+              {/* Mini progress bar */}
+              <div className="w-full h-1.5 rounded-full bg-black/5 dark:bg-white/10 overflow-hidden">
+                <div
+                  className="h-full rounded-full transition-all duration-300"
+                  style={{ width: `${kpi.pct}%`, background: kpi.pillarColor }}
+                />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 /* ── Desktop Pillar Breakdown (Donut + Table) ─────────────────────── */
 function DesktopPillarBreakdown({ pillars, logs, dateStr }) {
   const dayLog = logs[dateStr] || {};
@@ -1110,7 +1249,7 @@ export default function Home({ onOpenFocus, onOpenProfile }) {
 
       {/* ═══ MOBILE VIEW ═══════════════════════════════════════════ */}
       <MobileTodayView
-        pillars={pillars} logs={logs} logTarget={logTarget}
+        pillars={pillars} logs={logs} metrics={metrics} logTarget={logTarget}
         dateStr={today} streak={streak} settings={settings} onOpenFocus={onOpenFocus}
       />
 
@@ -1164,8 +1303,9 @@ export default function Home({ onOpenFocus, onOpenProfile }) {
             <DesktopWeeklyChart logs={logs} pillars={pillars} />
           </div>
 
-          {/* Right Column — Pillar Breakdown + Activity Feed */}
+          {/* Right Column — Today's Live KPIs + Pillar Breakdown + Activity Feed */}
           <div className="col-span-2 space-y-5">
+            <DesktopTodayLiveKPIs pillars={pillars} logs={logs} metrics={metrics} dateStr={today} />
             <DesktopPillarBreakdown pillars={pillars} logs={logs} dateStr={today} />
             <DesktopActivityFeed logs={logs} pillars={pillars} dateStr={today} />
           </div>
