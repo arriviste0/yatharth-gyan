@@ -805,23 +805,33 @@ function ProfileHeaderButton({ onOpenProfile }) {
 }
 
 
-/* ── Desktop GitHub-like Practice Matrix (Heatmap) ─────────────── */
+/* ── Desktop GitHub-like Practice Matrix (Heatmap + Side Chart) ───── */
 function DesktopGithubHeatmap({ logs, pillars }) {
+  const [timeRange, setTimeRange] = useState('365d'); // '30d' | '90d' | '180d' | '365d'
   const totalTargets = pillars.flatMap((p) => p.targets).length;
 
-  const { weeks, activeDaysCount, totalCompletedTasks } = useMemo(() => {
+  const numWeeks = useMemo(() => {
+    switch (timeRange) {
+      case '30d': return 5;
+      case '90d': return 13;
+      case '180d': return 26;
+      case '365d': default: return 52;
+    }
+  }, [timeRange]);
+
+  const { weeks, activeDaysCount, totalCompletedTasks, trendData } = useMemo(() => {
     const today = new Date();
     const todayDayOfWeek = today.getDay();
     const startDate = new Date(today);
-    // Go back 52 weeks (364 days) starting from Sunday
-    startDate.setDate(today.getDate() - (52 * 7 + todayDayOfWeek));
+    startDate.setDate(today.getDate() - (numWeeks * 7 + todayDayOfWeek));
 
     const weeksArr = [];
     let currentWeek = [];
     let activeDays = 0;
     let totalCompleted = 0;
+    const weeklyData = [];
 
-    const totalDays = 53 * 7;
+    const totalDays = (numWeeks + 1) * 7;
     for (let i = 0; i < totalDays; i++) {
       const d = new Date(startDate);
       d.setDate(startDate.getDate() + i);
@@ -853,14 +863,22 @@ function DesktopGithubHeatmap({ logs, pillars }) {
       });
 
       if (currentWeek.length === 7) {
+        const weekAvg = Math.round(currentWeek.reduce((s, w) => s + w.pct, 0) / 7);
+        const firstDayLabel = currentWeek[0].date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        weeklyData.push({ label: firstDayLabel, pct: weekAvg, tasks: currentWeek.reduce((s, w) => s + w.doneCount, 0) });
         weeksArr.push(currentWeek);
         currentWeek = [];
       }
     }
-    if (currentWeek.length > 0) weeksArr.push(currentWeek);
+    if (currentWeek.length > 0) {
+      const weekAvg = Math.round(currentWeek.reduce((s, w) => s + w.pct, 0) / currentWeek.length);
+      const firstDayLabel = currentWeek[0].date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      weeklyData.push({ label: firstDayLabel, pct: weekAvg, tasks: currentWeek.reduce((s, w) => s + w.doneCount, 0) });
+      weeksArr.push(currentWeek);
+    }
 
-    return { weeks: weeksArr, activeDaysCount: activeDays, totalCompletedTasks: totalCompleted };
-  }, [logs, pillars, totalTargets]);
+    return { weeks: weeksArr, activeDaysCount: activeDays, totalCompletedTasks: totalCompleted, trendData: weeklyData };
+  }, [logs, pillars, totalTargets, numWeeks]);
 
   const monthLabels = useMemo(() => {
     const labels = [];
@@ -888,72 +906,125 @@ function DesktopGithubHeatmap({ logs, pillars }) {
 
   return (
     <div className="card-bento p-5 space-y-4">
-      {/* Header */}
+      {/* Top Controls Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2.5">
           <div className="w-8 h-8 rounded-xl bg-[#F05A36]/15 border border-[#F05A36]/30 flex items-center justify-center text-[#F05A36]">
             <Flame size={16} />
           </div>
           <div>
-            <h3 className="text-base font-extrabold text-[#18191E] dark:text-white">Annual Practice Matrix</h3>
+            <h3 className="text-base font-extrabold text-[#18191E] dark:text-white">Practice Consistency & Matrix</h3>
             <p className="text-[11px] text-stone-400 dark:text-white/40 font-medium">
-              {activeDaysCount} active practice days · {totalCompletedTasks} total targets completed
+              {activeDaysCount} active days · {totalCompletedTasks} completed targets
             </p>
           </div>
         </div>
 
-        {/* Legend */}
-        <div className="flex items-center gap-1.5 text-[10px] text-stone-400 font-bold">
-          <span>Less</span>
-          <span className="w-2.5 h-2.5 rounded-sm bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/5" />
-          <span className="w-2.5 h-2.5 rounded-sm bg-[#F05A36]/25" />
-          <span className="w-2.5 h-2.5 rounded-sm bg-[#F05A36]/50" />
-          <span className="w-2.5 h-2.5 rounded-sm bg-[#F05A36]/75" />
-          <span className="w-2.5 h-2.5 rounded-sm bg-[#F05A36]" />
-          <span>More</span>
+        {/* Time Filter Select */}
+        <div className="flex items-center gap-3">
+          <div className="relative">
+            <select
+              value={timeRange}
+              onChange={(e) => setTimeRange(e.target.value)}
+              className="appearance-none bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 text-[#18191E] dark:text-white text-xs font-extrabold px-3 py-1.5 pr-7 rounded-xl outline-none focus:border-[#F05A36] cursor-pointer"
+            >
+              <option value="30d" className="text-stone-800">Last 30 Days</option>
+              <option value="90d" className="text-stone-800">Last 3 Months</option>
+              <option value="180d" className="text-stone-800">Last 6 Months</option>
+              <option value="365d" className="text-stone-800">Full Year (365d)</option>
+            </select>
+            <ChevronDown size={11} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-stone-400 pointer-events-none" />
+          </div>
+
+          {/* Legend */}
+          <div className="hidden xl:flex items-center gap-1.5 text-[10px] text-stone-400 font-bold">
+            <span>Less</span>
+            <span className="w-2.5 h-2.5 rounded-sm bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/5" />
+            <span className="w-2.5 h-2.5 rounded-sm bg-[#F05A36]/25" />
+            <span className="w-2.5 h-2.5 rounded-sm bg-[#F05A36]/50" />
+            <span className="w-2.5 h-2.5 rounded-sm bg-[#F05A36]/75" />
+            <span className="w-2.5 h-2.5 rounded-sm bg-[#F05A36]" />
+            <span>More</span>
+          </div>
         </div>
       </div>
 
-      {/* Matrix Grid */}
-      <div className="overflow-x-auto no-scrollbar pt-2 pb-1">
-        <div className="min-w-[720px]">
-          {/* Months header row */}
-          <div className="flex text-[10px] font-extrabold text-stone-400 mb-1.5 ml-7 relative h-4">
-            {monthLabels.map((m, idx) => (
-              <span
-                key={idx}
-                className="absolute"
-                style={{ left: `${m.weekIdx * 13.5}px` }}
-              >
-                {m.name}
-              </span>
-            ))}
-          </div>
-
-          {/* Grid Rows (Sun - Sat) */}
-          <div className="flex gap-1.5">
-            {/* Weekday labels */}
-            <div className="flex flex-col justify-between text-[9px] font-bold text-stone-400 pr-1 py-[2px] h-[98px]">
-              <span>Mon</span>
-              <span>Wed</span>
-              <span>Fri</span>
-            </div>
-
-            {/* Weeks columns */}
-            <div className="flex gap-[3.5px] flex-1">
-              {weeks.map((w, wIdx) => (
-                <div key={wIdx} className="flex flex-col gap-[3.5px]">
-                  {w.map((d, dIdx) => (
-                    <div
-                      key={d.dateStr || dIdx}
-                      title={`${d.formattedDate}: ${d.doneCount} targets (${Math.round(d.pct)}%)`}
-                      className={`w-2.5 h-2.5 rounded-[3px] transition-all hover:scale-125 hover:z-10 cursor-pointer ${getCellBg(d.pct)}`}
-                    />
-                  ))}
-                </div>
+      {/* Grid + Visualization split layout */}
+      <div className="grid grid-cols-12 gap-5 pt-2">
+        {/* Heatmap Matrix (Left 7 Cols) */}
+        <div className="col-span-7 overflow-x-auto no-scrollbar pb-1">
+          <div className="min-w-[380px]">
+            {/* Months header row */}
+            <div className="flex text-[10px] font-extrabold text-stone-400 mb-1.5 ml-7 relative h-4">
+              {monthLabels.map((m, idx) => (
+                <span
+                  key={idx}
+                  className="absolute"
+                  style={{ left: `${m.weekIdx * (timeRange === '30d' ? 36 : timeRange === '90d' ? 24 : 13.5)}px` }}
+                >
+                  {m.name}
+                </span>
               ))}
             </div>
+
+            {/* Grid Rows (Sun - Sat) */}
+            <div className="flex gap-1.5">
+              <div className="flex flex-col justify-between text-[9px] font-bold text-stone-400 pr-1 py-[2px] h-[98px]">
+                <span>Mon</span>
+                <span>Wed</span>
+                <span>Fri</span>
+              </div>
+
+              <div className="flex gap-[3.5px] flex-1">
+                {weeks.map((w, wIdx) => (
+                  <div key={wIdx} className="flex flex-col gap-[3.5px]">
+                    {w.map((d, dIdx) => (
+                      <div
+                        key={d.dateStr || dIdx}
+                        title={`${d.formattedDate}: ${d.doneCount} targets (${Math.round(d.pct)}%)`}
+                        className={`w-2.5 h-2.5 rounded-[3px] transition-all hover:scale-125 hover:z-10 cursor-pointer ${getCellBg(d.pct)}`}
+                      />
+                    ))}
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
+        </div>
+
+        {/* Consistency Bar Chart (Right 5 Cols) */}
+        <div className="col-span-5 border-l border-black/5 dark:border-white/5 pl-4 space-y-2">
+          <div className="flex items-center justify-between text-xs font-bold text-[#18191E] dark:text-white">
+            <span className="flex items-center gap-1 text-[#F05A36]">
+              <TrendingUp size={13} /> Volume Trend
+            </span>
+            <span className="text-[10px] text-stone-400">Avg %</span>
+          </div>
+
+          <ResponsiveContainer width="100%" height={125}>
+            <BarChart data={trendData.slice(-12)} margin={{ top: 5, right: 0, left: -25, bottom: 0 }}>
+              <XAxis dataKey="label" tick={{ fontSize: 9, fill: '#9CA3AF' }} axisLine={false} tickLine={false} />
+              <YAxis domain={[0, 100]} tick={{ fontSize: 9, fill: '#9CA3AF' }} axisLine={false} tickLine={false} />
+              <Tooltip
+                content={({ active, payload }) => {
+                  if (!active || !payload?.length) return null;
+                  return (
+                    <div className="bg-[#181926] border border-white/10 rounded-xl px-3 py-1.5 shadow-xl text-[11px] font-bold text-white">
+                      {payload[0].payload.label}: {payload[0].value}% avg ({payload[0].payload.tasks} tasks)
+                    </div>
+                  );
+                }}
+              />
+              <Bar dataKey="pct" radius={[4, 4, 0, 0]}>
+                {trendData.slice(-12).map((entry, index) => (
+                  <Cell
+                    key={`cell-${index}`}
+                    fill={entry.pct >= 80 ? '#F05A36' : entry.pct >= 50 ? '#E6A04E' : '#14B8A6'}
+                  />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
         </div>
       </div>
     </div>
