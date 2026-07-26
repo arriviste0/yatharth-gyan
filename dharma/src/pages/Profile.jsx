@@ -124,7 +124,7 @@ export default function Profile({ onClose }) {
       onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
 
-      <div className="relative w-full max-w-md rounded-3xl z-10 page-transition overflow-y-auto max-h-[90svh] scrollbar-thin bg-white dark:bg-[#181926] border border-black/10 dark:border-white/10 shadow-2xl">
+      <div className="relative w-full max-w-md rounded-3xl z-10 page-transition overflow-y-auto max-h-[90svh] no-scrollbar bg-white dark:bg-[#181926] border border-black/10 dark:border-white/10 shadow-2xl">
 
         {/* Header */}
         <div className="sticky top-0 z-10 flex items-center gap-4 px-5 py-4 border-b border-black/6 dark:border-white/6 bg-white/95 dark:bg-[#181926]/95 backdrop-blur-xl">

@@ -466,25 +466,25 @@ function DesktopTaskManager({ pillars, logs, logTarget, dateStr, setPillars }) {
   }
 
   return (
-    <div className="rounded-2xl overflow-hidden" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+    <div className="card-bento p-5">
       {/* Header */}
-      <div className="px-5 pt-5 pb-4">
+      <div className="pb-4">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h3 className="text-base font-bold text-white">Daily Practice Targets</h3>
-            <p className="text-[11px] text-white/30 mt-0.5">Complete your daily targets</p>
+            <h3 className="text-base font-extrabold text-[#18191E] dark:text-white">Daily Practice Targets</h3>
+            <p className="text-[11px] text-stone-400 dark:text-white/40 mt-0.5 font-medium">Complete your daily targets</p>
           </div>
           {/* Pillar filter */}
           <div className="relative">
             <select
               value={filterPillar}
               onChange={(e) => setFilterPillar(e.target.value)}
-              className="appearance-none bg-white/5 border border-white/8 text-white/70 text-xs font-semibold px-3 py-1.5 pr-7 rounded-lg outline-none focus:border-[#E8843C]/40 cursor-pointer"
+              className="appearance-none bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 text-[#18191E] dark:text-white text-xs font-extrabold px-3 py-1.5 pr-7 rounded-xl outline-none focus:border-[#F05A36] cursor-pointer"
             >
-              <option value="all">All Pillars</option>
-              {pillars.map((p) => <option key={p.id} value={p.id}>{p.english}</option>)}
+              <option value="all" className="text-stone-800">All Pillars</option>
+              {pillars.map((p) => <option key={p.id} value={p.id} className="text-stone-800">{p.english}</option>)}
             </select>
-            <ChevronDown size={11} className="absolute right-2 top-1/2 -translate-y-1/2 text-white/30 pointer-events-none" />
+            <ChevronDown size={11} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-stone-400 pointer-events-none" />
           </div>
         </div>
 
@@ -497,9 +497,9 @@ function DesktopTaskManager({ pillars, logs, logTarget, dateStr, setPillars }) {
       </div>
 
       {/* Task List */}
-      <div className="px-3 pb-3 space-y-1 max-h-[420px] overflow-y-auto scrollbar-thin">
+      <div className="space-y-1.5 max-h-[440px] overflow-y-auto no-scrollbar">
         {filtered.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-10 text-white/20">
+          <div className="flex flex-col items-center justify-center py-10 text-stone-300 dark:text-white/20">
             <CheckCircle2 size={32} className="mb-2" />
             <span className="text-sm font-medium">{tab === 'pending' ? 'All tasks completed!' : 'No tasks yet'}</span>
           </div>
@@ -737,7 +737,7 @@ function DesktopActivityFeed({ logs, pillars, dateStr }) {
           <span className="text-[10px] text-stone-400 mt-0.5">Complete a target to see it here</span>
         </div>
       ) : (
-        <div className="space-y-1 max-h-[300px] overflow-y-auto scrollbar-thin">
+        <div className="space-y-1 max-h-[300px] overflow-y-auto no-scrollbar">
           {/* Table header */}
           <div className="flex items-center gap-3 px-3 py-2 text-[10px] font-extrabold text-stone-400 uppercase tracking-wider">
             <span className="flex-1">Target</span>
