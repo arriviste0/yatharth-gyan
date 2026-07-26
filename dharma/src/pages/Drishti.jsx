@@ -402,7 +402,7 @@ export default function Drishti() {
                     }}
                     cursor={{ fill: 'transparent', stroke: 'none' }}
                   />
-                  <Bar dataKey="value" radius={[6, 6, 0, 0]} fill="#E8843C" opacity={0.85} />
+                  <Bar dataKey="value" radius={[6, 6, 0, 0]} fill="var(--color-accent)" opacity={0.85} />
                 </BarChart>
               </ResponsiveContainer>
             </div>

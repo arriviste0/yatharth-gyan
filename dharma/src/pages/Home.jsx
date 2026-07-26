@@ -577,7 +577,7 @@ function DesktopWeeklyChart({ logs, pillars }) {
           <p className="text-[11px] text-stone-400 dark:text-white/40 mt-0.5">Last 7 days performance</p>
         </div>
         <div className="text-right">
-          <div className="text-2xl font-extrabold tabular-nums text-[#F05A36]">{avg}%</div>
+          <div className="text-2xl font-extrabold tabular-nums text-accent">{avg}%</div>
           <div className="text-[10px] text-stone-400 dark:text-white/30">avg rate</div>
         </div>
       </div>
@@ -586,8 +586,8 @@ function DesktopWeeklyChart({ logs, pillars }) {
         <AreaChart data={data} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
           <defs>
             <linearGradient id="weekGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#F05A36" stopOpacity={0.3} />
-              <stop offset="100%" stopColor="#F05A36" stopOpacity={0} />
+              <stop offset="0%" stopColor="var(--color-accent)" stopOpacity={0.3} />
+              <stop offset="100%" stopColor="var(--color-accent)" stopOpacity={0} />
             </linearGradient>
           </defs>
           <XAxis dataKey="label" tick={{ fontSize: 10, fill: '#9CA3AF' }} axisLine={false} tickLine={false} />
@@ -602,7 +602,7 @@ function DesktopWeeklyChart({ logs, pillars }) {
               );
             }}
           />
-          <Area type="monotone" dataKey="rate" stroke="#F05A36" strokeWidth={2.5} fill="url(#weekGrad)" dot={{ r: 4, fill: '#F05A36', stroke: '#181926', strokeWidth: 2 }} />
+          <Area type="monotone" dataKey="rate" stroke="var(--color-accent)" strokeWidth={2.5} fill="url(#weekGrad)" dot={{ r: 4, fill: 'var(--color-accent)', stroke: '#181926', strokeWidth: 2 }} />
         </AreaChart>
       </ResponsiveContainer>
     </div>
