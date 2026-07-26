@@ -44,12 +44,13 @@ export default function DynamicIsland({ onOpenFocus }) {
         <div
           onClick={() => setExpanded(!expanded)}
           style={{
+            transformOrigin: 'top center',
             boxShadow: expanded
-              ? '0 28px 70px rgba(0,0,0,0.6), 0 0 50px rgba(240,90,54,0.3)'
-              : '0 10px 30px rgba(0,0,0,0.4), 0 0 16px rgba(240,90,54,0.18)',
-            transition: 'all 500ms cubic-bezier(0.32, 0.72, 0, 1)',
+              ? '0 30px 80px -10px rgba(0,0,0,0.7), 0 0 60px -5px rgba(240,90,54,0.35)'
+              : '0 12px 35px -5px rgba(0,0,0,0.45), 0 0 18px rgba(240,90,54,0.2)',
+            transition: 'all 500ms cubic-bezier(0.34, 1.4, 0.64, 1)',
           }}
-          className={`relative overflow-hidden cursor-pointer select-none backdrop-blur-2xl border transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] ${
+          className={`relative overflow-hidden cursor-pointer select-none backdrop-blur-2xl border transition-all duration-500 ease-[cubic-bezier(0.34,1.4,0.64,1)] active:scale-[0.98] ${
             expanded
               ? 'w-full max-w-md rounded-[28px] p-5 bg-[#181926]/95 border-[#F05A36]/40 text-white ring-1 ring-[#F05A36]/30'
               : 'w-auto max-w-[92vw] sm:max-w-sm rounded-full px-4 sm:px-5 py-2.5 bg-[#181926]/90 hover:bg-[#202334] border-[#F05A36]/30 text-white hover:border-[#F05A36]/60'
@@ -60,9 +61,9 @@ export default function DynamicIsland({ onOpenFocus }) {
 
           {/* Collapsed Pill View */}
           <div
-            className={`transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] ${
+            className={`transition-all duration-300 ease-[cubic-bezier(0.34,1.4,0.64,1)] ${
               expanded
-                ? 'opacity-0 scale-95 pointer-events-none absolute -translate-y-2'
+                ? 'opacity-0 scale-90 pointer-events-none absolute -translate-y-3'
                 : 'opacity-100 scale-100 translate-y-0 flex items-center justify-between gap-2.5 sm:gap-4 text-[11px] sm:text-xs font-extrabold text-white'
             }`}
           >
@@ -110,12 +111,12 @@ export default function DynamicIsland({ onOpenFocus }) {
             </div>
           </div>
 
-          {/* Expanded Island Dashboard Card (CSS Grid Height Animation) */}
+          {/* Expanded Island Dashboard Card (Smooth Spring Grid Height Animation) */}
           <div
-            className={`grid transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] ${
+            className={`grid transition-all duration-500 ease-[cubic-bezier(0.34,1.4,0.64,1)] ${
               expanded
                 ? 'grid-rows-[1fr] opacity-100 scale-100 pt-0'
-                : 'grid-rows-[0fr] opacity-0 scale-95 pointer-events-none'
+                : 'grid-rows-[0fr] opacity-0 scale-90 pointer-events-none'
             }`}
           >
             <div className="overflow-hidden space-y-4 text-white">
