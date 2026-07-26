@@ -197,25 +197,44 @@ function PillarCategoryCard({ pillar, dayLog }) {
   );
 }
 
-/* ── Log Value Modal for Non-Checkbox Targets ──────────────────────── */
+/* ── Log Value Modal for Targets (Single or Multi-Metric) ──────────────────────── */
 function LogValueModal({ target, dateStr, onLog, onClose }) {
   const isDone = target.done ?? false;
+  const subMetrics = target.subMetrics || [];
+  const isMulti = subMetrics.length > 0 || target.type === 'MULTI_METRIC';
+
   const initialVal = target.logEntry?.value != null ? String(target.logEntry.value) : (target.targetValue != null ? String(target.targetValue) : '');
   const [val, setVal] = useState(initialVal);
 
-  const isTime = target.type === 'TIME';
+  const [subVals, setSubVals] = useState(() => {
+    const existing = target.logEntry?.subValues || {};
+    const initial = {};
+    subMetrics.forEach((sub) => {
+      const idKey = sub.id || sub.name;
+      initial[idKey] = existing[idKey] != null ? String(existing[idKey]) : String(sub.targetValue || 0);
+    });
+    return initial;
+  });
+
   const unit = target.unit || '';
 
   function handleSubmit(e) {
     e.preventDefault();
-    if (isTime) {
-      if (!val) return;
-      const [h, m] = val.split(':').map(Number);
-      const [th, tm] = (target.targetValue || '23:00').split(':').map(Number);
-      const done = target.comparison === 'lte'
-        ? (h * 60 + m) <= (th * 60 + tm)
-        : (h * 60 + m) >= (th * 60 + tm);
-      onLog(dateStr, target.id, { done, value: val, timestamp: Date.now() });
+    if (isMulti) {
+      const parsedSub = {};
+      subMetrics.forEach((sub) => {
+        const idKey = sub.id || sub.name;
+        const num = parseFloat(subVals[idKey]) || 0;
+        parsedSub[idKey] = num;
+      });
+
+      const primaryVal = parseFloat(Object.values(subVals)[0]) || parseFloat(val) || 0;
+      onLog(dateStr, target.id, {
+        done: true,
+        value: primaryVal,
+        subValues: parsedSub,
+        timestamp: Date.now()
+      });
     } else {
       const num = parseFloat(val);
       if (isNaN(num)) return;
@@ -227,13 +246,13 @@ function LogValueModal({ target, dateStr, onLog, onClose }) {
   }
 
   function handleClear() {
-    onLog(dateStr, target.id, { done: false, value: null, timestamp: Date.now() });
+    onLog(dateStr, target.id, { done: false, value: null, subValues: null, timestamp: Date.now() });
     onClose();
   }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-[fadeIn_0.2s_ease-out]">
-      <div className="w-full max-w-md bg-white dark:bg-[#181926] border border-black/10 dark:border-white/10 rounded-3xl p-6 shadow-2xl space-y-4">
+      <div className="w-full max-w-md bg-white dark:bg-[#181926] border border-black/10 dark:border-white/10 rounded-3xl p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
         {/* Modal Header */}
         <div className="flex items-start justify-between">
           <div>
@@ -242,9 +261,11 @@ function LogValueModal({ target, dateStr, onLog, onClose }) {
               {target.pillarName}
             </span>
             <h3 className="text-lg font-extrabold text-[#18191E] dark:text-white mt-2">{target.name}</h3>
-            <p className="text-xs text-stone-500 dark:text-stone-400 mt-0.5 font-medium">
-              Goal: {target.comparison === 'lte' ? 'at most' : 'at least'} {target.targetValue}{unit ? ` ${unit}` : ''}
-            </p>
+            {!isMulti && (
+              <p className="text-xs text-stone-500 dark:text-stone-400 mt-0.5 font-medium">
+                Goal: {target.comparison === 'lte' ? 'at most' : 'at least'} {target.targetValue}{unit ? ` ${unit}` : ''}
+              </p>
+            )}
           </div>
           <button onClick={onClose} className="w-8 h-8 rounded-full flex items-center justify-center text-stone-400 hover:text-stone-700 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5 transition-all">
             <X size={16} />
@@ -253,30 +274,64 @@ function LogValueModal({ target, dateStr, onLog, onClose }) {
 
         {/* Form Body */}
         <form onSubmit={handleSubmit} className="space-y-4 pt-1">
-          <div>
-            <label className="block text-xs font-bold text-stone-600 dark:text-stone-300 uppercase tracking-wider mb-2">
-              Enter Logged {isTime ? 'Time' : unit ? `Amount (${unit})` : 'Value'}
-            </label>
-            <div className="flex items-center gap-2">
-              <input
-                type={isTime ? "time" : "number"}
-                step={isTime ? undefined : "any"}
-                value={val}
-                onChange={(e) => setVal(e.target.value)}
-                placeholder={target.targetValue != null ? String(target.targetValue) : '0'}
-                autoFocus
-                className="flex-1 text-base font-bold text-[#18191E] dark:text-white bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-2xl px-4 py-3 outline-none focus:border-[#F05A36] transition-colors"
-              />
-              {unit && !isTime && (
-                <span className="text-sm font-bold text-stone-500 dark:text-stone-400 px-3.5 py-3 rounded-2xl bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10">
-                  {unit}
-                </span>
-              )}
+          {isMulti ? (
+            <div className="space-y-3">
+              <label className="block text-xs font-extrabold text-accent uppercase tracking-wider">
+                Logged Sub-Metrics Breakdown
+              </label>
+              {subMetrics.map((sub) => {
+                const idKey = sub.id || sub.name;
+                return (
+                  <div key={idKey} className="p-3.5 rounded-2xl bg-black/[0.02] dark:bg-white/[0.03] border border-black/5 dark:border-white/5 space-y-2">
+                    <div className="flex items-center justify-between text-xs font-bold text-[#18191E] dark:text-white">
+                      <span>{sub.name}</span>
+                      <span className="text-[10px] text-stone-400">
+                        Goal: {sub.comparison === 'lte' ? '≤' : '≥'} {sub.targetValue} {sub.unit}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="number"
+                        step="any"
+                        value={subVals[idKey] ?? ''}
+                        onChange={(e) => setSubVals({ ...subVals, [idKey]: e.target.value })}
+                        placeholder="0"
+                        className="flex-1 text-base font-bold text-[#18191E] dark:text-white bg-white dark:bg-[#181926] border border-black/10 dark:border-white/10 rounded-xl px-3.5 py-2.5 outline-none focus:border-accent"
+                      />
+                      <span className="text-xs font-bold text-stone-500 px-3 py-2.5 rounded-xl bg-black/5 dark:bg-white/5">
+                        {sub.unit}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
-          </div>
+          ) : (
+            <div>
+              <label className="block text-xs font-bold text-stone-600 dark:text-stone-300 uppercase tracking-wider mb-2">
+                Enter Logged {unit ? `Amount (${unit})` : 'Value'}
+              </label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="number"
+                  step="any"
+                  value={val}
+                  onChange={(e) => setVal(e.target.value)}
+                  placeholder={target.targetValue != null ? String(target.targetValue) : '0'}
+                  autoFocus
+                  className="flex-1 text-base font-bold text-[#18191E] dark:text-white bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-2xl px-4 py-3 outline-none focus:border-[#F05A36] transition-colors"
+                />
+                {unit && (
+                  <span className="text-sm font-bold text-stone-500 dark:text-stone-400 px-3.5 py-3 rounded-2xl bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10">
+                    {unit}
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
 
-          {/* Quick presets for numbers */}
-          {!isTime && target.targetValue > 0 && (
+          {/* Quick presets for single numbers */}
+          {!isMulti && target.targetValue > 0 && (
             <div className="flex items-center gap-2 flex-wrap">
               <span className="text-[11px] font-semibold text-stone-400">Quick set:</span>
               {[0.5, 0.75, 1, 1.25, 1.5].map((mult) => {
@@ -286,7 +341,7 @@ function LogValueModal({ target, dateStr, onLog, onClose }) {
                     key={mult}
                     type="button"
                     onClick={() => setVal(String(preset))}
-                    className="text-xs font-bold px-3 py-1.5 rounded-full bg-black/5 dark:bg-white/5 hover:bg-accent hover:text-white dark:hover:bg-accent dark:hover:text-white transition-all text-stone-600 dark:text-stone-300 border border-black/5 dark:border-white/10"
+                    className="text-xs font-bold px-3 py-1.5 rounded-full bg-black/5 dark:bg-white/5 hover:bg-accent hover:text-white transition-all text-stone-600 dark:text-stone-300 border border-black/5 dark:border-white/10"
                   >
                     {preset} {unit}
                   </button>
@@ -321,7 +376,8 @@ function LogValueModal({ target, dateStr, onLog, onClose }) {
 
 function isInputRequired(target) {
   if (!target) return false;
-  if (target.type === 'NUMBER' || target.type === 'DURATION' || target.type === 'TIME') return true;
+  if (target.type === 'NUMBER' || target.type === 'DURATION' || target.type === 'TIME' || target.type === 'MULTI_METRIC') return true;
+  if (target.subMetrics && target.subMetrics.length > 0) return true;
   if (target.type === 'CHECKBOX') return false;
   if (target.unit && target.unit.trim().length > 0) return true;
   if (target.targetValue != null && typeof target.targetValue !== 'boolean') return true;
@@ -456,9 +512,9 @@ function MobileTodayView({ pillars, logs, metrics = {}, logTarget, dateStr, stre
                   <div className="text-[13px] font-semibold text-stone-400 dark:text-stone-500 line-through truncate">{target.name}</div>
                   <div className="text-[10px] text-stone-400 dark:text-stone-600 font-semibold uppercase tracking-wide mt-0.5 flex items-center gap-1.5">
                     <span>{target.pillarName}</span>
-                    {isNonCheckbox && loggedVal != null && (
+                    {isNonCheckbox && (
                       <span className="text-emerald-500 font-bold no-underline">
-                        • Logged: {loggedVal} {target.unit || ''}
+                        • Logged: {formatLoggedSummary(target)}
                       </span>
                     )}
                   </div>
@@ -586,10 +642,14 @@ function TaskRow({ target, dateStr, logTarget, onEdit, onLogModal }) {
         </div>
         {isNonCheckbox && (
           <div className="text-[11px] font-medium mt-0.5">
-            {target.done && loggedVal != null ? (
-              <span className="text-emerald-500 font-bold">Logged: {loggedVal} {target.unit || ''}</span>
+            {target.done ? (
+              <span className="text-emerald-500 font-bold">Logged: {formatLoggedSummary(target)}</span>
             ) : (
-              <span className="text-stone-400">Target: {target.comparison === 'lte' ? '≤' : '≥'} {target.targetValue} {target.unit || ''}</span>
+              <span className="text-stone-400">
+                {target.subMetrics && target.subMetrics.length > 0
+                  ? `Multi-Metric (${target.subMetrics.length} sub-fields)`
+                  : `Target: ${target.comparison === 'lte' ? '≤' : '≥'} ${target.targetValue} ${target.unit || ''}`}
+              </span>
             )}
           </div>
         )}

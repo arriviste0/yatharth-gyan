@@ -20,24 +20,38 @@ const ICON_MAP = {
 };
 
 const TARGET_TYPES = [
-  { id: 'CHECKBOX', label: 'Checklist', desc: 'Simple Yes / No habit toggle' },
-  { id: 'NUMBER',   label: 'Quantity', desc: 'Water L, Protein g, Steps, Pages...' },
-  { id: 'DURATION', label: 'Duration', desc: 'Workout mins, Meditate mins, Sleep hrs' },
+  { id: 'CHECKBOX',     label: 'Checklist', desc: 'Simple Yes / No habit toggle' },
+  { id: 'NUMBER',       label: 'Quantity',  desc: 'Water L, Protein g, Steps, Pages...' },
+  { id: 'DURATION',     label: 'Duration',  desc: 'Workout mins, Meditate mins, Sleep hrs' },
+  { id: 'MULTI_METRIC', label: 'Multi-Metric', desc: 'Lunch (Protein + Carbs + Calories)' },
 ];
 
 const TARGET_TEMPLATES = [
+  {
+    name: 'Lunch (Protein + Carbs + Cals)',
+    type: 'MULTI_METRIC',
+    subMetrics: [
+      { id: 'sub-prot', name: 'Protein', targetValue: 40, unit: 'g', comparison: 'gte' },
+      { id: 'sub-carbs', name: 'Carbs', targetValue: 60, unit: 'g', comparison: 'lte' },
+      { id: 'sub-cal', name: 'Calories', targetValue: 600, unit: 'kcal', comparison: 'lte' },
+    ]
+  },
+  {
+    name: 'Full Workout (Mins + Cals)',
+    type: 'MULTI_METRIC',
+    subMetrics: [
+      { id: 'sub-dur', name: 'Duration', targetValue: 45, unit: 'min', comparison: 'gte' },
+      { id: 'sub-cal', name: 'Calories Burned', targetValue: 350, unit: 'kcal', comparison: 'gte' },
+    ]
+  },
   { name: 'Drink 3L Water', type: 'NUMBER', targetValue: 3, comparison: 'gte', unit: 'L' },
   { name: 'Eat 90g Protein', type: 'NUMBER', targetValue: 90, comparison: 'gte', unit: 'g' },
   { name: 'Workout 45 mins', type: 'DURATION', targetValue: 45, comparison: 'gte', unit: 'min' },
   { name: 'Sleep 8 Hours', type: 'DURATION', targetValue: 8, comparison: 'gte', unit: 'hr' },
-  { name: 'Meditate 15 mins', type: 'DURATION', targetValue: 15, comparison: 'gte', unit: 'min' },
-  { name: 'Read 20 pages', type: 'NUMBER', targetValue: 20, comparison: 'gte', unit: 'pages' },
-  { name: 'Walk 8,000 steps', type: 'NUMBER', targetValue: 8000, comparison: 'gte', unit: 'steps' },
   { name: 'Cold shower', type: 'CHECKBOX', targetValue: 0, comparison: 'gte', unit: '' },
-  { name: 'No junk food', type: 'CHECKBOX', targetValue: 0, comparison: 'gte', unit: '' },
 ];
 
-const QUICK_UNITS = ['g', 'L', 'ml', 'min', 'hr', 'steps', 'pages', 'sessions'];
+const QUICK_UNITS = ['g', 'L', 'ml', 'min', 'hr', 'kcal', 'steps', 'pages', 'sessions'];
 
 /* ── Target Form (add OR edit) ─────────────────────────────────────── */
 function TargetForm({ initial, onSave, onCancel }) {
@@ -46,6 +60,7 @@ function TargetForm({ initial, onSave, onCancel }) {
   const [targetValue, setTargetValue] = useState(initial?.targetValue != null && typeof initial.targetValue === 'number' ? String(initial.targetValue) : '0');
   const [unit,        setUnit]        = useState(initial?.unit        ?? '');
   const [comparison,  setComparison]  = useState(initial?.comparison  ?? 'gte');
+  const [subMetrics,  setSubMetrics]  = useState(initial?.subMetrics  ?? []);
   const [showTemplates, setShowTemplates] = useState(false);
 
   const fieldCls =
@@ -59,12 +74,37 @@ function TargetForm({ initial, onSave, onCancel }) {
     setTargetValue(t.targetValue != null ? String(t.targetValue) : '0');
     setUnit(t.unit || '');
     setComparison(t.comparison || 'gte');
+    setSubMetrics(t.subMetrics ? JSON.parse(JSON.stringify(t.subMetrics)) : []);
     setShowTemplates(false);
+  }
+
+  function addSubMetric() {
+    setSubMetrics([
+      ...subMetrics,
+      {
+        id: `sub-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
+        name: '',
+        targetValue: 0,
+        unit: 'g',
+        comparison: 'gte'
+      }
+    ]);
+  }
+
+  function updateSubMetric(idx, key, val) {
+    const next = [...subMetrics];
+    next[idx] = { ...next[idx], [key]: val };
+    setSubMetrics(next);
+  }
+
+  function removeSubMetric(idx) {
+    setSubMetrics(subMetrics.filter((_, i) => i !== idx));
   }
 
   function handleSave(e) {
     e.preventDefault();
     if (!name.trim()) return;
+    const cleanSub = subMetrics.filter(s => s.name.trim().length > 0);
     onSave({
       id: initial?.id ?? `custom-${Date.now()}`,
       name: name.trim(),
@@ -72,6 +112,7 @@ function TargetForm({ initial, onSave, onCancel }) {
       targetValue: (type === 'NUMBER' || type === 'DURATION') ? parseFloat(targetValue) || 0 : null,
       unit: type === 'CHECKBOX' ? '' : unit.trim(),
       comparison: comparison || 'gte',
+      subMetrics: cleanSub,
       frequency: 'daily',
       reminder: null,
     });
@@ -110,7 +151,7 @@ function TargetForm({ initial, onSave, onCancel }) {
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="e.g. Eat 50g Protein, Drink 3L Water, Workout 45m"
+          placeholder="e.g. Lunch, Daily Nutrition, Full Workout"
           autoFocus
           className={fieldCls}
         />
@@ -121,7 +162,7 @@ function TargetForm({ initial, onSave, onCancel }) {
         <label className="block text-[11px] font-extrabold uppercase tracking-wider text-stone-500 dark:text-stone-400 mb-1.5">
           Tracking Type
         </label>
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
           {TARGET_TYPES.map((t) => (
             <button
               key={t.id}
@@ -129,6 +170,12 @@ function TargetForm({ initial, onSave, onCancel }) {
               onClick={() => {
                 setType(t.id);
                 if (t.id === 'CHECKBOX') { setTargetValue('0'); setUnit(''); }
+                if (t.id === 'MULTI_METRIC' && subMetrics.length === 0) {
+                  setSubMetrics([
+                    { id: `sub-${Date.now()}-1`, name: 'Protein', targetValue: 30, unit: 'g', comparison: 'gte' },
+                    { id: `sub-${Date.now()}-2`, name: 'Carbs', targetValue: 50, unit: 'g', comparison: 'lte' },
+                  ]);
+                }
               }}
               className={`p-3 rounded-2xl text-left transition-all border ${
                 type === t.id
@@ -145,7 +192,7 @@ function TargetForm({ initial, onSave, onCancel }) {
         </div>
       </div>
 
-      {/* Target Value, Unit, & Rule Configuration for NUMBER / DURATION */}
+      {/* Target Value & Unit Configuration for NUMBER / DURATION */}
       {(type === 'NUMBER' || type === 'DURATION') && (
         <div className="space-y-3 p-4 rounded-2xl bg-black/[0.02] dark:bg-white/[0.02] border border-black/5 dark:border-white/5">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -207,6 +254,76 @@ function TargetForm({ initial, onSave, onCancel }) {
                 </button>
               ))}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Multi-Metric Sub-Fields Section */}
+      {(type === 'MULTI_METRIC' || subMetrics.length > 0) && (
+        <div className="space-y-3 p-4 rounded-2xl bg-black/[0.02] dark:bg-white/[0.02] border border-accent/20">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-extrabold text-accent uppercase tracking-wider">
+              Sub-Metrics (Carbs, Protein, Calories...)
+            </span>
+            <button
+              type="button"
+              onClick={addSubMetric}
+              className="text-xs font-bold text-accent hover:underline flex items-center gap-1"
+            >
+              <Plus size={14} /> Add Sub-Metric
+            </button>
+          </div>
+
+          <div className="space-y-2">
+            {subMetrics.map((sub, idx) => (
+              <div key={sub.id || idx} className="grid grid-cols-12 gap-2 items-center bg-white dark:bg-[#181926] p-3 rounded-xl border border-black/5 dark:border-white/10">
+                <div className="col-span-4">
+                  <input
+                    value={sub.name}
+                    onChange={(e) => updateSubMetric(idx, 'name', e.target.value)}
+                    placeholder="e.g. Protein, Carbs"
+                    className="w-full text-xs font-bold text-[#18191E] dark:text-white bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl px-2.5 py-2 outline-none"
+                  />
+                </div>
+                <div className="col-span-3">
+                  <input
+                    type="number"
+                    step="any"
+                    value={sub.targetValue}
+                    onChange={(e) => updateSubMetric(idx, 'targetValue', parseFloat(e.target.value) || 0)}
+                    placeholder="Goal"
+                    className="w-full text-xs font-bold text-[#18191E] dark:text-white bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl px-2.5 py-2 outline-none"
+                  />
+                </div>
+                <div className="col-span-2">
+                  <input
+                    value={sub.unit}
+                    onChange={(e) => updateSubMetric(idx, 'unit', e.target.value)}
+                    placeholder="Unit"
+                    className="w-full text-xs font-bold text-[#18191E] dark:text-white bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl px-2 py-2 outline-none"
+                  />
+                </div>
+                <div className="col-span-2">
+                  <select
+                    value={sub.comparison}
+                    onChange={(e) => updateSubMetric(idx, 'comparison', e.target.value)}
+                    className="w-full text-[11px] font-bold text-[#18191E] dark:text-white bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl px-1.5 py-2 outline-none"
+                  >
+                    <option value="gte">≥ Min</option>
+                    <option value="lte">≤ Max</option>
+                  </select>
+                </div>
+                <div className="col-span-1 text-center">
+                  <button
+                    type="button"
+                    onClick={() => removeSubMetric(idx)}
+                    className="text-stone-400 hover:text-red-500 transition-colors p-1"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       )}

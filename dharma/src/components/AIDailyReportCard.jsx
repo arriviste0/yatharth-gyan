@@ -158,7 +158,22 @@ export default function AIDailyReportCard() {
     }
 
     let proteinToday = 0;
-    if (proteinTarget && dayLog[proteinTarget.id]?.value != null) {
+    // Check if sub-metrics for protein exist in any target log today
+    let subProteinSumToday = 0;
+    Object.values(dayLog).forEach(entry => {
+      if (entry?.subValues) {
+        Object.entries(entry.subValues).forEach(([k, v]) => {
+          if (k.toLowerCase().includes('protein') || k.toLowerCase().includes('prot')) {
+            const num = safeParseNumber(v);
+            if (!isNaN(num)) subProteinSumToday += num;
+          }
+        });
+      }
+    });
+
+    if (subProteinSumToday > 0) {
+      proteinToday = subProteinSumToday;
+    } else if (proteinTarget && dayLog[proteinTarget.id]?.value != null) {
       const v = safeParseNumber(dayLog[proteinTarget.id].value);
       if (!isNaN(v)) proteinToday = v;
       else if (dayLog[proteinTarget.id]?.done) proteinToday = proteinGoal;
@@ -186,7 +201,21 @@ export default function AIDailyReportCard() {
       const pastMetric = metrics[key] || {};
       let dayVal = null;
 
-      if (proteinTarget && pastLog[proteinTarget.id]?.value != null) {
+      let subProtSum = 0;
+      Object.values(pastLog).forEach(entry => {
+        if (entry?.subValues) {
+          Object.entries(entry.subValues).forEach(([k, v]) => {
+            if (k.toLowerCase().includes('protein') || k.toLowerCase().includes('prot')) {
+              const num = safeParseNumber(v);
+              if (!isNaN(num)) subProtSum += num;
+            }
+          });
+        }
+      });
+
+      if (subProtSum > 0) {
+        dayVal = subProtSum;
+      } else if (proteinTarget && pastLog[proteinTarget.id]?.value != null) {
         const v = safeParseNumber(pastLog[proteinTarget.id].value);
         if (!isNaN(v)) dayVal = v;
         else if (pastLog[proteinTarget.id]?.done) dayVal = proteinGoal;
