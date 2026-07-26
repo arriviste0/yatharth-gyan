@@ -364,16 +364,17 @@ export default function Gyaan() {
       </div>
 
       {/* Chapter of the day (#30) */}
-      <div className="card-bento mb-6 p-4 rounded-3xl bg-gradient-to-r from-[#F05A36]/12 via-[#F05A36]/6 to-transparent border border-[#F05A36]/25 shadow-sm flex items-center gap-4">
-        <div className="w-12 h-12 rounded-2xl flex-shrink-0 flex items-center justify-center font-dev font-extrabold text-xl bg-[#F05A36] text-white shadow-md">
+      <div className="card-bento mb-6 p-4 rounded-3xl shadow-sm flex items-center gap-4"
+        style={{ background: 'var(--color-accent-light)', border: '1px solid var(--color-accent-border)' }}>
+        <div className="w-12 h-12 rounded-2xl flex-shrink-0 flex items-center justify-center font-dev font-extrabold text-xl bg-accent text-white shadow-md">
           {chapterOfDay?.devanagari}
         </div>
         <div className="flex-1 min-w-0">
-          <div className="text-[10px] font-extrabold text-[#F05A36] uppercase tracking-widest mb-0.5">Chapter of the Day</div>
+          <div className="text-[10px] font-extrabold text-accent uppercase tracking-widest mb-0.5">Chapter of the Day</div>
           <div className="font-dev text-base font-extrabold text-[#18191E] dark:text-white truncate">{chapterOfDay?.sanskrit_name}</div>
           <div className="text-xs text-stone-500 dark:text-stone-300 truncate font-medium">{chapterOfDay?.english_name}</div>
         </div>
-        <BookOpen size={20} className="text-[#F05A36] flex-shrink-0 opacity-80" />
+        <BookOpen size={20} className="text-accent flex-shrink-0 opacity-80" />
       </div>
 
       {/* Tabs */}
@@ -382,7 +383,7 @@ export default function Gyaan() {
           <button key={t.id} onClick={() => setTab(t.id)}
             className={`flex-shrink-0 flex-1 py-2 px-3 rounded-xl text-xs font-extrabold transition-all whitespace-nowrap ${
               tab === t.id
-                ? 'bg-[#F05A36] text-white shadow-sm'
+                ? 'bg-accent text-white shadow-sm'
                 : 'text-stone-500 dark:text-stone-400 hover:text-[#18191E] dark:hover:text-white'
             }`}>
             {t.label}

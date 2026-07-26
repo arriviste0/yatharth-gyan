@@ -689,8 +689,8 @@ export default function Manan() {
           handleCreateFile('todo');
         }}
         title="Quick Create File"
-        className="fixed bottom-20 right-6 lg:bottom-10 lg:right-10 z-40 w-14 h-14 rounded-full bg-[#F05A36] text-white shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all"
-        style={{ boxShadow: '0 8px 30px rgba(240,90,54,0.5)' }}
+        className="fixed bottom-20 right-6 lg:bottom-10 lg:right-10 z-40 w-14 h-14 rounded-full bg-accent text-white shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all"
+        style={{ boxShadow: '0 8px 30px var(--color-accent-shadow)' }}
       >
         <Plus size={24} strokeWidth={2.5} />
       </button>

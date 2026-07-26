@@ -49,18 +49,18 @@ export default function DynamicIsland({ onOpenFocus, onOpenProfile }) {
             transformOrigin: 'top center',
             borderRadius: expanded ? '28px' : '24px',
             boxShadow: expanded
-              ? '0 30px 80px -10px rgba(0,0,0,0.7), 0 0 60px -5px rgba(240,90,54,0.35)'
-              : '0 12px 35px -5px rgba(0,0,0,0.45), 0 0 18px rgba(240,90,54,0.2)',
+              ? '0 30px 80px -10px rgba(0,0,0,0.7), 0 0 60px -5px var(--color-accent-shadow)'
+              : '0 12px 35px -5px rgba(0,0,0,0.45), 0 0 18px var(--color-accent-shadow)',
             transition: 'all 500ms cubic-bezier(0.34, 1.4, 0.64, 1)',
           }}
           className={`relative overflow-hidden cursor-pointer select-none backdrop-blur-2xl border transition-all duration-500 ease-[cubic-bezier(0.34,1.4,0.64,1)] active:scale-[0.98] ${
             expanded
-              ? 'w-full max-w-md p-5 bg-[#181926]/95 border-[#F05A36]/40 text-white ring-1 ring-[#F05A36]/30'
-              : 'w-auto max-w-[96vw] sm:max-w-md px-3.5 sm:px-4 py-2 bg-[#181926]/90 hover:bg-[#202334] border-[#F05A36]/30 text-white hover:border-[#F05A36]/60'
+              ? 'w-full max-w-md p-5 bg-[#181926]/95 border-accent text-white'
+              : 'w-auto max-w-[96vw] sm:max-w-md px-3.5 sm:px-4 py-2 bg-[#181926]/90 hover:bg-[#202334] border-accent text-white'
           }`}
         >
           {/* Ambient Top Glow Line */}
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-36 h-[1.5px] bg-gradient-to-r from-transparent via-[#F05A36] to-transparent opacity-80" />
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-36 h-[1.5px] bg-gradient-to-r from-transparent via-[var(--color-accent)] to-transparent opacity-80" />
 
           {/* Collapsed Pill View */}
           <div
