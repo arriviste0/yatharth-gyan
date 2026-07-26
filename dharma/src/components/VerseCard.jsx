@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { ChevronDown, ChevronUp, Bookmark, BookmarkCheck, Share2, Check, PenLine } from 'lucide-react';
+import { ChevronDown, ChevronUp, Bookmark, BookmarkCheck, Share2, Check, PenLine, Sparkles, Loader2 } from 'lucide-react';
+import { getShlokaAIInsight } from '../api/ai';
 
 export default function VerseCard({
   shloka,
@@ -14,8 +15,22 @@ export default function VerseCard({
   const [showHindi, setShowHindi] = useState(false);
   const [noteText,  setNoteText]  = useState(annotation);
   const [noteSaved, setNoteSaved] = useState(false);
+  const [aiInsight, setAiInsight] = useState(null);
+  const [loadingAi, setLoadingAi] = useState(false);
 
   if (!shloka) return null;
+
+  async function fetchAiInsight() {
+    setLoadingAi(true);
+    try {
+      const res = await getShlokaAIInsight(shloka);
+      setAiInsight(res.insight || res.reply);
+    } catch (e) {
+      setAiInsight('Focus on your effort without fear of outcomes.');
+    } finally {
+      setLoadingAi(false);
+    }
+  }
 
   async function handleShare() {
     const text = `"${shloka.english}"\n— Bhagavad Gita ${shloka.chapter}.${shloka.verse}`;
@@ -99,19 +114,65 @@ export default function VerseCard({
                   "{shloka.arjuna_struggle}"
                 </p>
               </div>
-              <div className="rounded-xl p-3" style={{ background: 'rgba(232,132,60,0.06)', border: '1px solid rgba(232,132,60,0.15)' }}>
-                <p className="text-[10px] font-semibold text-[#E8843C] uppercase tracking-widest mb-1.5">Krishna's answer</p>
-                <p className="font-verse text-sm text-[#1a1a2e] dark:text-stone-200 leading-relaxed">
+              <div className="rounded-xl p-3 bg-[#F05A36]/8 border border-[#F05A36]/20">
+                <p className="text-[10px] font-extrabold text-[#F05A36] uppercase tracking-widest mb-1.5">Krishna's answer</p>
+                <p className="font-verse text-sm text-[#18191E] dark:text-stone-200 leading-relaxed">
                   {shloka.krishna_answer}
                 </p>
               </div>
             </>
           )}
 
+          {/* AI Reflection by Krishna Ji */}
+          <div className="rounded-2xl p-3.5 bg-gradient-to-br from-[#F05A36]/10 via-[#F05A36]/5 to-transparent border border-[#F05A36]/20">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#F05A36] flex items-center gap-1">
+                <Sparkles size={12} className="text-[#F05A36]" /> Krishna Ji AI Insight
+              </span>
+              {!aiInsight && (
+                <button
+                  onClick={fetchAiInsight}
+                  disabled={loadingAi}
+                  className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-[#F05A36] text-white shadow-sm hover:opacity-90 transition-all flex items-center gap-1"
+                >
+                  {loadingAi ? <Loader2 size={10} className="animate-spin" /> : <Sparkles size={10} />}
+                  {loadingAi ? 'Asking…' : 'Ask AI'}
+                </button>
+              )}
+            </div>
+
+            {loadingAi && (
+              <div className="flex items-center gap-2 text-xs text-[#F05A36] font-medium py-1 animate-pulse">
+                <Loader2 size={13} className="animate-spin" /> Krishna Ji is contemplating your reflection…
+              </div>
+            )}
+
+            {aiInsight && (
+              <div className="space-y-1.5 animate-slide-up">
+                <p className="font-verse text-xs text-[#18191E] dark:text-stone-200 leading-relaxed">
+                  {aiInsight}
+                </p>
+                <div className="flex justify-end">
+                  <button
+                    onClick={fetchAiInsight}
+                    className="text-[9px] font-bold text-stone-400 hover:text-[#F05A36] transition-colors"
+                  >
+                    Refresh AI insight
+                  </button>
+                </div>
+              </div>
+            )}
+            {!aiInsight && !loadingAi && (
+              <p className="text-[11px] text-stone-500 dark:text-stone-400 italic">
+                Tap 'Ask AI' to get Krishna Ji's personalized productivity reflection for this shloka.
+              </p>
+            )}
+          </div>
+
           {/* Personal note (#28) */}
           {onSaveAnnotation && (
-            <div className="space-y-1.5">
-              <div className="flex items-center gap-1.5 text-[10px] font-semibold text-stone-400 uppercase tracking-widest">
+            <div className="space-y-1.5 pt-1">
+              <div className="flex items-center gap-1.5 text-[10px] font-extrabold text-stone-400 uppercase tracking-widest">
                 <PenLine size={10} /> My Note
               </div>
               <textarea
@@ -119,12 +180,11 @@ export default function VerseCard({
                 onChange={(e) => setNoteText(e.target.value)}
                 placeholder="Your personal reflection on this shloka…"
                 rows={2}
-                className="w-full text-xs text-[#1a1a2e] dark:text-white placeholder-stone-400 bg-white dark:bg-white/8 border border-black/8 dark:border-white/10 rounded-xl px-3 py-2 outline-none focus:border-[#C9A961] transition-colors resize-none font-verse leading-relaxed"
+                className="w-full text-xs text-[#18191E] dark:text-white placeholder-stone-400 bg-white dark:bg-white/8 border border-black/8 dark:border-white/10 rounded-xl px-3 py-2 outline-none focus:border-[#F05A36] transition-colors resize-none font-verse leading-relaxed"
               />
               <div className="flex justify-end">
                 <button onClick={saveNote}
-                  className="text-xs px-3 py-1.5 rounded-lg font-semibold transition-all"
-                  style={{ color: noteSaved ? '#C9A961' : 'white', background: noteSaved ? 'rgba(201,169,97,0.12)' : 'linear-gradient(135deg,#C9A961,#E8843C)' }}>
+                  className="btn-coral text-xs px-3 py-1.5">
                   {noteSaved ? '✓ Saved' : 'Save note'}
                 </button>
               </div>

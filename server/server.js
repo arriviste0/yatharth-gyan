@@ -6,6 +6,7 @@ const cors      = require('cors');
 const authRouter     = require('./routes/auth');
 const profileRouter  = require('./routes/profile');
 const progressRouter = require('./routes/progress');
+const aiRouter       = require('./routes/ai');
 
 const app  = express();
 const PORT = process.env.PORT || 5001;
@@ -24,6 +25,7 @@ app.use(express.json({ limit: '5mb' }));
 app.use('/api/auth',     authRouter);
 app.use('/api/profile',  profileRouter);
 app.use('/api/progress', progressRouter);
+app.use('/api/ai',       aiRouter);
 
 app.get('/api/health', (_req, res) => res.json({ status: 'ok' }));
 

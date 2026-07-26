@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { Moon, Sun, Download, Upload, Trash2, ChevronRight, User, Bell, FileText } from 'lucide-react';
+import { Moon, Sun, Download, Upload, Trash2, ChevronRight, User, Bell, FileText, Sparkles } from 'lucide-react';
 import { useStorage } from '../hooks/useStorage';
 
 const ACCENT_COLORS = [
@@ -94,7 +94,34 @@ export default function Settings() {
                 onBlur={() => updateSettings({ name: nameEdit.trim() })}
                 onKeyDown={(e) => { if (e.key === 'Enter') { updateSettings({ name: nameEdit.trim() }); e.target.blur(); } }}
                 placeholder="Your name (for greeting)"
-                className="flex-1 text-sm text-[#1a1a2e] dark:text-white placeholder-stone-400 bg-transparent outline-none border-b border-black/10 dark:border-white/10 focus:border-[#E8843C] transition-colors py-1"
+                className="flex-1 text-sm text-[#1a1a2e] dark:text-white placeholder-stone-400 bg-transparent outline-none border-b border-black/10 dark:border-white/10 focus:border-[#F05A36] transition-colors py-1"
+              />
+            </div>
+          </div>
+
+          {/* Groq AI Settings */}
+          <div className="card-bento mb-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="text-xs font-extrabold text-[#F05A36] uppercase tracking-wider flex items-center gap-1.5">
+                <Sparkles size={14} /> Krishna Ji AI (Groq API Key)
+              </div>
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#F05A36]/15 text-[#F05A36]">Llama-3 70B</span>
+            </div>
+            <p className="text-xs text-stone-500 dark:text-stone-400 leading-relaxed">
+              Krishna Ji AI uses Groq Cloud API for ultra-fast Llama-3 productivity guidance. You can enter your own key below or use the app's default server key.
+            </p>
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-extrabold uppercase tracking-widest text-stone-400">Groq API Key (gsk_...)</label>
+              <input
+                type="password"
+                defaultValue={localStorage.getItem('dharma_groq_key') || ''}
+                onChange={(e) => {
+                  const val = e.target.value.trim();
+                  if (val) localStorage.setItem('dharma_groq_key', val);
+                  else localStorage.removeItem('dharma_groq_key');
+                }}
+                placeholder="gsk_..."
+                className="w-full text-xs font-mono text-[#18191E] dark:text-white bg-black/5 dark:bg-white/8 border border-black/10 dark:border-white/10 rounded-xl px-3 py-2 outline-none focus:border-[#F05A36] transition-colors"
               />
             </div>
           </div>

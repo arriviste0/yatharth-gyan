@@ -3,10 +3,11 @@ import {
   Search, BookOpen, Plus, X, Folder, Sparkles, Trophy, Calendar,
   ArrowLeft, Share2, Trash2, Check, ArrowDown, Zap, CheckCircle2,
   Copy, Image as ImageIcon, Edit3, MoreVertical, FileText, CheckSquare,
-  ChevronRight, FolderPlus, FilePlus, Layers
+  ChevronRight, FolderPlus, FilePlus, Layers, Loader2
 } from 'lucide-react';
 import { useStorage } from '../hooks/useStorage';
 import { formatDateDisplay, todayKey } from '../utils/dateUtils';
+import { getNoteAIAdvice } from '../api/ai';
 
 // Preset banner graphics for notes
 const BANNER_PRESETS = [
@@ -139,6 +140,8 @@ function FileEditor({ file, onSave, onDelete, onBack }) {
   const [bannerIdx, setBannerIdx] = useState(file.bannerIdx || 0);
   const [copied, setCopied] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [aiAdvice, setAiAdvice] = useState(null);
+  const [loadingAi, setLoadingAi] = useState(false);
 
   useEffect(() => {
     setTitle(file.title || (file.fileType === 'todo' ? 'To-Do List Note' : 'Text Note'));
@@ -153,7 +156,20 @@ function FileEditor({ file, onSave, onDelete, onBack }) {
     setNoteContent(file.content || file.curiosity || '');
     setBannerIdx(file.bannerIdx || 0);
     setConfirmDelete(false);
+    setAiAdvice(null);
   }, [file.id]);
+
+  async function fetchKrishnaAdvice() {
+    setLoadingAi(true);
+    try {
+      const res = await getNoteAIAdvice(title, noteContent, todoItems);
+      setAiAdvice(res.advice || res.reply);
+    } catch (e) {
+      setAiAdvice('Focus on your effort without fear of outcomes.');
+    } finally {
+      setLoadingAi(false);
+    }
+  }
 
   const dateInfo = formatDateDisplay(new Date(file.updatedAt || Date.now()));
 
@@ -211,12 +227,22 @@ function FileEditor({ file, onSave, onDelete, onBack }) {
     <div className="relative rounded-3xl p-6 space-y-5 bg-white dark:bg-[#181926] border border-black/5 dark:border-white/8 shadow-2xl">
 
       {/* Header bar */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-2">
         <button onClick={onBack} className="flex items-center gap-1.5 text-xs font-bold text-stone-500 hover:text-[#F05A36] transition-all">
           <ArrowLeft size={16} /> Back to Files
         </button>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* Krishna AI Reflection Button */}
+          <button
+            onClick={fetchKrishnaAdvice}
+            disabled={loadingAi}
+            className="px-3 py-1.5 rounded-xl bg-[#F05A36]/12 text-[#F05A36] hover:bg-[#F05A36]/20 transition-all text-xs font-extrabold flex items-center gap-1.5 border border-[#F05A36]/30"
+          >
+            {loadingAi ? <Loader2 size={13} className="animate-spin" /> : <Sparkles size={13} />}
+            <span>{loadingAi ? 'Reflecting…' : 'Reflect with Krishna'}</span>
+          </button>
+
           {/* File Type toggle */}
           <div className="flex items-center bg-black/5 dark:bg-white/5 rounded-xl p-0.5 border border-black/5 dark:border-white/8">
             <button
@@ -261,6 +287,21 @@ function FileEditor({ file, onSave, onDelete, onBack }) {
           )}
         </div>
       </div>
+
+      {/* Krishna AI Advice Box */}
+      {aiAdvice && (
+        <div className="p-4 rounded-2xl bg-gradient-to-br from-[#F05A36]/10 via-[#F05A36]/5 to-transparent border border-[#F05A36]/20 space-y-1.5 animate-slide-up">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#F05A36] flex items-center gap-1">
+              <Sparkles size={12} /> Krishna Ji's Actionable Guidance
+            </span>
+            <button onClick={() => setAiAdvice(null)} className="text-stone-400 hover:text-stone-600 dark:hover:text-white"><X size={13} /></button>
+          </div>
+          <p className="font-verse text-xs leading-relaxed text-[#18191E] dark:text-stone-200">
+            {aiAdvice}
+          </p>
+        </div>
+      )}
 
       {/* Title & Date */}
       <div>

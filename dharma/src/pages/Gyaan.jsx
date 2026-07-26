@@ -1,10 +1,11 @@
 import { useState, useMemo } from 'react';
-import { Search, Bookmark, BookmarkCheck, CheckCircle2, ChevronDown, ChevronUp, CalendarDays, BookOpen } from 'lucide-react';
+import { Search, Bookmark, BookmarkCheck, CheckCircle2, ChevronDown, ChevronUp, CalendarDays, BookOpen, Sparkles, Send, Loader2 } from 'lucide-react';
 import { useStorage } from '../hooks/useStorage';
 import chapters from '../data/chapters.json';
 import shlokas from '../data/shlokas.json';
 import VerseCard from '../components/VerseCard';
 import { todayKey } from '../utils/dateUtils';
+import { askKrishnaAI } from '../api/ai';
 
 /* ── Ask Krishna theme chips (#29) ─────────────────────────────── */
 const SUGGEST_THEMES = ['duty', 'fear', 'grief', 'attachment', 'action', 'peace', 'purpose', 'identity', 'impermanence', 'focus'];
@@ -101,62 +102,127 @@ function ChapterCard({ chapter, isRead, onMarkRead, bookmarks, onToggleBookmark 
   );
 }
 
-/* ── AskKrishna (#29 theme chips) ─────────────────────────────── */
+/* ── AskKrishna (AI-powered Krishna Ji Companion) ──────────────── */
 function AskKrishna({ bookmarks, allShlokas }) {
-  const [query,  setQuery]  = useState('');
-  const [result, setResult] = useState(null);
+  const [query, setQuery] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [aiResponse, setAiResponse] = useState(null);
+  const [matchedShloka, setMatchedShloka] = useState(null);
+  const [messages, setMessages] = useState([]);
 
-  const bookmarkedShlokas = allShlokas.filter((s) => bookmarks.includes(s.id));
-  const pool = bookmarkedShlokas.length >= 5 ? bookmarkedShlokas : allShlokas;
+  async function handleAsk(userPrompt) {
+    const text = (userPrompt || query).trim();
+    if (!text || loading) return;
 
-  function search(q) {
-    const term = (q || query).trim();
-    if (!term) return;
-    const keywords = term.toLowerCase().split(/\s+/);
-    const scored = pool.map((s) => {
+    setLoading(true);
+    setQuery('');
+
+    // Match best shloka based on text
+    const keywords = text.toLowerCase().split(/\s+/);
+    const scored = allShlokas.map((s) => {
       let score = 0;
-      const text = `${s.english} ${s.hindi} ${s.theme} ${s.arjuna_struggle || ''} ${s.krishna_answer || ''}`.toLowerCase();
+      const combined = `${s.english} ${s.hindi} ${s.theme} ${s.arjuna_struggle || ''} ${s.krishna_answer || ''}`.toLowerCase();
       for (const kw of keywords) {
-        if (text.includes(kw)) score += 2;
+        if (combined.includes(kw)) score += 2;
         if ((s.theme || '').toLowerCase().includes(kw)) score += 3;
       }
       return { shloka: s, score };
     });
     scored.sort((a, b) => b.score - a.score);
-    const top = scored[0];
-    setResult(top && top.score > 0 ? top.shloka : pool[Math.floor(Math.random() * pool.length)]);
+    const bestShloka = scored[0]?.score > 0 ? scored[0].shloka : null;
+    setMatchedShloka(bestShloka);
+
+    try {
+      const result = await askKrishnaAI(text, messages);
+      const newMsg = { prompt: text, reply: result.reply, source: result.source };
+      setAiResponse(result.reply);
+      setMessages((prev) => [...prev, newMsg]);
+    } catch (err) {
+      setAiResponse('Dear friend, stay steady in your duty. Bring your mind gently to the next small step before you.');
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
-    <div className="card-bento p-5 bg-white dark:bg-[#181926] border border-black/5 dark:border-white/8 shadow-sm">
-      <div className="flex items-center gap-2 mb-3">
-        <div className="w-1.5 h-4 rounded-full bg-[#F05A36]" />
-        <div className="text-sm font-bold text-[#18191E] dark:text-white">Ask Krishna</div>
+    <div className="card-bento p-5 bg-white dark:bg-[#181926] border border-black/5 dark:border-white/8 shadow-sm space-y-4">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-xl flex items-center justify-center bg-[#F05A36]/15 text-[#F05A36]">
+            <Sparkles size={16} />
+          </div>
+          <div>
+            <h3 className="text-sm font-extrabold text-[#18191E] dark:text-white">Ask Krishna Ji AI</h3>
+            <p className="text-[10px] text-stone-400 font-medium">Gita-inspired advice for focus, motivation & work</p>
+          </div>
+        </div>
+        <span className="text-[9px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#F05A36]/12 text-[#F05A36]">
+          AI Powered
+        </span>
       </div>
-      <form onSubmit={(e) => { e.preventDefault(); search(); }} className="flex gap-2 mb-3">
-        <input value={query} onChange={(e) => setQuery(e.target.value)}
-          placeholder="What struggles you today?"
-          className="flex-1 text-sm text-[#18191E] dark:text-white placeholder-stone-400 bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-2xl px-3.5 py-2.5 outline-none focus:border-[#F05A36] transition-colors font-verse" />
-        <button type="submit" className="btn-coral text-xs px-4 py-2.5">
-          <Search size={16} />
+
+      {/* Input box */}
+      <form onSubmit={(e) => { e.preventDefault(); handleAsk(); }} className="flex gap-2">
+        <input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Ask Krishna Ji (e.g., How to stop procrastinating?)"
+          disabled={loading}
+          className="flex-1 text-xs text-[#18191E] dark:text-white placeholder-stone-400 bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-2xl px-4 py-3 outline-none focus:border-[#F05A36] transition-colors font-verse"
+        />
+        <button
+          type="submit"
+          disabled={loading || !query.trim()}
+          className="btn-coral text-xs px-4 flex items-center gap-1.5 shadow-md disabled:opacity-50"
+        >
+          {loading ? <Loader2 size={15} className="animate-spin" /> : <Send size={15} />}
         </button>
       </form>
-      {/* Theme chips (#29) */}
-      <div className="flex flex-wrap gap-1.5 mb-3">
-        {SUGGEST_THEMES.map((t) => (
-          <button key={t} onClick={() => { setQuery(t); search(t); }}
-            className={`text-[10px] px-3 py-1 rounded-full font-bold transition-all ${
-              query === t
-                ? 'bg-[#F05A36] text-white shadow-sm'
-                : 'bg-black/5 dark:bg-white/5 text-stone-500 hover:text-[#18191E] dark:hover:text-white'
-            }`}>
-            {t}
-          </button>
-        ))}
+
+      {/* Quick Theme Chips */}
+      <div className="space-y-1">
+        <span className="text-[10px] font-extrabold text-stone-400 uppercase tracking-widest">Common Struggles:</span>
+        <div className="flex flex-wrap gap-1.5 pt-0.5">
+          {SUGGEST_THEMES.map((t) => (
+            <button
+              key={t}
+              onClick={() => handleAsk(`How can Krishna's wisdom help me with ${t}?`)}
+              disabled={loading}
+              className="text-[10px] px-3 py-1 rounded-full font-bold transition-all bg-black/5 dark:bg-white/5 text-stone-600 dark:text-stone-300 hover:bg-[#F05A36]/15 hover:text-[#F05A36] border border-black/5 dark:border-white/5"
+            >
+              {t}
+            </button>
+          ))}
+        </div>
       </div>
-      {result && (
-        <div className="animate-slide-up">
-          <VerseCard shloka={result} compact />
+
+      {/* Loading indicator */}
+      {loading && (
+        <div className="flex items-center gap-2 p-3 rounded-2xl bg-[#F05A36]/8 text-[#F05A36] text-xs font-semibold animate-pulse border border-[#F05A36]/20">
+          <Loader2 size={16} className="animate-spin shrink-0" />
+          <span>Krishna Ji is contemplating your question…</span>
+        </div>
+      )}
+
+      {/* Latest AI Response */}
+      {aiResponse && !loading && (
+        <div className="p-4 rounded-2xl bg-gradient-to-br from-[#F05A36]/10 via-[#F05A36]/5 to-transparent border border-[#F05A36]/20 space-y-2 animate-slide-up">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#F05A36] flex items-center gap-1">
+              <Sparkles size={12} /> Krishna Ji's Guidance
+            </span>
+          </div>
+          <p className="font-verse text-xs leading-relaxed text-[#18191E] dark:text-stone-200">
+            {aiResponse}
+          </p>
+        </div>
+      )}
+
+      {/* Matched Shloka Card if relevant */}
+      {matchedShloka && !loading && (
+        <div className="pt-2 space-y-1.5">
+          <span className="text-[10px] font-extrabold text-stone-400 uppercase tracking-widest">Relevant Shloka for you:</span>
+          <VerseCard shloka={matchedShloka} compact />
         </div>
       )}
     </div>
