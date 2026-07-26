@@ -171,9 +171,9 @@ export default function AIDailyReportCard() {
     let currentMode = null;
 
     rawLines.forEach((line) => {
-      // Remove raw markdown symbols, leading digits like 1. 2. 3. 4., leading asterisks
+      // Remove raw markdown symbols, leading digits with dots like 1. 2. 3., leading asterisks, hyphens & stray periods
       const cleaned = line
-        .replace(/^[\d#*-\s]+/, '')
+        .replace(/^[\d#*-\.\s]+/, '')
         .replace(/\*\*/g, '')
         .replace(/Powered by Groq AI/gi, '')
         .trim();
@@ -181,13 +181,13 @@ export default function AIDailyReportCard() {
       const lower = line.toLowerCase();
 
       if (lower.includes('today\'s summary') || lower.includes('summary:')) {
-        summary = cleaned.replace(/^today's summary:?/i, '').replace(/^\d+\.\s*/, '').trim();
+        summary = cleaned.replace(/^today's summary:?/i, '').replace(/^[\d\.\s]+/, '').trim();
         currentMode = 'summary';
       } else if (lower.includes('best win')) {
-        bestWin = cleaned.replace(/^best win:?/i, '').replace(/^\d+\.\s*/, '').trim();
+        bestWin = cleaned.replace(/^best win:?/i, '').replace(/^[\d\.\s]+/, '').trim();
         currentMode = 'bestWin';
       } else if (lower.includes('worth attention')) {
-        worthAttention = cleaned.replace(/^worth attention:?/i, '').replace(/^\d+\.\s*/, '').trim();
+        worthAttention = cleaned.replace(/^worth attention:?/i, '').replace(/^[\d\.\s]+/, '').trim();
         currentMode = 'worthAttention';
       } else if (lower.includes('for tomorrow') || lower.includes('suggestions for tomorrow')) {
         currentMode = 'tomorrow';
