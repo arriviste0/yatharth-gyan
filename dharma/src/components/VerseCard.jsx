@@ -50,7 +50,7 @@ export default function VerseCard({
   }
 
   return (
-    <div className="card-bento p-4 bg-white dark:bg-[#181926] border border-black/5 dark:border-white/8 shadow-sm" style={{ borderLeft: '3px solid #F05A36' }}>
+    <div className="card-bento p-4 bg-white dark:bg-[#181926] border border-black/5 dark:border-white/8 shadow-sm" style={{ borderLeft: '3px solid var(--color-accent)' }}>
       {/* Sanskrit */}
       <div className="verse-sanskrit text-center leading-loose mb-3 px-2 text-sm text-[#18191E] dark:text-white">
         {shloka.sanskrit}
@@ -59,7 +59,7 @@ export default function VerseCard({
       {/* Hindi transliteration toggle (#32) */}
       {shloka.hindi && (
         <button onClick={() => setShowHindi(!showHindi)}
-          className="w-full text-[10px] text-stone-400 mb-2 hover:text-[#F05A36] transition-colors text-left pl-1 font-bold">
+          className="w-full text-[10px] text-stone-400 mb-2 hover:text-accent transition-colors text-left pl-1 font-bold">
           {showHindi ? '▲ hide hindi' : '▼ हिन्दी अनुवाद'}
         </button>
       )}
@@ -71,7 +71,7 @@ export default function VerseCard({
 
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-1.5">
-          <span className="text-[10px] font-extrabold tracking-widest uppercase px-2 py-0.5 rounded-full bg-[#F05A36]/15 text-[#F05A36]">
+          <span className="text-[10px] font-extrabold tracking-widest uppercase px-2 py-0.5 rounded-full text-accent" style={{ background: 'var(--color-accent-light)' }}>
             BG {shloka.chapter}.{shloka.verse}
           </span>
           {shloka.theme && (
@@ -80,14 +80,14 @@ export default function VerseCard({
         </div>
         <div className="flex items-center gap-0.5">
           <button onClick={handleShare}
-            className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors text-stone-400 hover:text-[#F05A36]"
+            className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors text-stone-400 hover:text-accent"
             title="Copy / Share">
             {copied ? <Check size={13} className="text-emerald-500" /> : <Share2 size={13} />}
           </button>
           {onToggleBookmark && (
             <button onClick={() => onToggleBookmark(shloka.id)}
               className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors"
-              style={{ color: bookmarked ? '#F05A36' : '#9CA3AF' }}>
+              style={{ color: bookmarked ? 'var(--color-accent)' : '#9CA3AF' }}>
               {bookmarked ? <BookmarkCheck size={14} /> : <Bookmark size={14} />}
             </button>
           )}
@@ -114,8 +114,8 @@ export default function VerseCard({
                   "{shloka.arjuna_struggle}"
                 </p>
               </div>
-              <div className="rounded-xl p-3 bg-[#F05A36]/8 border border-[#F05A36]/20">
-                <p className="text-[10px] font-extrabold text-[#F05A36] uppercase tracking-widest mb-1.5">Krishna's answer</p>
+              <div className="rounded-xl p-3" style={{ background: 'var(--color-accent-light)', border: '1px solid var(--color-accent-border)' }}>
+                <p className="text-[10px] font-extrabold text-accent uppercase tracking-widest mb-1.5">Krishna's answer</p>
                 <p className="font-verse text-sm text-[#18191E] dark:text-stone-200 leading-relaxed">
                   {shloka.krishna_answer}
                 </p>
@@ -124,16 +124,16 @@ export default function VerseCard({
           )}
 
           {/* AI Reflection by Krishna Ji */}
-          <div className="rounded-2xl p-3.5 bg-gradient-to-br from-[#F05A36]/10 via-[#F05A36]/5 to-transparent border border-[#F05A36]/20">
+          <div className="rounded-2xl p-3.5" style={{ background: 'var(--color-accent-light)', border: '1px solid var(--color-accent-border)' }}>
             <div className="flex items-center justify-between mb-2">
-              <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#F05A36] flex items-center gap-1">
-                <Sparkles size={12} className="text-[#F05A36]" /> Krishna Ji AI Insight
+              <span className="text-[10px] font-extrabold uppercase tracking-widest text-accent flex items-center gap-1">
+                <Sparkles size={12} className="text-accent" /> Krishna Ji AI Insight
               </span>
               {!aiInsight && (
                 <button
                   onClick={fetchAiInsight}
                   disabled={loadingAi}
-                  className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-[#F05A36] text-white shadow-sm hover:opacity-90 transition-all flex items-center gap-1"
+                  className="text-[10px] font-bold px-2.5 py-1 rounded-full btn-coral shadow-sm transition-all flex items-center gap-1"
                 >
                   {loadingAi ? <Loader2 size={10} className="animate-spin" /> : <Sparkles size={10} />}
                   {loadingAi ? 'Asking…' : 'Ask AI'}
@@ -142,7 +142,7 @@ export default function VerseCard({
             </div>
 
             {loadingAi && (
-              <div className="flex items-center gap-2 text-xs text-[#F05A36] font-medium py-1 animate-pulse">
+              <div className="flex items-center gap-2 text-xs text-accent font-medium py-1 animate-pulse">
                 <Loader2 size={13} className="animate-spin" /> Krishna Ji is contemplating your reflection…
               </div>
             )}
@@ -155,7 +155,7 @@ export default function VerseCard({
                 <div className="flex justify-end">
                   <button
                     onClick={fetchAiInsight}
-                    className="text-[9px] font-bold text-stone-400 hover:text-[#F05A36] transition-colors"
+                    className="text-[9px] font-bold text-stone-400 hover:text-accent transition-colors"
                   >
                     Refresh AI insight
                   </button>

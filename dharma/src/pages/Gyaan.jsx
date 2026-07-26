@@ -21,8 +21,8 @@ function ChapterGrid({ progress }) {
             title={`Ch. ${ch.number}: ${ch.english_name} (${done ? 'Read' : 'Unread'})`}
             className={`w-5 h-5 rounded-lg flex items-center justify-center text-[10px] font-extrabold transition-all cursor-pointer ${
               done
-                ? 'bg-[#F05A36] text-white shadow-sm scale-105'
-                : 'bg-black/5 dark:bg-white/8 text-stone-400 dark:text-stone-400 hover:border-[#F05A36] hover:text-[#F05A36]'
+                ? 'bg-accent text-white shadow-sm scale-105'
+                : 'bg-black/5 dark:bg-white/8 text-stone-400 dark:text-stone-400 hover:border-accent hover:text-accent'
             }`}>
             {ch.number}
           </div>

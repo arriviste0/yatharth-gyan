@@ -94,7 +94,7 @@ export default function Settings() {
                 onBlur={() => updateSettings({ name: nameEdit.trim() })}
                 onKeyDown={(e) => { if (e.key === 'Enter') { updateSettings({ name: nameEdit.trim() }); e.target.blur(); } }}
                 placeholder="Your name (for greeting)"
-                className="flex-1 text-sm text-[#1a1a2e] dark:text-white placeholder-stone-400 bg-transparent outline-none border-b border-black/10 dark:border-white/10 focus:border-[#F05A36] transition-colors py-1"
+                className="flex-1 text-sm text-[#1a1a2e] dark:text-white placeholder-stone-400 bg-transparent outline-none border-b border-black/10 dark:border-white/10 focus:border-accent transition-colors py-1"
               />
             </div>
           </div>
@@ -102,10 +102,10 @@ export default function Settings() {
           {/* Groq AI Settings */}
           <div className="card-bento mb-4 space-y-3">
             <div className="flex items-center justify-between">
-              <div className="text-xs font-extrabold text-[#F05A36] uppercase tracking-wider flex items-center gap-1.5">
+              <div className="text-xs font-extrabold text-accent uppercase tracking-wider flex items-center gap-1.5">
                 <Sparkles size={14} /> Krishna Ji AI (Groq API Key)
               </div>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#F05A36]/15 text-[#F05A36]">Llama-3 70B</span>
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full text-accent" style={{ background: 'var(--color-accent-light)' }}>Llama-3 70B</span>
             </div>
             <p className="text-xs text-stone-500 dark:text-stone-400 leading-relaxed">
               Krishna Ji AI uses Groq Cloud API for ultra-fast Llama-3 productivity guidance. You can enter your own key below or use the app's default server key.
@@ -121,18 +121,18 @@ export default function Settings() {
                   else localStorage.removeItem('dharma_groq_key');
                 }}
                 placeholder="gsk_..."
-                className="w-full text-xs font-mono text-[#18191E] dark:text-white bg-black/5 dark:bg-white/8 border border-black/10 dark:border-white/10 rounded-xl px-3 py-2 outline-none focus:border-[#F05A36] transition-colors"
+                className="w-full text-xs font-mono text-[#18191E] dark:text-white bg-black/5 dark:bg-white/8 border border-black/10 dark:border-white/10 rounded-xl px-3 py-2 outline-none focus:border-accent transition-colors"
               />
             </div>
           </div>
 
           {/* Theme & Display */}
           <div className="card-bento mb-4 space-y-3">
-            <div className="text-xs font-extrabold text-[#F05A36] uppercase tracking-wider">Appearance & Theme</div>
+            <div className="text-xs font-extrabold text-accent uppercase tracking-wider">Appearance & Theme</div>
             
             <div className="flex items-center justify-between p-3 rounded-2xl bg-black/4 dark:bg-white/5">
               <div className="flex items-center gap-3">
-                {settings.theme === 'dark' ? <Moon size={18} className="text-amber-400" /> : <Sun size={18} className="text-[#F05A36]" />}
+                {settings.theme === 'dark' ? <Moon size={18} className="text-amber-400" /> : <Sun size={18} className="text-accent" />}
                 <div>
                   <div className="text-xs font-bold text-[#18191E] dark:text-white">Site Theme Mode</div>
                   <div className="text-[10px] text-stone-400">Current: {settings.theme === 'dark' ? 'Dark Midnight' : 'Light Cream'}</div>
@@ -142,7 +142,7 @@ export default function Settings() {
                 <button
                   onClick={() => { updateSettings({ theme: 'light' }); document.documentElement.classList.remove('dark'); }}
                   className={`px-3 py-1 text-xs font-bold rounded-full transition-all ${
-                    settings.theme !== 'dark' ? 'bg-[#F05A36] text-white' : 'text-stone-400 hover:text-[#18191E] dark:hover:text-white'
+                    settings.theme !== 'dark' ? 'bg-accent text-white' : 'text-stone-400 hover:text-[#18191E] dark:hover:text-white'
                   }`}
                 >
                   Light ☀️
@@ -150,7 +150,7 @@ export default function Settings() {
                 <button
                   onClick={() => { updateSettings({ theme: 'dark' }); document.documentElement.classList.add('dark'); }}
                   className={`px-3 py-1 text-xs font-bold rounded-full transition-all ${
-                    settings.theme === 'dark' ? 'bg-[#F05A36] text-white' : 'text-stone-400 hover:text-[#18191E] dark:hover:text-white'
+                    settings.theme === 'dark' ? 'bg-accent text-white' : 'text-stone-400 hover:text-[#18191E] dark:hover:text-white'
                   }`}
                 >
                   Dark 🌙
@@ -170,10 +170,13 @@ export default function Settings() {
                       onClick={() => updateSettings({ accentColor: c.id })}
                       className={`flex flex-col items-center gap-1.5 py-2.5 px-2 rounded-2xl border transition-all duration-200 ${
                         isActive
-                          ? 'bg-[#F05A36]/10 shadow-sm scale-105'
+                          ? 'shadow-sm scale-105'
                           : 'border-black/5 dark:border-white/10 bg-black/[0.02] dark:bg-white/[0.03] hover:bg-black/[0.04] dark:hover:bg-white/[0.06]'
                       }`}
-                      style={{ borderColor: isActive ? c.primary : undefined }}
+                      style={{
+                        borderColor: isActive ? c.primary : undefined,
+                        background: isActive ? 'var(--color-accent-light)' : undefined,
+                      }}
                     >
                       <div className="w-6 h-6 rounded-full shadow-sm" style={{ background: `linear-gradient(135deg, ${c.primary}, ${c.secondary})` }} />
                       <span className="text-[10px] font-extrabold" style={{ color: isActive ? c.primary : undefined }}>{c.label}</span>
@@ -182,7 +185,7 @@ export default function Settings() {
                 })}
               </div>
               <p className="text-[10px] text-stone-500 dark:text-stone-400 mt-2 font-medium">
-                Accent Theme: <span className="font-extrabold text-[#F05A36] uppercase">{accentColor}</span> active live.
+                Accent Theme: <span className="font-extrabold text-accent uppercase">{accentColor}</span> active live.
               </p>
             </div>
           </div>
