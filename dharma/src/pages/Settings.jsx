@@ -99,19 +99,19 @@ export default function Settings() {
             </div>
           </div>
 
-          {/* Groq AI Settings */}
+          {/* AI Companion Settings */}
           <div className="card-bento mb-4 space-y-3">
             <div className="flex items-center justify-between">
               <div className="text-xs font-extrabold text-accent uppercase tracking-wider flex items-center gap-1.5">
-                <Sparkles size={14} /> Krishna Ji AI (Groq API Key)
+                <Sparkles size={14} /> Krishna Ji AI Companion
               </div>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full text-accent" style={{ background: 'var(--color-accent-light)' }}>Llama-3 70B</span>
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full text-accent" style={{ background: 'var(--color-accent-light)' }}>AI Assistant</span>
             </div>
             <p className="text-xs text-stone-500 dark:text-stone-400 leading-relaxed">
-              Krishna Ji AI uses Groq Cloud API for ultra-fast Llama-3 productivity guidance. You can enter your own key below or use the app's default server key.
+              Krishna Ji AI provides personalized spiritual guidance & daily practice analysis. You can enter a custom access key below or leave blank to use the app's default connection.
             </p>
             <div className="space-y-1.5">
-              <label className="text-[10px] font-extrabold uppercase tracking-widest text-stone-400">Groq API Key (gsk_...)</label>
+              <label className="text-[10px] font-extrabold uppercase tracking-widest text-stone-400">Custom AI Access Key</label>
               <input
                 type="password"
                 defaultValue={localStorage.getItem('dharma_groq_key') || ''}
@@ -120,7 +120,7 @@ export default function Settings() {
                   if (val) localStorage.setItem('dharma_groq_key', val);
                   else localStorage.removeItem('dharma_groq_key');
                 }}
-                placeholder="gsk_..."
+                placeholder="Optional custom access key…"
                 className="w-full text-xs font-mono text-[#18191E] dark:text-white bg-black/5 dark:bg-white/8 border border-black/10 dark:border-white/10 rounded-xl px-3 py-2 outline-none focus:border-accent transition-colors"
               />
             </div>

@@ -176,6 +176,8 @@ export default function AIDailyReportCard() {
         .replace(/^[\d#*-\.\s]+/, '')
         .replace(/\*\*/g, '')
         .replace(/Powered by Groq AI/gi, '')
+        .replace(/Groq/gi, '')
+        .replace(/Llama[-\s]?3(\s?70b)?/gi, '')
         .trim();
 
       const lower = line.toLowerCase();
