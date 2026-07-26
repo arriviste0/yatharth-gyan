@@ -805,6 +805,162 @@ function ProfileHeaderButton({ onOpenProfile }) {
 }
 
 
+/* ── Desktop GitHub-like Practice Matrix (Heatmap) ─────────────── */
+function DesktopGithubHeatmap({ logs, pillars }) {
+  const totalTargets = pillars.flatMap((p) => p.targets).length;
+
+  const { weeks, activeDaysCount, totalCompletedTasks } = useMemo(() => {
+    const today = new Date();
+    const todayDayOfWeek = today.getDay();
+    const startDate = new Date(today);
+    // Go back 52 weeks (364 days) starting from Sunday
+    startDate.setDate(today.getDate() - (52 * 7 + todayDayOfWeek));
+
+    const weeksArr = [];
+    let currentWeek = [];
+    let activeDays = 0;
+    let totalCompleted = 0;
+
+    const totalDays = 53 * 7;
+    for (let i = 0; i < totalDays; i++) {
+      const d = new Date(startDate);
+      d.setDate(startDate.getDate() + i);
+
+      if (d > today) break;
+
+      const key = dateKey(d);
+      const dayLog = logs[key] || {};
+      let doneCount = 0;
+
+      pillars.forEach((p) => {
+        p.targets.forEach((t) => {
+          if (dayLog[t.id]?.done) doneCount++;
+        });
+      });
+
+      const pct = totalTargets > 0 ? (doneCount / totalTargets) * 100 : 0;
+      if (doneCount > 0) {
+        activeDays++;
+        totalCompleted += doneCount;
+      }
+
+      currentWeek.push({
+        date: d,
+        dateStr: key,
+        formattedDate: d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+        doneCount,
+        pct,
+      });
+
+      if (currentWeek.length === 7) {
+        weeksArr.push(currentWeek);
+        currentWeek = [];
+      }
+    }
+    if (currentWeek.length > 0) weeksArr.push(currentWeek);
+
+    return { weeks: weeksArr, activeDaysCount: activeDays, totalCompletedTasks: totalCompleted };
+  }, [logs, pillars, totalTargets]);
+
+  const monthLabels = useMemo(() => {
+    const labels = [];
+    let lastMonth = -1;
+    weeks.forEach((w, wIdx) => {
+      const firstDayInWeek = w[0]?.date;
+      if (firstDayInWeek) {
+        const m = firstDayInWeek.getMonth();
+        if (m !== lastMonth) {
+          labels.push({ weekIdx: wIdx, name: firstDayInWeek.toLocaleDateString('en-US', { month: 'short' }) });
+          lastMonth = m;
+        }
+      }
+    });
+    return labels;
+  }, [weeks]);
+
+  const getCellBg = (pct) => {
+    if (pct >= 80) return 'bg-[#F05A36] shadow-sm shadow-[#F05A36]/40';
+    if (pct >= 50) return 'bg-[#F05A36]/75';
+    if (pct >= 25) return 'bg-[#F05A36]/45';
+    if (pct > 0) return 'bg-[#F05A36]/25';
+    return 'bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/5';
+  };
+
+  return (
+    <div className="card-bento p-5 space-y-4">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-xl bg-[#F05A36]/15 border border-[#F05A36]/30 flex items-center justify-center text-[#F05A36]">
+            <Flame size={16} />
+          </div>
+          <div>
+            <h3 className="text-base font-extrabold text-[#18191E] dark:text-white">Annual Practice Matrix</h3>
+            <p className="text-[11px] text-stone-400 dark:text-white/40 font-medium">
+              {activeDaysCount} active practice days · {totalCompletedTasks} total targets completed
+            </p>
+          </div>
+        </div>
+
+        {/* Legend */}
+        <div className="flex items-center gap-1.5 text-[10px] text-stone-400 font-bold">
+          <span>Less</span>
+          <span className="w-2.5 h-2.5 rounded-sm bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/5" />
+          <span className="w-2.5 h-2.5 rounded-sm bg-[#F05A36]/25" />
+          <span className="w-2.5 h-2.5 rounded-sm bg-[#F05A36]/50" />
+          <span className="w-2.5 h-2.5 rounded-sm bg-[#F05A36]/75" />
+          <span className="w-2.5 h-2.5 rounded-sm bg-[#F05A36]" />
+          <span>More</span>
+        </div>
+      </div>
+
+      {/* Matrix Grid */}
+      <div className="overflow-x-auto no-scrollbar pt-2 pb-1">
+        <div className="min-w-[720px]">
+          {/* Months header row */}
+          <div className="flex text-[10px] font-extrabold text-stone-400 mb-1.5 ml-7 relative h-4">
+            {monthLabels.map((m, idx) => (
+              <span
+                key={idx}
+                className="absolute"
+                style={{ left: `${m.weekIdx * 13.5}px` }}
+              >
+                {m.name}
+              </span>
+            ))}
+          </div>
+
+          {/* Grid Rows (Sun - Sat) */}
+          <div className="flex gap-1.5">
+            {/* Weekday labels */}
+            <div className="flex flex-col justify-between text-[9px] font-bold text-stone-400 pr-1 py-[2px] h-[98px]">
+              <span>Mon</span>
+              <span>Wed</span>
+              <span>Fri</span>
+            </div>
+
+            {/* Weeks columns */}
+            <div className="flex gap-[3.5px] flex-1">
+              {weeks.map((w, wIdx) => (
+                <div key={wIdx} className="flex flex-col gap-[3.5px]">
+                  {w.map((d, dIdx) => (
+                    <div
+                      key={d.dateStr || dIdx}
+                      title={`${d.formattedDate}: ${d.doneCount} targets (${Math.round(d.pct)}%)`}
+                      className={`w-2.5 h-2.5 rounded-[3px] transition-all hover:scale-125 hover:z-10 cursor-pointer ${getCellBg(d.pct)}`}
+                    />
+                  ))}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
 /* ═══════════════════════════════════════════════════════════════════ *
  *  MAIN PAGE                                                         *
  * ═══════════════════════════════════════════════════════════════════ */
@@ -955,6 +1111,9 @@ export default function Home({ onOpenFocus, onOpenProfile }) {
             <DesktopActivityFeed logs={logs} pillars={pillars} dateStr={today} />
           </div>
         </div>
+
+        {/* ── Big GitHub-like Practice Matrix (Desktop Only) ─────── */}
+        <DesktopGithubHeatmap logs={logs} pillars={pillars} />
 
         {/* ── Verse of the Day ──────────────────────────────────── */}
         {dailyVerse && (
