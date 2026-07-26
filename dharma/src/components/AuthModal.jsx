@@ -75,13 +75,30 @@ export default function AuthModal({ onClose, onSuccess }) {
           </p>
         </div>
 
-        {/* Notice for deleted Google Client ID */}
-        <div className="mb-4 text-center">
-          <p className="text-[11px] text-amber-300 font-medium bg-amber-950/40 p-2.5 rounded-xl border border-amber-500/25 leading-relaxed">
-            💡 Google OAuth Client was deleted in Google Cloud. <br/>
-            <strong>Sign in or Register with Email below</strong> for instant access & MongoDB sync!
-          </p>
-        </div>
+        {/* Google sign-in */}
+        {googleClientId && (
+          <div className="mb-4 space-y-3">
+            <div className="flex justify-center">
+              <GoogleLogin
+                onSuccess={handleGoogleSuccess}
+                onError={() => setError('Google sign-in failed. Please check your Google OAuth credentials or use Email below.')}
+                theme="filled_black"
+                shape="pill"
+                text="continue_with"
+                size="large"
+              />
+            </div>
+            <div className="relative my-4">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t" style={{ borderColor: 'rgba(255,255,255,0.08)' }} />
+              </div>
+              <div className="relative flex justify-center">
+                <span className="px-3 text-[10px] uppercase tracking-widest text-stone-400 font-bold"
+                  style={{ background: '#131325' }}>or use email</span>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Tab toggle */}
         <div className="flex gap-1 rounded-xl p-1 mb-5" style={{ background: 'rgba(255,255,255,0.05)' }}>
