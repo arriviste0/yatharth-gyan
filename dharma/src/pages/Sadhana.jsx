@@ -20,53 +20,45 @@ const ICON_MAP = {
 };
 
 const TARGET_TYPES = [
-  { id: 'CHECKBOX', label: 'Yes / No' },
-  { id: 'NUMBER',   label: 'Number' },
-  { id: 'TIME',     label: 'Time' },
-  { id: 'DURATION', label: 'Duration' },
-];
-
-const FREQUENCY_OPTIONS = [
-  { id: 'daily',    label: 'Every day' },
-  { id: 'weekdays', label: 'Weekdays' },
-  { id: '3x',       label: '3×/week' },
-  { id: 'weekly',   label: 'Weekly' },
+  { id: 'CHECKBOX', label: 'Checklist', desc: 'Simple Yes / No habit toggle' },
+  { id: 'NUMBER',   label: 'Quantity', desc: 'Water L, Protein g, Steps, Pages...' },
+  { id: 'DURATION', label: 'Duration', desc: 'Workout mins, Meditate mins, Sleep hrs' },
 ];
 
 const TARGET_TEMPLATES = [
-  { name: 'Wake up by 6am', type: 'TIME', targetValue: '06:00', comparison: 'lte', unit: '' },
-  { name: 'Drink 2L water', type: 'NUMBER', targetValue: 2000, comparison: 'gte', unit: 'ml' },
-  { name: 'Meditate 10 min', type: 'DURATION', targetValue: 10, comparison: 'gte', unit: 'min' },
+  { name: 'Drink 3L Water', type: 'NUMBER', targetValue: 3, comparison: 'gte', unit: 'L' },
+  { name: 'Eat 90g Protein', type: 'NUMBER', targetValue: 90, comparison: 'gte', unit: 'g' },
+  { name: 'Workout 45 mins', type: 'DURATION', targetValue: 45, comparison: 'gte', unit: 'min' },
+  { name: 'Sleep 8 Hours', type: 'DURATION', targetValue: 8, comparison: 'gte', unit: 'hr' },
+  { name: 'Meditate 15 mins', type: 'DURATION', targetValue: 15, comparison: 'gte', unit: 'min' },
   { name: 'Read 20 pages', type: 'NUMBER', targetValue: 20, comparison: 'gte', unit: 'pages' },
-  { name: 'Sleep by 10:30pm', type: 'TIME', targetValue: '22:30', comparison: 'lte', unit: '' },
-  { name: 'Walk 7000 steps', type: 'NUMBER', targetValue: 7000, comparison: 'gte', unit: 'steps' },
-  { name: 'Gym workout', type: 'CHECKBOX', targetValue: null, comparison: 'gte', unit: '' },
-  { name: 'Cold shower', type: 'CHECKBOX', targetValue: null, comparison: 'gte', unit: '' },
-  { name: 'No social media', type: 'CHECKBOX', targetValue: null, comparison: 'gte', unit: '' },
-  { name: 'Journaling', type: 'CHECKBOX', targetValue: null, comparison: 'gte', unit: '' },
+  { name: 'Walk 8,000 steps', type: 'NUMBER', targetValue: 8000, comparison: 'gte', unit: 'steps' },
+  { name: 'Cold shower', type: 'CHECKBOX', targetValue: 0, comparison: 'gte', unit: '' },
+  { name: 'No junk food', type: 'CHECKBOX', targetValue: 0, comparison: 'gte', unit: '' },
 ];
+
+const QUICK_UNITS = ['g', 'L', 'ml', 'min', 'hr', 'steps', 'pages', 'sessions'];
 
 /* ── Target Form (add OR edit) ─────────────────────────────────────── */
 function TargetForm({ initial, onSave, onCancel }) {
   const [name,        setName]        = useState(initial?.name        ?? '');
-  const [type,        setType]        = useState(initial?.type        ?? 'CHECKBOX');
-  const [targetValue, setTargetValue] = useState(initial?.targetValue != null ? String(initial.targetValue) : '');
+  const [type,        setType]        = useState(initial?.type === 'TIME' ? 'DURATION' : (initial?.type ?? 'CHECKBOX'));
+  const [targetValue, setTargetValue] = useState(initial?.targetValue != null && typeof initial.targetValue === 'number' ? String(initial.targetValue) : '0');
   const [unit,        setUnit]        = useState(initial?.unit        ?? '');
   const [comparison,  setComparison]  = useState(initial?.comparison  ?? 'gte');
-  const [frequency,   setFrequency]   = useState(initial?.frequency   ?? 'daily');
   const [showTemplates, setShowTemplates] = useState(false);
 
   const fieldCls =
-    'w-full text-sm text-[#18191E] dark:text-white placeholder-stone-400 ' +
+    'w-full text-sm font-bold text-[#18191E] dark:text-white placeholder-stone-400 ' +
     'bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 ' +
-    'rounded-xl px-3.5 py-2.5 outline-none focus:border-[#F05A36] transition-colors';
+    'rounded-2xl px-4 py-3 outline-none focus:border-accent transition-colors';
 
   function applyTemplate(t) {
     setName(t.name);
     setType(t.type);
-    setTargetValue(t.targetValue != null ? String(t.targetValue) : '');
-    setUnit(t.unit);
-    setComparison(t.comparison);
+    setTargetValue(t.targetValue != null ? String(t.targetValue) : '0');
+    setUnit(t.unit || '');
+    setComparison(t.comparison || 'gte');
     setShowTemplates(false);
   }
 
@@ -77,102 +69,161 @@ function TargetForm({ initial, onSave, onCancel }) {
       id: initial?.id ?? `custom-${Date.now()}`,
       name: name.trim(),
       type,
-      targetValue: (type === 'NUMBER' || type === 'DURATION') ? parseFloat(targetValue) || 0 : targetValue,
-      unit, comparison, frequency, reminder: null,
+      targetValue: (type === 'NUMBER' || type === 'DURATION') ? parseFloat(targetValue) || 0 : null,
+      unit: type === 'CHECKBOX' ? '' : unit.trim(),
+      comparison: comparison || 'gte',
+      frequency: 'daily',
+      reminder: null,
     });
   }
 
   return (
-    <form onSubmit={handleSave} className="rounded-2xl p-4 space-y-3.5 bg-white/80 dark:bg-white/[0.04] border border-black/8 dark:border-white/10 shadow-lg">
+    <form onSubmit={handleSave} className="rounded-3xl p-5 space-y-4 bg-white dark:bg-[#181926] border border-black/8 dark:border-white/10 shadow-xl animate-[fadeIn_0.2s_ease-out]">
       <div className="flex items-center justify-between">
-        <p className="text-xs font-bold text-[#C9A961] uppercase tracking-wider">
-          {initial?.id ? 'Edit Target' : 'New Target'}
+        <p className="text-xs font-extrabold text-accent uppercase tracking-wider">
+          {initial?.id ? 'Edit Target' : 'New Daily Target'}
         </p>
         {!initial?.id && (
           <button type="button" onClick={() => setShowTemplates(!showTemplates)}
-            className="text-xs text-[#E8843C] font-semibold hover:underline">
-            {showTemplates ? 'Hide templates' : 'Quick-add templates ▾'}
+            className="text-xs text-accent font-bold hover:underline flex items-center gap-1">
+            {showTemplates ? 'Hide templates' : 'Quick templates ▾'}
           </button>
         )}
       </div>
 
       {showTemplates && (
-        <div className="flex flex-wrap gap-1.5 pb-2 border-b border-black/6 dark:border-white/6">
+        <div className="flex flex-wrap gap-1.5 pb-3 border-b border-black/6 dark:border-white/6">
           {TARGET_TEMPLATES.map((t) => (
             <button key={t.name} type="button" onClick={() => applyTemplate(t)}
-              className="text-xs px-2.5 py-1 rounded-lg border border-black/8 dark:border-white/10 text-stone-600 dark:text-stone-300 hover:border-[#E8843C] hover:text-[#E8843C] transition-all bg-white/5">
+              className="text-xs font-semibold px-3 py-1.5 rounded-full border border-black/8 dark:border-white/10 text-stone-600 dark:text-stone-300 hover:border-accent hover:text-accent transition-all bg-black/5 dark:bg-white/5">
               {t.name}
             </button>
           ))}
         </div>
       )}
 
-      <input value={name} onChange={(e) => setName(e.target.value)}
-        placeholder="Target name (e.g. Read 20 pages)" autoFocus className={fieldCls} />
-
+      {/* Target Name */}
       <div>
-        <p className="text-[11px] text-stone-400 font-semibold uppercase tracking-wider mb-1.5">Type</p>
-        <div className="flex gap-1.5 flex-wrap">
+        <label className="block text-[11px] font-extrabold uppercase tracking-wider text-stone-500 dark:text-stone-400 mb-1.5">
+          Target Name
+        </label>
+        <input
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="e.g. Eat 50g Protein, Drink 3L Water, Workout 45m"
+          autoFocus
+          className={fieldCls}
+        />
+      </div>
+
+      {/* Target Type Selector */}
+      <div>
+        <label className="block text-[11px] font-extrabold uppercase tracking-wider text-stone-500 dark:text-stone-400 mb-1.5">
+          Tracking Type
+        </label>
+        <div className="grid grid-cols-3 gap-2">
           {TARGET_TYPES.map((t) => (
-            <button key={t.id} type="button" onClick={() => setType(t.id)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all border ${
+            <button
+              key={t.id}
+              type="button"
+              onClick={() => {
+                setType(t.id);
+                if (t.id === 'CHECKBOX') { setTargetValue('0'); setUnit(''); }
+              }}
+              className={`p-3 rounded-2xl text-left transition-all border ${
                 type === t.id
-                  ? 'bg-[#E8843C] text-white border-[#E8843C] shadow-sm'
-                  : 'bg-transparent border-black/10 dark:border-white/12 text-stone-400 hover:text-white'
-              }`}>
-              {t.label}
+                  ? 'bg-accent text-white border-accent shadow-md scale-[1.02]'
+                  : 'bg-black/5 dark:bg-white/5 border-black/10 dark:border-white/10 text-stone-600 dark:text-stone-300 hover:border-accent/50'
+              }`}
+            >
+              <div className="text-xs font-extrabold">{t.label}</div>
+              <div className={`text-[10px] mt-0.5 font-medium ${type === t.id ? 'text-white/80' : 'text-stone-400'}`}>
+                {t.desc}
+              </div>
             </button>
           ))}
         </div>
       </div>
 
+      {/* Target Value, Unit, & Rule Configuration for NUMBER / DURATION */}
       {(type === 'NUMBER' || type === 'DURATION') && (
-        <div className="flex gap-2">
-          <input type="number" value={targetValue} onChange={(e) => setTargetValue(e.target.value)}
-            placeholder="Target value" className={fieldCls} />
-          <input value={unit} onChange={(e) => setUnit(e.target.value)} placeholder="Unit (ml, min…)"
-            className="w-28 text-sm text-[#1a1a2e] dark:text-white placeholder-white/30 bg-white/5 border border-black/10 dark:border-white/10 rounded-xl px-3 py-2.5 outline-none focus:border-[#E8843C] transition-colors" />
-          <select value={comparison} onChange={(e) => setComparison(e.target.value)}
-            className="text-sm text-[#1a1a2e] dark:text-white bg-white/5 dark:bg-[#12162d] border border-black/10 dark:border-white/10 rounded-xl px-3 py-2.5 outline-none">
-            <option value="gte">≥ at least</option>
-            <option value="lte">≤ at most</option>
-          </select>
-        </div>
-      )}
-      {type === 'TIME' && (
-        <div className="flex gap-2">
-          <input type="time" value={targetValue} onChange={(e) => setTargetValue(e.target.value)} className={fieldCls} />
-          <select value={comparison} onChange={(e) => setComparison(e.target.value)}
-            className="text-sm text-[#1a1a2e] dark:text-white bg-white/5 dark:bg-[#12162d] border border-black/10 dark:border-white/10 rounded-xl px-3 py-2.5 outline-none">
-            <option value="lte">by (before)</option>
-            <option value="gte">after</option>
-          </select>
+        <div className="space-y-3 p-4 rounded-2xl bg-black/[0.02] dark:bg-white/[0.02] border border-black/5 dark:border-white/5">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+              <label className="block text-[10px] font-extrabold uppercase tracking-wider text-stone-400 mb-1">
+                Target Value (Goal)
+              </label>
+              <input
+                type="number"
+                step="any"
+                value={targetValue}
+                onChange={(e) => setTargetValue(e.target.value)}
+                placeholder="0"
+                className={fieldCls}
+              />
+            </div>
+            <div>
+              <label className="block text-[10px] font-extrabold uppercase tracking-wider text-stone-400 mb-1">
+                Unit (g, L, min...)
+              </label>
+              <input
+                value={unit}
+                onChange={(e) => setUnit(e.target.value)}
+                placeholder="e.g. g, L, min, hrs"
+                className={fieldCls}
+              />
+            </div>
+            <div>
+              <label className="block text-[10px] font-extrabold uppercase tracking-wider text-stone-400 mb-1">
+                Comparison Goal
+              </label>
+              <select
+                value={comparison}
+                onChange={(e) => setComparison(e.target.value)}
+                className={`${fieldCls} cursor-pointer`}
+              >
+                <option value="gte">≥ At least (Min Goal)</option>
+                <option value="lte">≤ At most (Max Limit)</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Quick Unit Suggestion Chips */}
+          <div>
+            <span className="text-[10px] font-extrabold uppercase tracking-wider text-stone-400 mr-2">Quick Units:</span>
+            <div className="inline-flex gap-1.5 flex-wrap mt-1">
+              {QUICK_UNITS.map((u) => (
+                <button
+                  key={u}
+                  type="button"
+                  onClick={() => setUnit(u)}
+                  className={`text-[11px] font-bold px-2.5 py-1 rounded-full transition-all border ${
+                    unit === u
+                      ? 'bg-accent text-white border-accent'
+                      : 'bg-black/5 dark:bg-white/5 border-black/5 dark:border-white/10 text-stone-500 hover:text-accent'
+                  }`}
+                >
+                  {u}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
       )}
 
-      <div>
-        <p className="text-[11px] text-stone-400 font-semibold uppercase tracking-wider mb-1.5">Frequency</p>
-        <div className="flex gap-1.5 flex-wrap">
-          {FREQUENCY_OPTIONS.map((f) => (
-            <button key={f.id} type="button" onClick={() => setFrequency(f.id)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all border ${
-                frequency === f.id
-                  ? 'bg-[#2D3561] text-white border-[#2D3561] shadow-sm'
-                  : 'bg-transparent border-black/10 dark:border-white/12 text-stone-400 hover:text-white'
-              }`}>
-              {f.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div className="flex gap-2 pt-1">
-        <button type="submit"
-          className="flex-1 btn-coral py-3 px-6 text-xs font-extrabold uppercase tracking-wider text-white shadow-md hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center">
+      {/* Action Buttons */}
+      <div className="flex gap-2 pt-2">
+        <button
+          type="submit"
+          className="flex-1 btn-coral py-3.5 px-6 text-xs font-extrabold uppercase tracking-wider text-white shadow-md hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2"
+        >
           {initial?.id ? 'Save Changes' : 'Add Target'}
         </button>
-        <button type="button" onClick={onCancel}
-          className="btn-secondary-outline px-5 py-3 text-xs font-extrabold uppercase tracking-wider text-stone-400 hover:text-white rounded-full">
+        <button
+          type="button"
+          onClick={onCancel}
+          className="btn-secondary-outline px-5 py-3.5 text-xs font-extrabold uppercase tracking-wider text-stone-400 hover:text-white rounded-full"
+        >
           Cancel
         </button>
       </div>
