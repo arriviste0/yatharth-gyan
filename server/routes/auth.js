@@ -63,6 +63,7 @@ router.post('/google', async (req, res) => {
     const clientIds = [
       process.env.GOOGLE_CLIENT_ID,
       process.env.VITE_GOOGLE_CLIENT_ID,
+      '259886949867-a3v5f3t4cklfv34j28plug0m6p2nsmhl.apps.googleusercontent.com',
       '259886949867-7n73hh971etfnkvorj0km3296sjv879f.apps.googleusercontent.com',
       '615878644272-t70b00ha1ile2edhoamk4306bqhf8t7h.apps.googleusercontent.com'
     ].filter(Boolean);
