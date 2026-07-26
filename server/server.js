@@ -13,10 +13,14 @@ const PORT = process.env.PORT || 5001;
 
 /* ── Middleware ─────────────────────────────────────────────────── */
 app.use(cors({
-  origin: [
-    process.env.CLIENT_ORIGIN || 'http://localhost:5173',
-    'http://localhost:4173',
-  ],
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps, curl) or localhost & vercel apps
+    if (!origin || origin.includes('localhost') || origin.includes('vercel.app') || origin.includes('karma')) {
+      callback(null, true);
+    } else {
+      callback(null, true); // Permissive for API consumers
+    }
+  },
   credentials: true,
 }));
 app.use(express.json({ limit: '5mb' }));
