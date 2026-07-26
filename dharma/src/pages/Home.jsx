@@ -970,10 +970,13 @@ export default function Home({ onOpenFocus, onOpenProfile }) {
         )}
       </div>
 
-      {/* ═══ MOBILE: Verse of the Day ══════════════════════════════ */}
-      <div className="lg:hidden">
+      {/* ═══ MOBILE: AI Analyze Card & Verse of the Day ═══════════ */}
+      <div className="lg:hidden space-y-5 mt-4">
+        {/* Full Body & Practice AI Report Card for Mobile */}
+        <AIDailyReportCard />
+
         {dailyVerse && (
-          <div className="mb-4">
+          <div>
             <div className="flex items-center gap-2 mb-2.5">
               <Sparkles size={13} style={{ color: '#E8843C' }} />
               <span className="section-label">Verse of the day</span>
