@@ -197,13 +197,144 @@ function PillarCategoryCard({ pillar, dayLog }) {
   );
 }
 
+/* ── Log Value Modal for Non-Checkbox Targets ──────────────────────── */
+function LogValueModal({ target, dateStr, onLog, onClose }) {
+  const isDone = target.done ?? false;
+  const initialVal = target.logEntry?.value != null ? String(target.logEntry.value) : (target.targetValue != null ? String(target.targetValue) : '');
+  const [val, setVal] = useState(initialVal);
+
+  const isTime = target.type === 'TIME';
+  const unit = target.unit || '';
+
+  function handleSubmit(e) {
+    e.preventDefault();
+    if (isTime) {
+      if (!val) return;
+      const [h, m] = val.split(':').map(Number);
+      const [th, tm] = (target.targetValue || '23:00').split(':').map(Number);
+      const done = target.comparison === 'lte'
+        ? (h * 60 + m) <= (th * 60 + tm)
+        : (h * 60 + m) >= (th * 60 + tm);
+      onLog(dateStr, target.id, { done, value: val, timestamp: Date.now() });
+    } else {
+      const num = parseFloat(val);
+      if (isNaN(num)) return;
+      const tv = target.targetValue ?? 0;
+      const done = target.comparison === 'gte' ? num >= tv : num <= tv;
+      onLog(dateStr, target.id, { done, value: num, timestamp: Date.now() });
+    }
+    onClose();
+  }
+
+  function handleClear() {
+    onLog(dateStr, target.id, { done: false, value: null, timestamp: Date.now() });
+    onClose();
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-[fadeIn_0.2s_ease-out]">
+      <div className="w-full max-w-md bg-white dark:bg-[#181926] border border-black/10 dark:border-white/10 rounded-3xl p-6 shadow-2xl space-y-4">
+        {/* Modal Header */}
+        <div className="flex items-start justify-between">
+          <div>
+            <span className="text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-1 rounded-full"
+              style={{ background: `${target.pillarColor}15`, color: target.pillarColor }}>
+              {target.pillarName}
+            </span>
+            <h3 className="text-lg font-extrabold text-[#18191E] dark:text-white mt-2">{target.name}</h3>
+            <p className="text-xs text-stone-500 dark:text-stone-400 mt-0.5 font-medium">
+              Goal: {target.comparison === 'lte' ? 'at most' : 'at least'} {target.targetValue}{unit ? ` ${unit}` : ''}
+            </p>
+          </div>
+          <button onClick={onClose} className="w-8 h-8 rounded-full flex items-center justify-center text-stone-400 hover:text-stone-700 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5 transition-all">
+            <X size={16} />
+          </button>
+        </div>
+
+        {/* Form Body */}
+        <form onSubmit={handleSubmit} className="space-y-4 pt-1">
+          <div>
+            <label className="block text-xs font-bold text-stone-600 dark:text-stone-300 uppercase tracking-wider mb-2">
+              Enter Logged {isTime ? 'Time' : unit ? `Amount (${unit})` : 'Value'}
+            </label>
+            <div className="flex items-center gap-2">
+              <input
+                type={isTime ? "time" : "number"}
+                step={isTime ? undefined : "any"}
+                value={val}
+                onChange={(e) => setVal(e.target.value)}
+                placeholder={target.targetValue != null ? String(target.targetValue) : '0'}
+                autoFocus
+                className="flex-1 text-base font-bold text-[#18191E] dark:text-white bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-2xl px-4 py-3 outline-none focus:border-[#F05A36] transition-colors"
+              />
+              {unit && !isTime && (
+                <span className="text-sm font-bold text-stone-500 dark:text-stone-400 px-3.5 py-3 rounded-2xl bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10">
+                  {unit}
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* Quick presets for numbers */}
+          {!isTime && target.targetValue > 0 && (
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-[11px] font-semibold text-stone-400">Quick set:</span>
+              {[0.5, 0.75, 1, 1.25, 1.5].map((mult) => {
+                const preset = Math.round(target.targetValue * mult * 10) / 10;
+                return (
+                  <button
+                    key={mult}
+                    type="button"
+                    onClick={() => setVal(String(preset))}
+                    className="text-xs font-bold px-2.5 py-1 rounded-xl bg-black/5 dark:bg-white/5 hover:bg-[#F05A36]/10 hover:text-[#F05A36] dark:hover:text-[#F05A36] transition-all text-stone-600 dark:text-stone-300"
+                  >
+                    {preset} {unit}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Action Buttons */}
+          <div className="flex gap-2 pt-2">
+            <button
+              type="submit"
+              className="flex-1 py-3 rounded-2xl text-xs font-extrabold uppercase tracking-wider text-white shadow-lg transition-all active:scale-[0.98]"
+              style={{ background: 'linear-gradient(135deg, #F05A36, #C9A961)' }}
+            >
+              {isDone ? 'Update Log' : 'Log & Complete'}
+            </button>
+            {isDone && (
+              <button
+                type="button"
+                onClick={handleClear}
+                className="px-4 py-3 rounded-2xl text-xs font-bold uppercase tracking-wider text-red-500 hover:bg-red-500/10 border border-red-500/20 transition-all"
+              >
+                Clear Log
+              </button>
+            )}
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 /* ── Mobile Today View ─────────────────────────────────────────────── */
 function MobileTodayView({ pillars, logs, logTarget, dateStr, streak, settings, onOpenFocus }) {
+  const [loggingTarget, setLoggingTarget] = useState(null);
   const dayLog = logs[dateStr] || {};
   const activeTargets = useMemo(() =>
     pillars.flatMap((p) =>
       p.targets.filter((t) => t.frequency === 'daily' || !t.frequency)
-        .map((t) => ({ ...t, pillarName: p.english, pillarColor: p.color || '#F05A36', pillarIcon: p.icon, done: !!dayLog[t.id]?.done }))
+        .map((t) => ({
+          ...t,
+          pillarName: p.english,
+          pillarColor: p.color || '#F05A36',
+          pillarIcon: p.icon,
+          done: !!dayLog[t.id]?.done,
+          logEntry: dayLog[t.id],
+        }))
     ), [pillars, dayLog]);
 
   const completedCount = activeTargets.filter((t) => t.done).length;
@@ -213,6 +344,14 @@ function MobileTodayView({ pillars, logs, logTarget, dateStr, streak, settings, 
   const pendingTargets = activeTargets.filter((t) => !t.done);
   const doneTargets = activeTargets.filter((t) => t.done);
 
+  function handleTaskClick(target) {
+    if (target.type === 'CHECKBOX' || !target.type) {
+      logTarget(dateStr, target.id, { done: !target.done, value: !target.done, timestamp: Date.now() });
+    } else {
+      setLoggingTarget(target);
+    }
+  }
+
   return (
     <div className="block lg:hidden space-y-5 mb-5">
       {/* Hero Progress Card */}
@@ -221,7 +360,7 @@ function MobileTodayView({ pillars, logs, logTarget, dateStr, streak, settings, 
           <div className="flex-1">
             <span className="text-[10px] font-extrabold uppercase tracking-widest text-accent">Today's Practice</span>
             <h2 className="text-xl font-extrabold text-[#18191E] dark:text-white mt-1 leading-tight">{allDone ? 'All done! 🪷' : `${totalCount - completedCount} tasks remaining`}</h2>
-            <p className="text-[11px] text-stone-500 dark:text-white/50 mt-1 leading-relaxed">{allDone ? 'Your practice blooms today — rest well.' : 'Tap each target to check it off.'}</p>
+            <p className="text-[11px] text-stone-500 dark:text-white/50 mt-1 leading-relaxed">{allDone ? 'Your practice blooms today — rest well.' : 'Tap each target to check it off or enter amounts.'}</p>
             <div className="flex items-center gap-3 mt-4">
               {!settings.silentMode && streak > 0 && (
                 <div className="flex items-center gap-1.5 px-3 py-1 rounded-full text-accent" style={{ background: 'var(--color-accent-light)' }}>
@@ -263,15 +402,26 @@ function MobileTodayView({ pillars, logs, logTarget, dateStr, streak, settings, 
         <div className="space-y-2">
           {pendingTargets.map((target) => {
             const Icon = PILLAR_ICONS[target.pillarIcon] || Zap;
+            const isNonCheckbox = target.type && target.type !== 'CHECKBOX';
             return (
-              <button key={target.id} onClick={() => logTarget(dateStr, target.id, { done: true, timestamp: Date.now() })}
-                className="w-full flex items-center gap-3 p-3.5 rounded-2xl border text-left transition-all duration-200 active:scale-[0.97] bg-white dark:bg-[#181926] border-black/5 dark:border-white/8 hover:border-[#F05A36]/30 shadow-sm">
+              <button
+                key={target.id}
+                onClick={() => handleTaskClick(target)}
+                className="w-full flex items-center gap-3 p-3.5 rounded-2xl border text-left transition-all duration-200 active:scale-[0.97] bg-white dark:bg-[#181926] border-black/5 dark:border-white/8 hover:border-[#F05A36]/30 shadow-sm"
+              >
                 <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: `${target.pillarColor}18` }}>
                   <Icon size={15} style={{ color: target.pillarColor }} />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="text-[13px] font-bold text-[#18191E] dark:text-white truncate">{target.name}</div>
-                  <div className="text-[10px] text-stone-400 font-semibold uppercase tracking-wide mt-0.5">{target.pillarName}</div>
+                  <div className="text-[10px] text-stone-400 font-semibold uppercase tracking-wide mt-0.5 flex items-center gap-1.5">
+                    <span>{target.pillarName}</span>
+                    {isNonCheckbox && (
+                      <span className="text-[#F05A36] font-bold">
+                        • Goal: {target.comparison === 'lte' ? '≤' : '≥'} {target.targetValue} {target.unit || ''}
+                      </span>
+                    )}
+                  </div>
                 </div>
                 <div className="w-7 h-7 rounded-full flex items-center justify-center shrink-0 border-2 transition-all" style={{ borderColor: `${target.pillarColor}40` }}>
                   <Plus size={12} style={{ color: target.pillarColor, opacity: 0.6 }} />
@@ -281,15 +431,27 @@ function MobileTodayView({ pillars, logs, logTarget, dateStr, streak, settings, 
           })}
           {doneTargets.map((target) => {
             const Icon = PILLAR_ICONS[target.pillarIcon] || Zap;
+            const isNonCheckbox = target.type && target.type !== 'CHECKBOX';
+            const loggedVal = target.logEntry?.value;
             return (
-              <button key={target.id} onClick={() => logTarget(dateStr, target.id, { done: false, timestamp: Date.now() })}
-                className="w-full flex items-center gap-3 p-3.5 rounded-2xl border text-left transition-all duration-200 active:scale-[0.97] bg-black/[0.02] dark:bg-white/[0.03] border-black/5 dark:border-white/5">
+              <button
+                key={target.id}
+                onClick={() => handleTaskClick(target)}
+                className="w-full flex items-center gap-3 p-3.5 rounded-2xl border text-left transition-all duration-200 active:scale-[0.97] bg-black/[0.02] dark:bg-white/[0.03] border-black/5 dark:border-white/5"
+              >
                 <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: `${target.pillarColor}12` }}>
                   <Icon size={15} style={{ color: target.pillarColor, opacity: 0.5 }} />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="text-[13px] font-semibold text-stone-400 dark:text-stone-500 line-through truncate">{target.name}</div>
-                  <div className="text-[10px] text-stone-400 dark:text-stone-600 font-semibold uppercase tracking-wide mt-0.5">{target.pillarName}</div>
+                  <div className="text-[10px] text-stone-400 dark:text-stone-600 font-semibold uppercase tracking-wide mt-0.5 flex items-center gap-1.5">
+                    <span>{target.pillarName}</span>
+                    {isNonCheckbox && loggedVal != null && (
+                      <span className="text-emerald-500 font-bold no-underline">
+                        • Logged: {loggedVal} {target.unit || ''}
+                      </span>
+                    )}
+                  </div>
                 </div>
                 <div className="w-7 h-7 rounded-full flex items-center justify-center shrink-0 transition-all bg-[#F05A36] text-white">
                   <Check size={13} strokeWidth={3} />
@@ -299,6 +461,15 @@ function MobileTodayView({ pillars, logs, logTarget, dateStr, streak, settings, 
           })}
         </div>
       </div>
+
+      {loggingTarget && (
+        <LogValueModal
+          target={loggingTarget}
+          dateStr={dateStr}
+          onLog={logTarget}
+          onClose={() => setLoggingTarget(null)}
+        />
+      )}
     </div>
   );
 }
@@ -353,16 +524,32 @@ function TabButton({ active, label, count, onClick }) {
 }
 
 /* ── Desktop Task Row ─────────────────────────────────────────────── */
-function TaskRow({ target, dateStr, logTarget, onEdit }) {
+function TaskRow({ target, dateStr, logTarget, onEdit, onLogModal }) {
   const Icon = PILLAR_ICONS[target.pillarIcon] || Zap;
+  const isNonCheckbox = target.type && target.type !== 'CHECKBOX';
+  const loggedVal = target.logEntry?.value;
+
+  function handleCheckClick(e) {
+    e.stopPropagation();
+    if (isNonCheckbox) {
+      onLogModal(target);
+    } else {
+      logTarget(dateStr, target.id, { done: !target.done, value: !target.done, timestamp: Date.now() });
+    }
+  }
 
   return (
-    <div className={`flex items-center gap-4 px-4 py-3 rounded-2xl transition-all group border border-black/5 dark:border-white/5 ${
-      target.done ? 'bg-black/[0.02] dark:bg-white/[0.02]' : 'bg-white dark:bg-[#181926] shadow-sm hover:shadow-md'
-    }`}>
+    <div
+      onClick={() => isNonCheckbox && onLogModal(target)}
+      className={`flex items-center gap-4 px-4 py-3 rounded-2xl transition-all group border border-black/5 dark:border-white/5 ${
+        isNonCheckbox ? 'cursor-pointer hover:border-[#F05A36]/30' : ''
+      } ${
+        target.done ? 'bg-black/[0.02] dark:bg-white/[0.02]' : 'bg-white dark:bg-[#181926] shadow-sm hover:shadow-md'
+      }`}
+    >
       {/* Target check button */}
       <button
-        onClick={() => logTarget(dateStr, target.id, { done: !target.done })}
+        onClick={handleCheckClick}
         className="shrink-0 transition-transform active:scale-95"
       >
         {target.done ? (
@@ -387,6 +574,15 @@ function TaskRow({ target, dateStr, logTarget, onEdit }) {
         <div className={`text-sm font-bold truncate ${target.done ? 'line-through text-stone-400 dark:text-white/30' : 'text-[#18191E] dark:text-white'}`}>
           {target.name}
         </div>
+        {isNonCheckbox && (
+          <div className="text-[11px] font-medium mt-0.5">
+            {target.done && loggedVal != null ? (
+              <span className="text-emerald-500 font-bold">Logged: {loggedVal} {target.unit || ''}</span>
+            ) : (
+              <span className="text-stone-400">Target: {target.comparison === 'lte' ? '≤' : '≥'} {target.targetValue} {target.unit || ''}</span>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Pillar badge */}
@@ -397,16 +593,28 @@ function TaskRow({ target, dateStr, logTarget, onEdit }) {
 
       {/* Type badge */}
       <span className="text-[10px] font-semibold px-2.5 py-1 rounded-full bg-black/5 dark:bg-white/5 text-stone-600 dark:text-white/50 shrink-0">
-        {target.type === 'CHECKBOX' ? 'Yes/No' : target.type === 'NUMBER' ? `≥${target.targetValue}${target.unit || ''}` : target.type === 'TIME' ? `≤${target.targetValue}` : target.type}
+        {!isNonCheckbox ? 'Yes/No' : target.type === 'NUMBER' ? `${target.comparison === 'lte' ? '≤' : '≥'}${target.targetValue}${target.unit ? ` ${target.unit}` : ''}` : target.type === 'TIME' ? `≤${target.targetValue}` : target.type}
       </span>
 
-      {/* Edit button */}
-      <button
-        onClick={() => onEdit(target)}
-        className="w-7 h-7 rounded-lg flex items-center justify-center text-stone-400 hover:text-[#F05A36] hover:bg-[#F05A36]/10 transition-all opacity-0 group-hover:opacity-100 shrink-0"
-      >
-        <Edit3 size={13} />
-      </button>
+      {/* Action buttons */}
+      <div className="flex items-center gap-1 shrink-0">
+        {isNonCheckbox && (
+          <button
+            onClick={(e) => { e.stopPropagation(); onLogModal(target); }}
+            title="Log amount"
+            className="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-[#F05A36]/10 text-[#F05A36] hover:bg-[#F05A36]/20 transition-all"
+          >
+            {target.done ? 'Edit Log' : 'Log Value'}
+          </button>
+        )}
+        <button
+          onClick={(e) => { e.stopPropagation(); onEdit(target); }}
+          className="w-7 h-7 rounded-lg flex items-center justify-center text-stone-400 hover:text-[#F05A36] hover:bg-[#F05A36]/10 transition-all opacity-0 group-hover:opacity-100"
+          title="Edit target definition"
+        >
+          <Edit3 size={13} />
+        </button>
+      </div>
     </div>
   );
 }
@@ -415,6 +623,7 @@ function TaskRow({ target, dateStr, logTarget, onEdit }) {
 function DesktopTaskManager({ pillars, logs, logTarget, dateStr, setPillars }) {
   const [tab, setTab] = useState('all');
   const [editingTarget, setEditingTarget] = useState(null);
+  const [loggingTarget, setLoggingTarget] = useState(null);
   const [editName, setEditName] = useState('');
   const [editValue, setEditValue] = useState('');
   const [filterPillar, setFilterPillar] = useState('all');
@@ -432,6 +641,7 @@ function DesktopTaskManager({ pillars, logs, logTarget, dateStr, setPillars }) {
           pillarColor: p.color || '#E8843C',
           pillarIcon: p.icon,
           done: !!dayLog[t.id]?.done,
+          logEntry: dayLog[t.id],
         }))
     ), [pillars, dayLog]);
 
@@ -506,12 +716,19 @@ function DesktopTaskManager({ pillars, logs, logTarget, dateStr, setPillars }) {
           </div>
         ) : (
           filtered.map((target) => (
-            <TaskRow key={target.id} target={target} dateStr={dateStr} logTarget={logTarget} onEdit={handleEdit} />
+            <TaskRow
+              key={target.id}
+              target={target}
+              dateStr={dateStr}
+              logTarget={logTarget}
+              onEdit={handleEdit}
+              onLogModal={(t) => setLoggingTarget(t)}
+            />
           ))
         )}
       </div>
 
-      {/* Edit Modal */}
+      {/* Target Definition Edit Modal */}
       {editingTarget && (
         <div className="border-t border-white/5 px-5 py-4 bg-white/[0.02]">
           <div className="flex items-center justify-between mb-3">
@@ -535,12 +752,22 @@ function DesktopTaskManager({ pillars, logs, logTarget, dateStr, setPillars }) {
             )}
             <button
               onClick={handleSaveEdit}
-              className="px-4 py-2 bg-[#E8843C] hover:bg-[#d4732b] text-white rounded-xl text-xs font-bold transition-all"
+              className="px-4 py-2 bg-[#E8843C] hover:bg-[#d4732b] text-[#ffffff] rounded-xl text-xs font-bold transition-all"
             >
               Save
             </button>
           </div>
         </div>
+      )}
+
+      {/* Log Value Modal for Desktop */}
+      {loggingTarget && (
+        <LogValueModal
+          target={loggingTarget}
+          dateStr={dateStr}
+          onLog={logTarget}
+          onClose={() => setLoggingTarget(null)}
+        />
       )}
     </div>
   );

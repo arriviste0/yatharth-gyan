@@ -50,8 +50,7 @@ function ProfileButton({ onClick }) {
   if (!user) {
     return (
       <button onClick={onClick}
-        className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all"
-        style={{ background: 'rgba(232,132,60,0.12)', color: '#E8843C' }}>
+        className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all bg-accent/12 text-accent border border-accent/20 hover:bg-accent/20">
         <LogIn size={13} /> Sign in
       </button>
     );
