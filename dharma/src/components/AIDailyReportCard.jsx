@@ -10,7 +10,7 @@ const CHART_COLORS = ['#F05A36', '#14B8A6', '#E6A04E', '#8B5CF6', '#3B82F6', '#E
 
 export default function AIDailyReportCard() {
   const { state } = useStorage();
-  const pillars = state.pillars || DEFAULT_PILLARS;
+  const pillars = state.pillars || [];
   const logs = state.logs || {};
   const metrics = state.metrics || {};
   const today = todayKey();

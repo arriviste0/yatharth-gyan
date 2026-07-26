@@ -21,7 +21,7 @@ function getFirstDayOfWeek(year, month) {
 
 export default function PracticeCalendarModal({ onClose }) {
   const { state } = useStorage();
-  const pillars = state.pillars || DEFAULT_PILLARS;
+  const pillars = state.pillars || [];
   const logs = state.logs || {};
 
   const now = new Date();

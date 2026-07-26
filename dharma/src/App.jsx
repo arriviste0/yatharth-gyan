@@ -129,7 +129,7 @@ function AppShell({ children, onOpenFocus, onOpenProfile }) {
 function AppInner() {
   const { state, updateSettings, logFocusSession } = useStorage();
   const { settings } = state;
-  const pillars = state.pillars || DEFAULT_PILLARS;
+  const pillars = state.pillars || [];
 
   const [milestone,    setMilestone]    = useState(null);
   const [showFocus,    setShowFocus]    = useState(false);

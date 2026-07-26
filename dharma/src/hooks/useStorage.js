@@ -23,7 +23,7 @@ function getInitialState() {
       reminderEnabled: false,
       reminderTime: '20:00',
     },
-    pillars: null,
+    pillars: [],
     logs: {},
     notebook: [],
     folders: DEFAULT_FOLDERS,
@@ -48,6 +48,7 @@ function loadState() {
       ...defaults,
       ...parsed,
       settings: { ...defaults.settings, ...(parsed.settings || {}) },
+      pillars: parsed.pillars ?? [],
     };
   } catch {
     return defaults;
@@ -88,6 +89,7 @@ export function loadFromCloud(data) {
     ...defaults,
     ...data,
     settings: { ...defaults.settings, ...(data.settings || {}) },
+    pillars: data.pillars ?? [],
   };
   _globalState = merged;
   saveState(merged);

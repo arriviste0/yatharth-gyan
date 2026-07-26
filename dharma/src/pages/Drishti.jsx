@@ -120,8 +120,8 @@ function TrendArrow({ current, prev, size = 14 }) {
 
 /* ── Main page ────────────────────────────────────────────────────── */
 export default function Drishti() {
-  const { state } = useStorage();
-  const pillars = state.pillars || DEFAULT_PILLARS;
+  const { state, toggleBookmark, logMetric } = useStorage();
+  const pillars = state.pillars || [];
   const { logs, settings, focusLog = [] } = state;
 
   /* Skeleton loading — 1 frame so charts mount with data */

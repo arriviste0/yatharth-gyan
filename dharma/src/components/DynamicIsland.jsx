@@ -15,7 +15,7 @@ export default function DynamicIsland({ onOpenFocus, onOpenProfile }) {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  const pillars = state.pillars || DEFAULT_PILLARS;
+  const pillars = state.pillars || [];
   const logs = state.logs || {};
   const metrics = state.metrics || {};
   const today = todayKey();

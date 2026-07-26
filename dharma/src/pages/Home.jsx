@@ -319,6 +319,17 @@ function LogValueModal({ target, dateStr, onLog, onClose }) {
   );
 }
 
+function isInputRequired(target) {
+  if (!target) return false;
+  if (target.type === 'NUMBER' || target.type === 'DURATION' || target.type === 'TIME') return true;
+  if (target.type === 'CHECKBOX') return false;
+  if (target.unit && target.unit.trim().length > 0) return true;
+  if (target.targetValue != null && typeof target.targetValue !== 'boolean') return true;
+  const name = (target.name || '').toLowerCase();
+  if (name.includes('protein') || name.includes('water') || name.includes('liter') || name.includes('litre') || name.includes('duration') || name.includes('gram') || name.includes('intake') || name.includes('sleep') || name.includes('workout') || name.includes('gym')) return true;
+  return false;
+}
+
 /* ── Mobile Today View ─────────────────────────────────────────────── */
 function MobileTodayView({ pillars, logs, logTarget, dateStr, streak, settings, onOpenFocus }) {
   const [loggingTarget, setLoggingTarget] = useState(null);
@@ -344,10 +355,10 @@ function MobileTodayView({ pillars, logs, logTarget, dateStr, streak, settings, 
   const doneTargets = activeTargets.filter((t) => t.done);
 
   function handleTaskClick(target) {
-    if (target.type === 'CHECKBOX' || !target.type) {
-      logTarget(dateStr, target.id, { done: !target.done, value: !target.done, timestamp: Date.now() });
-    } else {
+    if (isInputRequired(target)) {
       setLoggingTarget(target);
+    } else {
+      logTarget(dateStr, target.id, { done: !target.done, value: !target.done, timestamp: Date.now() });
     }
   }
 
@@ -401,7 +412,7 @@ function MobileTodayView({ pillars, logs, logTarget, dateStr, streak, settings, 
         <div className="space-y-2">
           {pendingTargets.map((target) => {
             const Icon = PILLAR_ICONS[target.pillarIcon] || Zap;
-            const isNonCheckbox = target.type && target.type !== 'CHECKBOX';
+            const isNonCheckbox = isInputRequired(target);
             return (
               <button
                 key={target.id}
@@ -430,7 +441,7 @@ function MobileTodayView({ pillars, logs, logTarget, dateStr, streak, settings, 
           })}
           {doneTargets.map((target) => {
             const Icon = PILLAR_ICONS[target.pillarIcon] || Zap;
-            const isNonCheckbox = target.type && target.type !== 'CHECKBOX';
+            const isNonCheckbox = isInputRequired(target);
             const loggedVal = target.logEntry?.value;
             return (
               <button
@@ -525,7 +536,7 @@ function TabButton({ active, label, count, onClick }) {
 /* ── Desktop Task Row ─────────────────────────────────────────────── */
 function TaskRow({ target, dateStr, logTarget, onEdit, onLogModal }) {
   const Icon = PILLAR_ICONS[target.pillarIcon] || Zap;
-  const isNonCheckbox = target.type && target.type !== 'CHECKBOX';
+  const isNonCheckbox = isInputRequired(target);
   const loggedVal = target.logEntry?.value;
 
   function handleCheckClick(e) {
@@ -1025,7 +1036,7 @@ function ProfileHeaderButton({ onOpenProfile }) {
 
 export default function Home({ onOpenFocus, onOpenProfile }) {
   const { state, toggleBookmark, logTarget, setPillars, logMetric } = useStorage();
-  const pillars = state.pillars || DEFAULT_PILLARS;
+  const pillars = state.pillars || [];
   const { logs, bookmarks, settings, metrics = {} } = state;
   const dailyVerse = useDailyVerse();
 

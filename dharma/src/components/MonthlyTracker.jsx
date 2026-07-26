@@ -27,7 +27,7 @@ const daysInMonth = (y, m) => new Date(y, m + 1, 0).getDate();
 
 export default function MonthlyTracker() {
   const { state, logTarget, logMetric } = useStorage();
-  const pillars = state.pillars || DEFAULT_PILLARS;
+  const pillars = state.pillars || [];
   const logs = state.logs || {};
   const metrics = state.metrics || {};
 

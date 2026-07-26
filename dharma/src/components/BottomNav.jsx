@@ -83,8 +83,8 @@ export default function BottomNav({ onOpenProfile }) {
 /* ── Desktop side nav ───────────────────────────────────────────────────────── */
 export function SideNav({ onOpenFocus, onOpenProfile }) {
   const location  = useLocation();
-  const { state, updateSettings } = useStorage();
-  const pillars   = state.pillars || DEFAULT_PILLARS;
+  const { state } = useStorage();
+  const pillars   = state.pillars || [];
   const { logs, settings } = state;
 
   const isDark = settings.theme === 'dark';

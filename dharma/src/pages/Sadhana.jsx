@@ -253,7 +253,7 @@ function PillarEditor({ pillar, onSave, onCancel }) {
 /* ── Main ───────────────────────────────────────────────────────────── */
 export default function Sadhana() {
   const { state, setPillars } = useStorage();
-  const pillars = state.pillars || DEFAULT_PILLARS;
+  const pillars = state.pillars || [];
   const [editingId,       setEditingId]       = useState(null);
   const [addingTargetTo,  setAddingTargetTo]  = useState(null);
   const [editingTarget,   setEditingTarget]   = useState(null);
@@ -352,6 +352,27 @@ export default function Sadhana() {
             onSave={addNewPillar}
             onCancel={() => setAddingPillar(false)}
           />
+        </div>
+      )}
+
+      {/* Empty State when no pillars exist */}
+      {pillars.length === 0 && !addingPillar && (
+        <div className="card-bento p-8 text-center space-y-4 bg-white dark:bg-[#181926] border border-black/5 dark:border-white/8 shadow-sm rounded-3xl">
+          <div className="w-14 h-14 rounded-3xl bg-accent/15 text-accent flex items-center justify-center mx-auto">
+            <Layers size={28} />
+          </div>
+          <div>
+            <h3 className="text-lg font-extrabold text-[#18191E] dark:text-white">No Pillars Defined</h3>
+            <p className="text-xs text-stone-500 dark:text-stone-400 font-medium mt-1 max-w-sm mx-auto">
+              Your account has no pre-set pillars. Click "Add Pillar" above to create your custom daily targets.
+            </p>
+          </div>
+          <button
+            onClick={() => setAddingPillar(true)}
+            className="btn-coral inline-flex items-center gap-2 text-xs font-extrabold px-6 py-3 shadow-md"
+          >
+            <Plus size={16} /> Create Your First Pillar
+          </button>
         </div>
       )}
 
