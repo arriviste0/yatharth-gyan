@@ -261,12 +261,12 @@ function TargetForm({ initial, onSave, onCancel }) {
             <div className="flex items-center justify-between">
               <div>
                 <span className="text-xs font-extrabold text-accent uppercase tracking-wider">
-                  {type === 'DURATION' ? 'Multiple Duration Sessions / Time Blocks' : 'Multiple Quantities (Names & Units)'}
+                  {type === 'DURATION' ? 'Multiple Duration Sessions / Time Blocks' : 'Multiple Sub-Metrics'}
                 </span>
                 <p className="text-[10px] text-stone-400 font-medium">
                   {type === 'DURATION'
                     ? 'Track specific activity time blocks (e.g. Cardio 20m, Lifting 30m, Yoga 15m)'
-                    : 'Track multiple items with custom names & units (e.g. Protein g, Carbs g, Water L, Calories)'}
+                    : 'Track specific breakdown sub-fields (e.g. Protein, Carbs, Calories for meals)'}
                 </p>
               </div>
               <button
@@ -274,7 +274,7 @@ function TargetForm({ initial, onSave, onCancel }) {
                 onClick={addSubMetric}
                 className="text-xs font-bold text-accent hover:underline flex items-center gap-1 shrink-0 ml-2"
               >
-                <Plus size={14} /> {type === 'DURATION' ? 'Add Time Block' : 'Add Quantity'}
+                <Plus size={14} /> {type === 'DURATION' ? 'Add Time Block' : 'Add Sub-Metric'}
               </button>
             </div>
 
