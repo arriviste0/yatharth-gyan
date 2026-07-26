@@ -687,13 +687,13 @@ function TaskRow({ target, dateStr, logTarget, onEdit, onLogModal }) {
 
       {/* Action buttons */}
       <div className="flex items-center gap-1 shrink-0">
-        {isNonCheckbox && (
+        {isNonCheckbox && !target.done && (
           <button
             onClick={(e) => { e.stopPropagation(); onLogModal(target); }}
             title="Log amount"
             className="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-[#F05A36]/10 text-[#F05A36] hover:bg-[#F05A36]/20 transition-all"
           >
-            {target.done ? 'Edit Log' : 'Log Value'}
+            Log Value
           </button>
         )}
         <button
