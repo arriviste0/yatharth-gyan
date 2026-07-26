@@ -189,71 +189,73 @@ function TargetForm({ initial, onSave, onCancel }) {
         </div>
       </div>
 
-      {/* Target Value & Unit Configuration for NUMBER / DURATION */}
+      {/* Target Value & Unit Configuration for single NUMBER / DURATION (hidden if sub-metrics are present) */}
       {(type === 'NUMBER' || type === 'DURATION') && (
         <>
-          <div className="space-y-3 p-4 rounded-2xl bg-black/[0.02] dark:bg-white/[0.02] border border-black/5 dark:border-white/5">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <div>
-                <label className="block text-[10px] font-extrabold uppercase tracking-wider text-stone-400 mb-1">
-                  Target Value (Goal)
-                </label>
-                <input
-                  type="number"
-                  step="any"
-                  value={targetValue}
-                  onChange={(e) => setTargetValue(e.target.value)}
-                  placeholder="0"
-                  className={fieldCls}
-                />
-              </div>
-              <div>
-                <label className="block text-[10px] font-extrabold uppercase tracking-wider text-stone-400 mb-1">
-                  Unit (g, L, min...)
-                </label>
-                <input
-                  value={unit}
-                  onChange={(e) => setUnit(e.target.value)}
-                  placeholder="e.g. g, L, min, hrs"
-                  className={fieldCls}
-                />
-              </div>
-              <div>
-                <label className="block text-[10px] font-extrabold uppercase tracking-wider text-stone-400 mb-1">
-                  Comparison Goal
-                </label>
-                <select
-                  value={comparison}
-                  onChange={(e) => setComparison(e.target.value)}
-                  className={`${fieldCls} cursor-pointer`}
-                >
-                  <option value="gte">≥ At least (Min Goal)</option>
-                  <option value="lte">≤ At most (Max Limit)</option>
-                </select>
-              </div>
-            </div>
-
-            {/* Quick Unit Suggestion Chips */}
-            <div>
-              <span className="text-[10px] font-extrabold uppercase tracking-wider text-stone-400 mr-2">Quick Units:</span>
-              <div className="inline-flex gap-1.5 flex-wrap mt-1">
-                {QUICK_UNITS.map((u) => (
-                  <button
-                    key={u}
-                    type="button"
-                    onClick={() => setUnit(u)}
-                    className={`text-[11px] font-bold px-2.5 py-1 rounded-full transition-all border ${
-                      unit === u
-                        ? 'bg-accent text-white border-accent'
-                        : 'bg-black/5 dark:bg-white/5 border-black/5 dark:border-white/10 text-stone-500 hover:text-accent'
-                    }`}
+          {subMetrics.length === 0 && (
+            <div className="space-y-3 p-4 rounded-2xl bg-black/[0.02] dark:bg-white/[0.02] border border-black/5 dark:border-white/5">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-[10px] font-extrabold uppercase tracking-wider text-stone-400 mb-1">
+                    Target Value (Goal)
+                  </label>
+                  <input
+                    type="number"
+                    step="any"
+                    value={targetValue}
+                    onChange={(e) => setTargetValue(e.target.value)}
+                    placeholder="0"
+                    className={fieldCls}
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-extrabold uppercase tracking-wider text-stone-400 mb-1">
+                    Unit (g, L, min...)
+                  </label>
+                  <input
+                    value={unit}
+                    onChange={(e) => setUnit(e.target.value)}
+                    placeholder="e.g. g, L, min, hrs"
+                    className={fieldCls}
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-extrabold uppercase tracking-wider text-stone-400 mb-1">
+                    Comparison Goal
+                  </label>
+                  <select
+                    value={comparison}
+                    onChange={(e) => setComparison(e.target.value)}
+                    className={`${fieldCls} cursor-pointer`}
                   >
-                    {u}
-                  </button>
-                ))}
+                    <option value="gte">≥ At least (Min Goal)</option>
+                    <option value="lte">≤ At most (Max Limit)</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Quick Unit Suggestion Chips */}
+              <div>
+                <span className="text-[10px] font-extrabold uppercase tracking-wider text-stone-400 mr-2">Quick Units:</span>
+                <div className="inline-flex gap-1.5 flex-wrap mt-1">
+                  {QUICK_UNITS.map((u) => (
+                    <button
+                      key={u}
+                      type="button"
+                      onClick={() => setUnit(u)}
+                      className={`text-[11px] font-bold px-2.5 py-1 rounded-full transition-all border ${
+                        unit === u
+                          ? 'bg-accent text-white border-accent'
+                          : 'bg-black/5 dark:bg-white/5 border-black/5 dark:border-white/10 text-stone-500 hover:text-accent'
+                      }`}
+                    >
+                      {u}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
-          </div>
+          )}
 
           {/* Sub-Metrics Section inside Quantity & Duration */}
           <div className="space-y-3 p-4 rounded-2xl bg-black/[0.02] dark:bg-white/[0.02] border border-accent/20">
