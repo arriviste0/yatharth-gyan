@@ -18,7 +18,7 @@ function ToggleRow({ label, description, enabled, onChange }) {
       </div>
       <button onClick={() => onChange(!enabled)}
         className={`w-12 h-6 rounded-full transition-all duration-300 flex-shrink-0 mt-0.5 relative ${
-          enabled ? 'bg-[#2D3561]' : 'bg-stone-200 dark:bg-white/10'
+          enabled ? 'bg-accent' : 'bg-stone-200 dark:bg-white/10'
         }`}>
         <div className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow-sm transition-all duration-300 ${enabled ? 'left-6' : 'left-0.5'}`} />
       </button>

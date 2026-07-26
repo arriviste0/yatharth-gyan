@@ -192,7 +192,7 @@ export function SideNav({ onOpenFocus, onOpenProfile }) {
           className="w-full flex items-center justify-between px-4 py-2.5 rounded-full text-xs font-bold text-[#18191E] dark:text-white bg-white dark:bg-[#181926] border border-black/5 dark:border-white/8 hover:shadow-sm transition-all"
         >
           <div className="flex items-center gap-2">
-            {isDark ? <Moon size={15} className="text-amber-400" /> : <Sun size={15} className="text-[#F05A36]" />}
+            {isDark ? <Moon size={15} className="text-amber-400" /> : <Sun size={15} className="text-accent" />}
             <span>{isDark ? 'Dark Mode' : 'Light Mode'}</span>
           </div>
           <span className="text-[10px] px-2 py-0.5 rounded-full bg-black/5 dark:bg-white/10 uppercase font-extrabold">
@@ -212,9 +212,10 @@ export function SideNav({ onOpenFocus, onOpenProfile }) {
           to="/settings"
           className={`flex items-center gap-3 px-4 py-2.5 rounded-full text-xs font-bold transition-all ${
             location.pathname === '/settings'
-              ? 'bg-[#F05A36]/15 text-[#F05A36]'
+              ? 'text-accent'
               : 'text-stone-600 dark:text-stone-300 hover:bg-black/5 dark:hover:bg-white/5'
           }`}
+          style={location.pathname === '/settings' ? { background: 'var(--color-accent-light)' } : {}}
         >
           <Settings size={16} strokeWidth={1.8} />
           Settings
