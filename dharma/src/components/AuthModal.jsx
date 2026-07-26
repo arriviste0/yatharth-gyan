@@ -76,12 +76,12 @@ export default function AuthModal({ onClose, onSuccess }) {
         </div>
 
         {/* Google sign-in */}
-        {googleClientId && (
-          <div className="mb-4">
+        {googleClientId ? (
+          <div className="mb-4 space-y-3">
             <div className="flex justify-center">
               <GoogleLogin
                 onSuccess={handleGoogleSuccess}
-                onError={() => setError('Google sign-in failed')}
+                onError={() => setError('Google OAuth client error (deleted/expired). Please sign in below using your Name & Email.')}
                 theme="filled_black"
                 shape="pill"
                 text="continue_with"
@@ -93,10 +93,16 @@ export default function AuthModal({ onClose, onSuccess }) {
                 <div className="w-full border-t" style={{ borderColor: 'rgba(255,255,255,0.08)' }} />
               </div>
               <div className="relative flex justify-center">
-                <span className="px-3 text-[10px] uppercase tracking-widest text-stone-600"
-                  style={{ background: '#131325' }}>or</span>
+                <span className="px-3 text-[10px] uppercase tracking-widest text-stone-400 font-bold"
+                  style={{ background: '#131325' }}>or use email</span>
               </div>
             </div>
+          </div>
+        ) : (
+          <div className="mb-4 text-center">
+            <p className="text-xs text-amber-400 font-semibold bg-amber-950/30 p-2.5 rounded-xl border border-amber-500/20">
+              Sign in below using your Name and Email to sync all data with MongoDB.
+            </p>
           </div>
         )}
 
