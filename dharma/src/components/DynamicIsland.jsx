@@ -67,16 +67,16 @@ export default function DynamicIsland({ onOpenFocus, onOpenProfile }) {
             className={`transition-all duration-300 ease-[cubic-bezier(0.34,1.4,0.64,1)] ${
               expanded
                 ? 'opacity-0 scale-90 pointer-events-none absolute -translate-y-3'
-                : 'opacity-100 scale-100 translate-y-0 flex items-center justify-between gap-2 sm:gap-3 text-[11px] sm:text-xs font-extrabold text-white'
+                : 'opacity-100 scale-100 translate-y-0 flex items-center justify-between gap-3 text-xs font-bold w-full'
             }`}
           >
-            {/* Streak numeric button -> opens calendar modal */}
+            {/* Streak count button -> opens Practice & Streak Calendar Modal */}
             <button
               onClick={openStreakCalendar}
-              title="Open Streak & Practice Calendar"
-              className="flex items-center gap-1 text-[#F05A36] shrink-0 hover:scale-105 transition-all"
+              title="View Practice & Streak Calendar"
+              className="flex items-center gap-1.5 text-accent shrink-0 transition-all hover:scale-105"
             >
-              <Flame size={13} className="animate-pulse" />
+              <Flame size={14} className="animate-bounce" />
               <span>{streak}d</span>
             </button>
 
@@ -91,11 +91,11 @@ export default function DynamicIsland({ onOpenFocus, onOpenProfile }) {
               <span className="tabular-nums shrink-0 font-extrabold">{done}/{total}</span>
               <div className="w-8 sm:w-12 h-1.5 rounded-full bg-white/15 overflow-hidden shrink-0">
                 <div
-                  className="h-full rounded-full bg-[#F05A36] transition-all duration-500"
+                  className="h-full rounded-full bg-accent transition-all duration-500"
                   style={{ width: `${pct}%` }}
                 />
               </div>
-              <span className="text-[#F05A36] shrink-0 font-extrabold">{pct}%</span>
+              <span className="text-accent shrink-0 font-extrabold">{pct}%</span>
             </button>
 
             <div className="w-px h-3.5 bg-white/15 shrink-0" />
@@ -106,7 +106,7 @@ export default function DynamicIsland({ onOpenFocus, onOpenProfile }) {
                   e.stopPropagation();
                   if (onOpenFocus) onOpenFocus();
                 }}
-                className="flex items-center gap-1 text-[10px] sm:text-[11px] text-white bg-[#F05A36] px-2.5 py-1 rounded-full hover:scale-105 active:scale-95 transition-all shadow-md font-bold"
+                className="flex items-center gap-1 text-[10px] sm:text-[11px] text-white bg-accent px-2.5 py-1 rounded-full hover:scale-105 active:scale-95 transition-all shadow-md font-bold"
               >
                 <Timer size={11} /> Focus
               </button>
@@ -121,7 +121,7 @@ export default function DynamicIsland({ onOpenFocus, onOpenProfile }) {
                 className={`flex items-center gap-1 text-[10px] sm:text-[11px] font-extrabold px-2.5 py-1 rounded-full shrink-0 hover:scale-105 active:scale-95 transition-all shadow-sm ${
                   user
                     ? 'text-white bg-white/10 hover:bg-white/20 border border-white/20'
-                    : 'text-white bg-[#F05A36] hover:bg-[#E87326]'
+                    : 'text-white bg-accent'
                 }`}
               >
                 {user ? (
@@ -129,7 +129,7 @@ export default function DynamicIsland({ onOpenFocus, onOpenProfile }) {
                     {user.avatarPhoto ? (
                       <img src={user.avatarPhoto} alt={user.name} className="w-3.5 h-3.5 rounded-full object-cover shrink-0" />
                     ) : (
-                      <span className="w-3.5 h-3.5 rounded-full bg-[#F05A36] text-white flex items-center justify-center text-[7px] font-black shrink-0">
+                      <span className="w-3.5 h-3.5 rounded-full bg-accent text-white flex items-center justify-center text-[7px] font-black shrink-0">
                         {user.name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase()}
                       </span>
                     )}
@@ -162,11 +162,12 @@ export default function DynamicIsland({ onOpenFocus, onOpenProfile }) {
                   title="View Practice & Streak Calendar"
                   className="flex items-center gap-2.5 text-left group"
                 >
-                  <div className="w-9 h-9 rounded-2xl bg-[#F05A36]/20 border border-[#F05A36]/30 flex items-center justify-center text-[#F05A36] group-hover:scale-105 transition-all">
+                  <div className="w-9 h-9 rounded-2xl flex items-center justify-center group-hover:scale-105 transition-all"
+                    style={{ background: 'var(--color-accent-light)', border: '1px solid var(--color-accent-border)', color: 'var(--color-accent)' }}>
                     <Flame size={18} className="animate-bounce" />
                   </div>
                   <div>
-                    <h4 className="text-[10px] font-extrabold uppercase tracking-widest text-[#F05A36] flex items-center gap-1 group-hover:underline">
+                    <h4 className="text-[10px] font-extrabold uppercase tracking-widest text-accent flex items-center gap-1 group-hover:underline">
                       <CalendarIcon size={11} /> Practice & Streak Calendar
                     </h4>
                     <p className="text-xs sm:text-sm font-extrabold text-white">{streak} Days Continuous Practice</p>
@@ -184,7 +185,7 @@ export default function DynamicIsland({ onOpenFocus, onOpenProfile }) {
                   >
                     {user ? (
                       <>
-                        <div className="w-4 h-4 rounded-full overflow-hidden bg-[#F05A36] text-white flex items-center justify-center text-[8px] font-extrabold shrink-0">
+                        <div className="w-4 h-4 rounded-full overflow-hidden bg-accent text-white flex items-center justify-center text-[8px] font-extrabold shrink-0">
                           {user.avatarPhoto ? (
                             <img src={user.avatarPhoto} alt={user.name} className="w-full h-full object-cover" />
                           ) : (
@@ -195,7 +196,7 @@ export default function DynamicIsland({ onOpenFocus, onOpenProfile }) {
                       </>
                     ) : (
                       <>
-                        <LogIn size={13} className="text-[#F05A36]" />
+                        <LogIn size={13} className="text-accent" />
                         <span>Sign in</span>
                       </>
                     )}
@@ -217,11 +218,11 @@ export default function DynamicIsland({ onOpenFocus, onOpenProfile }) {
                   onClick={goToDailyTasks}
                   className="p-3.5 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 text-left transition-all group"
                 >
-                  <div className="text-[9px] text-stone-400 uppercase font-extrabold tracking-wider group-hover:text-[#F05A36]">Today's Progress ➔</div>
+                  <div className="text-[9px] text-stone-400 uppercase font-extrabold tracking-wider group-hover:text-accent">Today's Progress ➔</div>
                   <div className="text-sm font-extrabold text-white mt-0.5">{done} of {total} targets</div>
                   <div className="mt-2 h-1.5 rounded-full bg-white/10 overflow-hidden">
                     <div
-                      className="h-full rounded-full bg-[#F05A36] transition-all duration-500"
+                      className="h-full rounded-full bg-accent transition-all duration-500"
                       style={{ width: `${pct}%` }}
                     />
                   </div>
@@ -252,7 +253,7 @@ export default function DynamicIsland({ onOpenFocus, onOpenProfile }) {
                     setExpanded(false);
                     if (onOpenFocus) onOpenFocus();
                   }}
-                  className="w-full py-2.5 rounded-2xl bg-[#F05A36] text-white text-xs font-extrabold shadow-lg hover:bg-[#d94a28] active:scale-98 transition-all flex items-center justify-center gap-1.5"
+                  className="w-full py-2.5 rounded-2xl btn-coral text-white text-xs font-extrabold shadow-lg active:scale-98 transition-all flex items-center justify-center gap-1.5"
                 >
                   <Timer size={14} /> Start 25m Focus Session
                 </button>

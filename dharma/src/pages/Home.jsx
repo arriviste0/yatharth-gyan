@@ -338,7 +338,7 @@ function TabButton({ active, label, count, onClick }) {
       onClick={onClick}
       className={`px-4 py-2 text-xs font-extrabold uppercase tracking-wider rounded-full transition-all ${
         active
-          ? 'bg-[#F05A36] text-white shadow-md'
+          ? 'bg-accent text-white shadow-md'
           : 'text-stone-500 dark:text-white/50 hover:text-[#18191E] dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5'
       }`}
     >
@@ -366,11 +366,11 @@ function TaskRow({ target, dateStr, logTarget, onEdit }) {
         className="shrink-0 transition-transform active:scale-95"
       >
         {target.done ? (
-          <div className="w-6 h-6 rounded-lg flex items-center justify-center bg-[#F05A36] text-white shadow-sm">
+          <div className="w-6 h-6 rounded-lg flex items-center justify-center bg-accent text-white shadow-sm">
             <Check size={14} strokeWidth={3} />
           </div>
         ) : (
-          <div className="w-6 h-6 rounded-lg border-2 flex items-center justify-center hover:border-[#F05A36] transition-colors"
+          <div className="w-6 h-6 rounded-lg border-2 flex items-center justify-center hover:border-accent transition-colors"
             style={{ borderColor: `${target.pillarColor}40` }}>
           </div>
         )}

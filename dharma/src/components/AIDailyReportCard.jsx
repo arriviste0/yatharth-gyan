@@ -226,7 +226,7 @@ export default function AIDailyReportCard() {
       {/* Glassmorphism Blur Overlay when locked - matching rounded-[28px] */}
       {!isUnlocked && (
         <div className="absolute inset-0 z-30 flex flex-col items-center justify-center p-6 bg-black/20 dark:bg-black/60 backdrop-blur-lg rounded-[28px] transition-all duration-500">
-          <div className="w-13 h-13 rounded-2xl bg-[#F05A36] text-white flex items-center justify-center shadow-xl shadow-[#F05A36]/40 mb-3.5 animate-pulse">
+          <div className="w-13 h-13 rounded-2xl bg-accent text-white flex items-center justify-center shadow-xl shadow-accent mb-3.5 animate-pulse">
             <Sparkles size={26} />
           </div>
           <h4 className="text-base sm:text-lg font-extrabold text-white mb-1 tracking-tight">
@@ -252,7 +252,8 @@ export default function AIDailyReportCard() {
         {/* Top Header */}
         <div className="flex items-center justify-between flex-wrap gap-3">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-[#F05A36]/15 border border-[#F05A36]/30 flex items-center justify-center text-[#F05A36] shadow-sm">
+            <div className="w-10 h-10 rounded-2xl flex items-center justify-center shadow-sm"
+              style={{ background: 'var(--color-accent-light)', border: '1px solid var(--color-accent-border)', color: 'var(--color-accent)' }}>
               <Sparkles size={20} />
             </div>
             <div>
@@ -288,7 +289,7 @@ export default function AIDailyReportCard() {
                 <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: CHART_COLORS[i % CHART_COLORS.length] }} />
               </div>
               <div className="text-xs font-extrabold text-[#18191E] dark:text-white tabular-nums">
-                {item.value} <span className="text-[10px] text-[#F05A36]">{item.unit}</span>
+                {item.value} <span className="text-[10px] text-accent font-extrabold">{item.unit}</span>
                 <span className="text-[9px] text-stone-400 font-normal block mt-0.5">Target: {item.goal}</span>
               </div>
               <div className="w-full h-1.5 rounded-full bg-black/5 dark:bg-white/10 overflow-hidden">
@@ -307,7 +308,7 @@ export default function AIDailyReportCard() {
           {/* Left 7 Cols: Bar Chart */}
           <div className="md:col-span-7 space-y-2">
             <div className="flex items-center justify-between text-xs font-bold text-[#18191E] dark:text-white">
-              <span className="flex items-center gap-1.5 text-[#F05A36]">
+              <span className="flex items-center gap-1.5 text-accent font-extrabold">
                 <BarChart2 size={14} /> Core KPI Performance (%)
               </span>
               <span className="text-[10px] text-stone-400 font-semibold">100% Target</span>
@@ -381,7 +382,7 @@ export default function AIDailyReportCard() {
         {parsedSections && (
           <div className="mt-4 p-5 rounded-3xl bg-black/[0.03] dark:bg-white/[0.04] border border-black/5 dark:border-white/10 space-y-4 animate-fade-in">
             <div className="flex items-center justify-between border-b border-black/5 dark:border-white/10 pb-3">
-              <span className="text-xs font-extrabold text-[#F05A36] uppercase tracking-wider flex items-center gap-1.5">
+              <span className="text-xs font-extrabold text-accent uppercase tracking-wider flex items-center gap-1.5">
                 <Trophy size={14} /> Comprehensive Daily AI Analysis ({dateDisplay.short})
               </span>
             </div>
@@ -390,7 +391,8 @@ export default function AIDailyReportCard() {
               
               {/* Summary Pill */}
               {parsedSections.summary && (
-                <div className="p-3.5 rounded-2xl bg-[#F05A36]/10 border border-[#F05A36]/25 text-[#18191E] dark:text-white font-bold flex items-center gap-2.5">
+                <div className="p-3.5 rounded-2xl text-[#18191E] dark:text-white font-bold flex items-center gap-2.5"
+                  style={{ background: 'var(--color-accent-light)', border: '1px solid var(--color-accent-border)' }}>
                   <span className="text-base">💡</span>
                   <span>{parsedSections.summary}</span>
                 </div>
@@ -421,7 +423,7 @@ export default function AIDailyReportCard() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     {parsedSections.tomorrowTips.map((tip, idx) => (
                       <div key={idx} className="p-3 rounded-2xl bg-black/[0.02] dark:bg-white/5 border border-black/5 dark:border-white/8 flex items-start gap-2.5 text-stone-700 dark:text-stone-200">
-                        <ArrowRight size={14} className="text-[#F05A36] shrink-0 mt-0.5" />
+                        <ArrowRight size={14} className="text-accent shrink-0 mt-0.5" />
                         <span>{tip}</span>
                       </div>
                     ))}
