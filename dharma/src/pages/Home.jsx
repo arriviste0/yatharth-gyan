@@ -696,13 +696,6 @@ function TaskRow({ target, dateStr, logTarget, onEdit, onLogModal }) {
             Log Value
           </button>
         )}
-        <button
-          onClick={(e) => { e.stopPropagation(); onEdit(target); }}
-          className="w-7 h-7 rounded-lg flex items-center justify-center text-stone-400 hover:text-[#F05A36] hover:bg-[#F05A36]/10 transition-all opacity-0 group-hover:opacity-100"
-          title="Edit target definition"
-        >
-          <Edit3 size={13} />
-        </button>
       </div>
     </div>
   );
