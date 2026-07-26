@@ -15,6 +15,7 @@ const NAV_ITEMS = [
   { path: '/sadhana', label: 'Pillars',   Icon: Layers },
   { path: '/manan',   label: 'Journal',   Icon: BookOpen },
   { path: '/gyaan',   label: 'Wisdom',    Icon: BookMarked },
+  { path: '/settings', label: 'Settings',  Icon: Settings },
 ];
 
 /* ── Mobile bottom bar ──────────────────────────────────────────────────────── */

@@ -867,17 +867,7 @@ export default function Home({ onOpenFocus, onOpenProfile }) {
         </div>
         <div className="flex items-center gap-2 pt-1">
           {completion >= 1 && total > 0 && <ShankhaSVG size={26} color="#C9A961" />}
-          <button onClick={onOpenFocus}
-            className="w-9 h-9 rounded-xl flex items-center justify-center text-stone-400 hover:text-[#E8843C] transition-colors"
-            style={{ background: 'rgba(0,0,0,0.04)' }} title="Focus Timer">
-            <Timer size={17} />
-          </button>
           <ProfileHeaderButton onOpenProfile={onOpenProfile} />
-          <Link to="/settings"
-            className="w-9 h-9 rounded-xl flex items-center justify-center text-stone-400 hover:text-stone-600 dark:hover:text-stone-200 transition-colors"
-            style={{ background: 'rgba(0,0,0,0.04)' }}>
-            <Settings size={17} />
-          </Link>
         </div>
       </div>
 
