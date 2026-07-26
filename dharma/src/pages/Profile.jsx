@@ -162,7 +162,7 @@ export default function Profile({ onClose }) {
               { v: focusSessions,  l: 'Focus'    },
             ].map(({ v, l }) => (
               <div key={l} className="text-center py-3 rounded-2xl bg-black/[0.02] dark:bg-white/5 border border-black/5 dark:border-white/8">
-                <div className="text-xl font-extrabold text-[#F05A36] tabular-nums">{v}</div>
+                <div className="text-xl font-extrabold text-accent tabular-nums">{v}</div>
                 <div className="text-[10px] text-stone-400 mt-0.5 font-bold">{l}</div>
               </div>
             ))}
@@ -181,7 +181,7 @@ export default function Profile({ onClose }) {
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
-                    className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full flex items-center justify-center text-white shadow-md transition-all hover:scale-110 bg-[#F05A36]"
+                    className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full flex items-center justify-center text-white shadow-md transition-all hover:scale-110 bg-accent"
                     title="Upload photo"
                   >
                     <Camera size={11} />
@@ -191,7 +191,7 @@ export default function Profile({ onClose }) {
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
-                    className="text-xs px-3 py-1.5 rounded-xl font-bold text-stone-600 dark:text-stone-300 border border-black/10 dark:border-white/10 hover:border-[#F05A36] transition-colors"
+                    className="text-xs px-3 py-1.5 rounded-xl font-bold text-stone-600 dark:text-stone-300 border border-black/10 dark:border-white/10 hover:border-accent transition-colors"
                   >
                     Upload photo
                   </button>
@@ -234,14 +234,14 @@ export default function Profile({ onClose }) {
             <div>
               <label className="text-[10px] font-bold text-stone-400 uppercase tracking-widest">Name</label>
               <input value={name} onChange={(e) => setName(e.target.value)} required maxLength={60}
-                className="mt-1 w-full text-sm text-[#18191E] dark:text-white bg-white dark:bg-white/8 border border-black/10 dark:border-white/10 rounded-xl px-3 py-2.5 outline-none focus:border-[#F05A36] transition-colors" />
+                className="mt-1 w-full text-sm text-[#18191E] dark:text-white bg-white dark:bg-white/8 border border-black/10 dark:border-white/10 rounded-xl px-3 py-2.5 outline-none focus:border-accent transition-colors" />
             </div>
 
             <div>
               <label className="text-[10px] font-bold text-stone-400 uppercase tracking-widest">Bio</label>
               <textarea value={bio} onChange={(e) => setBio(e.target.value)} maxLength={200} rows={2}
                 placeholder="A short intention or mantra…"
-                className="mt-1 w-full text-sm text-[#18191E] dark:text-white bg-white dark:bg-white/8 border border-black/10 dark:border-white/10 rounded-xl px-3 py-2 outline-none focus:border-[#F05A36] transition-colors resize-none font-verse italic" />
+                className="mt-1 w-full text-sm text-[#18191E] dark:text-white bg-white dark:bg-white/8 border border-black/10 dark:border-white/10 rounded-xl px-3 py-2 outline-none focus:border-accent transition-colors resize-none font-verse italic" />
             </div>
             <div className="flex items-center gap-2">
               <button type="submit" disabled={saving}
@@ -265,12 +265,12 @@ export default function Profile({ onClose }) {
                 <Lock size={10} /> Change Password
               </div>
               <input value={currPw} onChange={(e) => setCurrPw(e.target.value)} required type="password" placeholder="Current password"
-                className="w-full text-sm text-[#18191E] dark:text-white bg-white dark:bg-white/8 border border-black/10 dark:border-white/10 rounded-xl px-3 py-2.5 outline-none focus:border-[#F05A36] transition-colors" />
+                className="w-full text-sm text-[#18191E] dark:text-white bg-white dark:bg-white/8 border border-black/10 dark:border-white/10 rounded-xl px-3 py-2.5 outline-none focus:border-accent transition-colors" />
               <input value={newPw} onChange={(e) => setNewPw(e.target.value)} required type="password" placeholder="New password (min 8 chars)"
-                className="w-full text-sm text-[#18191E] dark:text-white bg-white dark:bg-white/8 border border-black/10 dark:border-white/10 rounded-xl px-3 py-2.5 outline-none focus:border-[#F05A36] transition-colors" />
+                className="w-full text-sm text-[#18191E] dark:text-white bg-white dark:bg-white/8 border border-black/10 dark:border-white/10 rounded-xl px-3 py-2.5 outline-none focus:border-accent transition-colors" />
               <div className="flex items-center gap-2">
                 <button type="submit" disabled={pwBusy}
-                  className="px-4 py-2 rounded-xl text-xs font-bold text-stone-700 dark:text-white bg-black/5 dark:bg-white/10 border border-black/10 dark:border-white/10 hover:border-[#F05A36] transition-all">
+                  className="px-4 py-2 rounded-xl text-xs font-bold text-stone-700 dark:text-white bg-black/5 dark:bg-white/10 border border-black/10 dark:border-white/10 hover:border-accent transition-all">
                   {pwBusy ? 'Changing…' : 'Change'}
                 </button>
                 {pwMsg && (

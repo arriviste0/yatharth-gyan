@@ -81,11 +81,11 @@ export default function PracticeCalendarModal({ onClose }) {
   // Determine badge color intensity based on completion percentage
   const getIntensityStyle = (pct, isDone) => {
     if (pct >= 80) {
-      return 'bg-[#F05A36] text-white shadow-sm shadow-[#F05A36]/40 font-extrabold';
+      return 'bg-accent text-white shadow-sm font-extrabold';
     } else if (pct >= 50) {
-      return 'bg-[#E6A04E]/90 text-white font-bold';
+      return 'bg-accent/80 text-white font-bold';
     } else if (pct > 0) {
-      return 'bg-[#14B8A6]/90 text-white font-bold';
+      return 'bg-accent/50 text-white font-bold';
     }
     return 'bg-black/5 dark:bg-white/5 text-stone-600 dark:text-stone-400 font-medium';
   };
@@ -102,14 +102,15 @@ export default function PracticeCalendarModal({ onClose }) {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-[#F05A36]/15 border border-[#F05A36]/30 flex items-center justify-center text-[#F05A36]">
+            <div className="w-10 h-10 rounded-2xl border flex items-center justify-center text-accent"
+              style={{ background: 'var(--color-accent-light)', borderColor: 'var(--color-accent)' }}>
               <Flame size={22} className="animate-pulse" />
             </div>
             <div>
               <h3 className="text-base sm:text-lg font-extrabold text-[#18191E] dark:text-white flex items-center gap-2">
                 Practice & Streak Calendar
               </h3>
-              <p className="text-xs font-semibold text-[#F05A36] flex items-center gap-1">
+              <p className="text-xs font-semibold text-accent flex items-center gap-1">
                 <Sparkles size={12} /> {streak} Days Continuous Streak
               </p>
             </div>
@@ -124,7 +125,7 @@ export default function PracticeCalendarModal({ onClose }) {
           <button
             onClick={() => setViewMode('monthly')}
             className={`flex-1 py-2 text-xs font-extrabold rounded-xl transition-all flex items-center justify-center gap-1.5 ${
-              viewMode === 'monthly' ? 'bg-[#F05A36] text-white shadow-sm' : 'text-stone-500 dark:text-stone-400'
+              viewMode === 'monthly' ? 'bg-accent text-white shadow-sm' : 'text-stone-500 dark:text-stone-400'
             }`}
           >
             <CalendarIcon size={14} /> Monthly View
@@ -132,7 +133,7 @@ export default function PracticeCalendarModal({ onClose }) {
           <button
             onClick={() => setViewMode('yearly')}
             className={`flex-1 py-2 text-xs font-extrabold rounded-xl transition-all flex items-center justify-center gap-1.5 ${
-              viewMode === 'yearly' ? 'bg-[#F05A36] text-white shadow-sm' : 'text-stone-500 dark:text-stone-400'
+              viewMode === 'yearly' ? 'bg-accent text-white shadow-sm' : 'text-stone-500 dark:text-stone-400'
             }`}
           >
             <Layers size={14} /> Yearly Heatmap
@@ -143,13 +144,13 @@ export default function PracticeCalendarModal({ onClose }) {
         <div className="flex items-center justify-center gap-3 sm:gap-4 py-2 px-3 rounded-2xl bg-black/[0.02] dark:bg-white/[0.02] border border-black/5 dark:border-white/5 text-[10px] sm:text-xs font-bold text-stone-600 dark:text-stone-300 flex-wrap">
           <span className="text-stone-400 uppercase tracking-widest text-[9px]">Legend:</span>
           <span className="flex items-center gap-1">
-            <span className="w-2.5 h-2.5 rounded-full bg-[#F05A36]" /> High (80%+)
+            <span className="w-2.5 h-2.5 rounded-full bg-accent" /> High (80%+)
           </span>
           <span className="flex items-center gap-1">
-            <span className="w-2.5 h-2.5 rounded-full bg-[#E6A04E]" /> Avg (50%+)
+            <span className="w-2.5 h-2.5 rounded-full bg-accent/70" /> Avg (50%+)
           </span>
           <span className="flex items-center gap-1">
-            <span className="w-2.5 h-2.5 rounded-full bg-[#14B8A6]" /> Low (&lt;50%)
+            <span className="w-2.5 h-2.5 rounded-full bg-accent/40" /> Low (&lt;50%)
           </span>
           <span className="flex items-center gap-1">
             <span className="w-2.5 h-2.5 rounded-full bg-stone-300 dark:bg-stone-700" /> Rest
@@ -161,13 +162,13 @@ export default function PracticeCalendarModal({ onClose }) {
           <div className="space-y-4">
             {/* Month & Year Navigation */}
             <div className="flex items-center justify-between px-2">
-              <button onClick={prevMonth} className="w-8 h-8 rounded-xl flex items-center justify-center bg-black/5 dark:bg-white/5 text-stone-600 dark:text-stone-300 hover:border-[#F05A36] transition-all">
+              <button onClick={prevMonth} className="w-8 h-8 rounded-xl flex items-center justify-center bg-black/5 dark:bg-white/5 text-stone-600 dark:text-stone-300 hover:border-accent border border-transparent transition-all">
                 <ChevronLeft size={16} />
               </button>
               <h4 className="text-sm font-extrabold text-[#18191E] dark:text-white tracking-wide">
                 {MONTH_NAMES[currentMonth]} {currentYear}
               </h4>
-              <button onClick={nextMonth} className="w-8 h-8 rounded-xl flex items-center justify-center bg-black/5 dark:bg-white/5 text-stone-600 dark:text-stone-300 hover:border-[#F05A36] transition-all">
+              <button onClick={nextMonth} className="w-8 h-8 rounded-xl flex items-center justify-center bg-black/5 dark:bg-white/5 text-stone-600 dark:text-stone-300 hover:border-accent border border-transparent transition-all">
                 <ChevronRight size={16} />
               </button>
             </div>
@@ -200,7 +201,7 @@ export default function PracticeCalendarModal({ onClose }) {
                     className={`aspect-square rounded-2xl flex flex-col items-center justify-center relative text-xs transition-all ${getIntensityStyle(
                       stats.pct,
                       stats.done > 0
-                    )} ${isSelected ? 'ring-2 ring-offset-2 ring-[#F05A36] dark:ring-offset-[#181926] scale-105 z-10' : ''}`}
+                    )} ${isSelected ? 'ring-2 ring-offset-2 ring-accent dark:ring-offset-[#181926] scale-105 z-10' : ''}`}
                   >
                     <span>{day}</span>
                     {isToday && (
@@ -217,7 +218,7 @@ export default function PracticeCalendarModal({ onClose }) {
                 <span className="text-xs font-extrabold text-[#18191E] dark:text-white">
                   {MONTH_NAMES[currentMonth]} {selectedDay}, {currentYear}
                 </span>
-                <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-[#F05A36]/15 text-[#F05A36]">
+                <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full text-accent" style={{ background: 'var(--color-accent-light)' }}>
                   {selectedStats.pct}% Completed
                 </span>
               </div>
@@ -229,7 +230,7 @@ export default function PracticeCalendarModal({ onClose }) {
 
               <div className="w-full h-2 rounded-full bg-black/5 dark:bg-white/10 overflow-hidden mt-1">
                 <div
-                  className="h-full rounded-full bg-[#F05A36] transition-all duration-500"
+                  className="h-full rounded-full bg-accent transition-all duration-500"
                   style={{ width: `${selectedStats.pct}%` }}
                 />
               </div>
@@ -242,7 +243,7 @@ export default function PracticeCalendarModal({ onClose }) {
           <div className="space-y-4">
             <div className="flex items-center justify-between px-1">
               <span className="text-xs font-extrabold text-stone-400 uppercase tracking-widest">Year {currentYear} Progress Overview</span>
-              <span className="text-xs font-extrabold text-[#F05A36]">{streak} Days Active</span>
+              <span className="text-xs font-extrabold text-accent">{streak} Days Active</span>
             </div>
 
             <div className="grid grid-cols-3 sm:grid-cols-4 gap-2.5">
@@ -261,12 +262,12 @@ export default function PracticeCalendarModal({ onClose }) {
                       setCurrentMonth(mIdx);
                       setViewMode('monthly');
                     }}
-                    className="p-3 rounded-2xl bg-black/[0.02] dark:bg-white/5 border border-black/5 dark:border-white/8 hover:border-[#F05A36] text-left transition-all group"
+                    className="p-3 rounded-2xl bg-black/[0.02] dark:bg-white/5 border border-black/5 dark:border-white/8 hover:border-accent text-left transition-all group"
                   >
-                    <div className="text-xs font-extrabold text-[#18191E] dark:text-white group-hover:text-[#F05A36]">{mName.slice(0, 3)}</div>
+                    <div className="text-xs font-extrabold text-[#18191E] dark:text-white group-hover:text-accent">{mName.slice(0, 3)}</div>
                     <div className="text-[10px] text-stone-400 mt-1">{avgPct}% avg</div>
                     <div className="w-full h-1.5 rounded-full bg-black/5 dark:bg-white/10 overflow-hidden mt-1.5">
-                      <div className="h-full rounded-full bg-[#F05A36]" style={{ width: `${avgPct}%` }} />
+                      <div className="h-full rounded-full bg-accent" style={{ width: `${avgPct}%` }} />
                     </div>
                   </button>
                 );

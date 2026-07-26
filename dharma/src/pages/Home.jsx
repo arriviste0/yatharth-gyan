@@ -219,13 +219,13 @@ function MobileTodayView({ pillars, logs, logTarget, dateStr, streak, settings, 
       <div className="card-bento relative overflow-hidden rounded-3xl p-6 bg-white dark:bg-[#181926] border border-black/5 dark:border-white/8 shadow-md">
         <div className="relative z-10 flex items-center justify-between">
           <div className="flex-1">
-            <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#F05A36]">Today's Practice</span>
+            <span className="text-[10px] font-extrabold uppercase tracking-widest text-accent">Today's Practice</span>
             <h2 className="text-xl font-extrabold text-[#18191E] dark:text-white mt-1 leading-tight">{allDone ? 'All done! 🪷' : `${totalCount - completedCount} tasks remaining`}</h2>
             <p className="text-[11px] text-stone-500 dark:text-white/50 mt-1 leading-relaxed">{allDone ? 'Your practice blooms today — rest well.' : 'Tap each target to check it off.'}</p>
             <div className="flex items-center gap-3 mt-4">
               {!settings.silentMode && streak > 0 && (
-                <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#F05A36]/12">
-                  <Flame size={11} className="text-[#F05A36]" /><span className="text-[10px] font-extrabold text-[#F05A36]">{streak}d streak</span>
+                <div className="flex items-center gap-1.5 px-3 py-1 rounded-full text-accent" style={{ background: 'var(--color-accent-light)' }}>
+                  <Flame size={11} className="text-accent" /><span className="text-[10px] font-extrabold text-accent">{streak}d streak</span>
                 </div>
               )}
               <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/12">
