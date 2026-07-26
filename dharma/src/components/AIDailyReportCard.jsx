@@ -31,6 +31,14 @@ export default function AIDailyReportCard() {
       p.targets.filter((t) => t.frequency === 'daily' || !t.frequency)
     );
 
+    // Helper: Safely parse numbers (ignoring booleans, objects, and clock time strings like '23:00')
+    const safeParseNumber = (val) => {
+      if (val === null || val === undefined || typeof val === 'boolean') return NaN;
+      if (typeof val === 'string' && val.includes(':')) return NaN; // skip clock time strings
+      const num = parseFloat(val);
+      return isNaN(num) ? NaN : num;
+    };
+
     // --- 1. WATER INTAKE & 7-DAY AVG WATER ---
     let waterTarget = null;
     for (const p of pillars) {
@@ -47,39 +55,60 @@ export default function AIDailyReportCard() {
 
     let waterGoal = 3.0;
     if (waterTarget) {
-      const tv = parseFloat(waterTarget.targetValue) || 3.0;
-      waterGoal = (waterTarget.unit === 'ml' || tv > 20) ? +(tv / 1000).toFixed(1) : tv;
+      const tv = safeParseNumber(waterTarget.targetValue);
+      if (!isNaN(tv) && tv > 0) {
+        waterGoal = (waterTarget.unit === 'ml' || tv > 20) ? +(tv / 1000).toFixed(1) : tv;
+      }
     }
 
     let waterToday = 0;
     if (waterTarget && dayLog[waterTarget.id]?.value != null) {
-      const v = parseFloat(dayLog[waterTarget.id].value);
-      waterToday = (waterTarget.unit === 'ml' || v > 20) ? +(v / 1000).toFixed(1) : v;
+      const v = safeParseNumber(dayLog[waterTarget.id].value);
+      if (!isNaN(v)) {
+        waterToday = (waterTarget.unit === 'ml' || v > 20) ? +(v / 1000).toFixed(1) : v;
+      } else if (dayLog[waterTarget.id]?.done) {
+        waterToday = waterGoal;
+      }
     } else if (dayMetrics.water) {
-      const w = dayMetrics.water;
-      waterToday = w >= 1000 ? +(w / 1000).toFixed(1) : w;
+      const w = safeParseNumber(dayMetrics.water);
+      if (!isNaN(w)) {
+        waterToday = w >= 1000 ? +(w / 1000).toFixed(1) : w;
+      }
     } else if (waterTarget && dayLog[waterTarget.id]?.done) {
       waterToday = waterGoal;
     }
+    if (isNaN(waterToday)) waterToday = 0;
 
     let water7Sum = 0;
+    let waterDaysCount = 0;
     for (let i = 0; i < 7; i++) {
       const dd = new Date(d);
       dd.setDate(d.getDate() - i);
       const key = dateKey(dd);
       const pastLog = logs[key] || {};
       const pastMetric = metrics[key] || {};
+      let dayVal = null;
+
       if (waterTarget && pastLog[waterTarget.id]?.value != null) {
-        const v = parseFloat(pastLog[waterTarget.id].value);
-        water7Sum += (waterTarget.unit === 'ml' || v > 20) ? v / 1000 : v;
+        const v = safeParseNumber(pastLog[waterTarget.id].value);
+        if (!isNaN(v)) {
+          dayVal = (waterTarget.unit === 'ml' || v > 20) ? v / 1000 : v;
+        } else if (pastLog[waterTarget.id]?.done) {
+          dayVal = waterGoal;
+        }
       } else if (pastMetric.water) {
-        const w = pastMetric.water;
-        water7Sum += w >= 1000 ? w / 1000 : w;
+        const w = safeParseNumber(pastMetric.water);
+        if (!isNaN(w)) dayVal = w >= 1000 ? w / 1000 : w;
       } else if (waterTarget && pastLog[waterTarget.id]?.done) {
-        water7Sum += waterGoal;
+        dayVal = waterGoal;
+      }
+
+      if (dayVal !== null && !isNaN(dayVal)) {
+        water7Sum += dayVal;
+        waterDaysCount++;
       }
     }
-    const avgWater = +(water7Sum / 7).toFixed(1);
+    const avgWater = waterDaysCount > 0 ? +(water7Sum / waterDaysCount).toFixed(1) : waterToday;
 
     items.push({
       category: 'Hydration',
@@ -114,15 +143,28 @@ export default function AIDailyReportCard() {
     }
 
     let proteinGoal = 90;
-    if (proteinTarget && (proteinTarget.type === 'NUMBER' || proteinTarget.type === 'DURATION')) {
-      proteinGoal = parseFloat(proteinTarget.targetValue) || 90;
+    if (proteinTarget) {
+      const tv = safeParseNumber(proteinTarget.targetValue);
+      if (!isNaN(tv) && tv > 0) proteinGoal = tv;
+    } else {
+      const foodPillar = pillars.find(p => p.id === 'ahara' || p.english.toLowerCase().includes('food') || p.english.toLowerCase().includes('diet'));
+      if (foodPillar) {
+        const numTarget = foodPillar.targets.find(t => (t.type === 'NUMBER' || t.type === 'DURATION') && safeParseNumber(t.targetValue) > 10);
+        if (numTarget) {
+          const tv = safeParseNumber(numTarget.targetValue);
+          if (!isNaN(tv)) proteinGoal = tv;
+        }
+      }
     }
 
     let proteinToday = 0;
     if (proteinTarget && dayLog[proteinTarget.id]?.value != null) {
-      proteinToday = parseFloat(dayLog[proteinTarget.id].value);
+      const v = safeParseNumber(dayLog[proteinTarget.id].value);
+      if (!isNaN(v)) proteinToday = v;
+      else if (dayLog[proteinTarget.id]?.done) proteinToday = proteinGoal;
     } else if (dayMetrics.protein) {
-      proteinToday = dayMetrics.protein;
+      const v = safeParseNumber(dayMetrics.protein);
+      if (!isNaN(v)) proteinToday = v;
     } else if (proteinTarget && dayLog[proteinTarget.id]?.done) {
       proteinToday = proteinGoal;
     } else {
@@ -132,29 +174,41 @@ export default function AIDailyReportCard() {
         proteinToday = foodDone > 0 ? Math.round((foodDone / foodPillar.targets.length) * proteinGoal) : 0;
       }
     }
+    if (isNaN(proteinToday)) proteinToday = 0;
 
     let protein7Sum = 0;
+    let proteinDaysCount = 0;
     for (let i = 0; i < 7; i++) {
       const dd = new Date(d);
       dd.setDate(d.getDate() - i);
       const key = dateKey(dd);
       const pastLog = logs[key] || {};
       const pastMetric = metrics[key] || {};
+      let dayVal = null;
+
       if (proteinTarget && pastLog[proteinTarget.id]?.value != null) {
-        protein7Sum += parseFloat(pastLog[proteinTarget.id].value);
+        const v = safeParseNumber(pastLog[proteinTarget.id].value);
+        if (!isNaN(v)) dayVal = v;
+        else if (pastLog[proteinTarget.id]?.done) dayVal = proteinGoal;
       } else if (pastMetric.protein) {
-        protein7Sum += pastMetric.protein;
+        const v = safeParseNumber(pastMetric.protein);
+        if (!isNaN(v)) dayVal = v;
       } else if (proteinTarget && pastLog[proteinTarget.id]?.done) {
-        protein7Sum += proteinGoal;
+        dayVal = proteinGoal;
       } else {
         const foodPillar = pillars.find(p => p.id === 'ahara' || p.english.toLowerCase().includes('food') || p.english.toLowerCase().includes('diet'));
         if (foodPillar && foodPillar.targets.length > 0) {
           const foodDone = foodPillar.targets.filter(t => pastLog[t.id]?.done).length;
-          protein7Sum += foodDone > 0 ? Math.round((foodDone / foodPillar.targets.length) * proteinGoal) : 0;
+          if (foodDone > 0) dayVal = Math.round((foodDone / foodPillar.targets.length) * proteinGoal);
         }
       }
+
+      if (dayVal !== null && !isNaN(dayVal)) {
+        protein7Sum += dayVal;
+        proteinDaysCount++;
+      }
     }
-    const avgProtein = Math.round(protein7Sum / 7);
+    const avgProtein = proteinDaysCount > 0 ? Math.round(protein7Sum / proteinDaysCount) : proteinToday;
 
     items.push({
       category: 'Nutrition',
@@ -179,7 +233,8 @@ export default function AIDailyReportCard() {
     for (const p of pillars) {
       for (const t of p.targets) {
         const name = (t.name || '').toLowerCase();
-        if (name.includes('sleep') || name.includes('rest') || name.includes('bedtime') || t.id.includes('sleep') || t.id.includes('nidra')) {
+        const unit = (t.unit || '').toLowerCase();
+        if (unit === 'hr' || unit === 'hours' || (t.type === 'NUMBER' && name.includes('sleep')) || (t.type === 'DURATION' && name.includes('sleep'))) {
           sleepTarget = t;
           break;
         }
@@ -188,22 +243,26 @@ export default function AIDailyReportCard() {
     }
 
     let sleepGoal = 8.0;
-    if (sleepTarget && (sleepTarget.type === 'NUMBER' || sleepTarget.type === 'DURATION')) {
-      sleepGoal = parseFloat(sleepTarget.targetValue) || 8.0;
+    if (sleepTarget) {
+      const tv = safeParseNumber(sleepTarget.targetValue);
+      if (!isNaN(tv) && tv > 0 && tv <= 16) sleepGoal = tv;
     }
 
     let sleepToday = 0;
     if (sleepTarget && dayLog[sleepTarget.id]?.value != null) {
-      sleepToday = parseFloat(dayLog[sleepTarget.id].value);
-    } else if (sleepTarget && dayLog[sleepTarget.id]?.done) {
-      sleepToday = sleepGoal;
+      const v = safeParseNumber(dayLog[sleepTarget.id].value);
+      if (!isNaN(v) && v <= 16) sleepToday = v;
+      else if (dayLog[sleepTarget.id]?.done) sleepToday = sleepGoal;
     } else {
       const sleepPillar = pillars.find(p => p.id === 'nidra' || p.english.toLowerCase().includes('sleep'));
       if (sleepPillar && sleepPillar.targets.length > 0) {
         const sleepDone = sleepPillar.targets.filter(t => dayLog[t.id]?.done).length;
-        sleepToday = sleepDone > 0 ? +( (sleepDone / sleepPillar.targets.length) * sleepGoal ).toFixed(1) : 0;
+        if (sleepDone > 0) {
+          sleepToday = +( (sleepDone / sleepPillar.targets.length) * sleepGoal ).toFixed(1);
+        }
       }
     }
+    if (isNaN(sleepToday)) sleepToday = 0;
 
     items.push({
       category: 'Sleep',
@@ -220,7 +279,7 @@ export default function AIDailyReportCard() {
       for (const t of p.targets) {
         const name = (t.name || '').toLowerCase();
         const unit = (t.unit || '').toLowerCase();
-        if (name.includes('duration') || name.includes('workout') || name.includes('exercise') || name.includes('gym') || unit === 'min' || t.id.includes('vyayama')) {
+        if ((t.type === 'NUMBER' || t.type === 'DURATION') && (unit === 'min' || name.includes('duration') || name.includes('workout') || name.includes('exercise'))) {
           workoutTarget = t;
           break;
         }
@@ -229,22 +288,24 @@ export default function AIDailyReportCard() {
     }
 
     let workoutGoal = 45;
-    if (workoutTarget && (workoutTarget.type === 'NUMBER' || workoutTarget.type === 'DURATION')) {
-      workoutGoal = parseFloat(workoutTarget.targetValue) || 45;
+    if (workoutTarget) {
+      const tv = safeParseNumber(workoutTarget.targetValue);
+      if (!isNaN(tv) && tv > 0) workoutGoal = tv;
     }
 
     let workoutToday = 0;
     if (workoutTarget && dayLog[workoutTarget.id]?.value != null) {
-      workoutToday = parseFloat(dayLog[workoutTarget.id].value);
-    } else if (workoutTarget && dayLog[workoutTarget.id]?.done) {
-      workoutToday = workoutGoal;
+      const v = safeParseNumber(dayLog[workoutTarget.id].value);
+      if (!isNaN(v)) workoutToday = v;
+      else if (dayLog[workoutTarget.id]?.done) workoutToday = workoutGoal;
     } else {
-      const movePillar = pillars.find(p => p.id === 'vyayama' || p.english.toLowerCase().includes('gym') || p.english.toLowerCase().includes('move'));
+      const movePillar = pillars.find(p => p.id === 'vyayama' || p.english.toLowerCase().includes('gym') || p.english.toLowerCase().includes('move') || p.english.toLowerCase().includes('workout'));
       if (movePillar && movePillar.targets.length > 0) {
         const moveDone = movePillar.targets.filter(t => dayLog[t.id]?.done).length;
         workoutToday = moveDone > 0 ? Math.round((moveDone / movePillar.targets.length) * workoutGoal) : 0;
       }
     }
+    if (isNaN(workoutToday)) workoutToday = 0;
 
     items.push({
       category: 'Exercise',
