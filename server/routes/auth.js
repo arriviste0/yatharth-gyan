@@ -60,9 +60,16 @@ router.post('/google', async (req, res) => {
     if (!credential) return res.status(400).json({ error: 'credential required' });
     if (!process.env.GOOGLE_CLIENT_ID) return res.status(501).json({ error: 'Google sign-in not configured' });
 
+    const clientIds = [
+      process.env.GOOGLE_CLIENT_ID,
+      process.env.VITE_GOOGLE_CLIENT_ID,
+      '259886949867-7n73hh971etfnkvorj0km3296sjv879f.apps.googleusercontent.com',
+      '615878644272-t70b00ha1ile2edhoamk4306bqhf8t7h.apps.googleusercontent.com'
+    ].filter(Boolean);
+
     const ticket = await googleClient.verifyIdToken({
       idToken: credential,
-      audience: process.env.GOOGLE_CLIENT_ID,
+      audience: clientIds.length > 0 ? clientIds : undefined,
     });
     const { sub: googleId, email, name, picture } = ticket.getPayload();
 
