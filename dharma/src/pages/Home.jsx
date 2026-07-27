@@ -408,12 +408,16 @@ function formatLoggedSummary(target) {
 /* ── Mobile Today View ─────────────────────────────────────────────── */
 function MobileTodayView({ pillars, logs, metrics = {}, logTarget, dateStr, streak, settings, onOpenFocus }) {
   const [loggingTarget, setLoggingTarget] = useState(null);
+  const [tab, setTab] = useState('all');
+  const [filterPillar, setFilterPillar] = useState('all');
+
   const dayLog = logs[dateStr] || {};
   const activeTargets = useMemo(() =>
     pillars.flatMap((p) =>
       p.targets.filter((t) => t.frequency === 'daily' || !t.frequency)
         .map((t) => ({
           ...t,
+          pillarId: p.id,
           pillarName: p.english,
           pillarColor: p.color || '#F05A36',
           pillarIcon: p.icon,
@@ -426,8 +430,16 @@ function MobileTodayView({ pillars, logs, metrics = {}, logTarget, dateStr, stre
   const totalCount = activeTargets.length;
   const pct = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
   const allDone = completedCount === totalCount && totalCount > 0;
-  const pendingTargets = activeTargets.filter((t) => !t.done);
-  const doneTargets = activeTargets.filter((t) => t.done);
+  const pendingCount = activeTargets.filter((t) => !t.done).length;
+  const doneCount = completedCount;
+
+  const filteredTargets = useMemo(() => {
+    let list = activeTargets;
+    if (filterPillar !== 'all') list = list.filter((t) => t.pillarId === filterPillar);
+    if (tab === 'pending') return list.filter((t) => !t.done);
+    if (tab === 'done') return list.filter((t) => t.done);
+    return list;
+  }, [activeTargets, tab, filterPillar]);
 
   function handleTaskClick(target) {
     if (isInputRequired(target)) {
@@ -464,10 +476,10 @@ function MobileTodayView({ pillars, logs, metrics = {}, logTarget, dateStr, stre
   const pillarStats = useMemo(() =>
     pillars.map((p) => {
       const dailyTargets = p.targets.filter((t) => t.frequency === 'daily' || !t.frequency);
-      const doneCount = dailyTargets.filter((t) => dayLog[t.id]?.done).length;
-      const totalCount = dailyTargets.length;
-      const pctP = totalCount > 0 ? Math.round((doneCount / totalCount) * 100) : 0;
-      return { id: p.id, name: p.english, sanskrit: p.sanskrit, color: p.color, icon: p.icon, doneCount, totalCount, pct: pctP };
+      const doneC = dailyTargets.filter((t) => dayLog[t.id]?.done).length;
+      const totalC = dailyTargets.length;
+      const pctP = totalC > 0 ? Math.round((doneC / totalC) * 100) : 0;
+      return { id: p.id, name: p.english, sanskrit: p.sanskrit, color: p.color, icon: p.icon, doneCount: doneC, totalCount: totalC, pct: pctP };
     }).sort((a, b) => b.pct - a.pct),
     [pillars, dayLog]);
 
@@ -580,82 +592,163 @@ function MobileTodayView({ pillars, logs, metrics = {}, logTarget, dateStr, stre
         </div>
       </div>
 
-      {/* Pillar Cards */}
+      {/* Pillar Cards Header & Cards */}
       <div>
         <div className="flex items-center justify-between px-1 mb-3">
           <span className="text-xs font-bold uppercase tracking-widest text-stone-400">Your Pillars</span>
-          <Link to="/sadhana" className="text-[10px] font-extrabold text-[#F05A36] flex items-center gap-0.5">View all <ChevronRight size={10} /></Link>
+          <div className="flex items-center gap-2">
+            <Link
+              to="/sadhana"
+              state={{ addPillar: true }}
+              className="text-[10px] font-extrabold text-[#F05A36] bg-[#F05A36]/10 px-2 py-0.5 rounded-full hover:bg-[#F05A36]/20 transition-all flex items-center gap-1"
+            >
+              <Plus size={11} /> Pillar
+            </Link>
+            <Link to="/sadhana" className="text-[10px] font-extrabold text-[#F05A36] flex items-center gap-0.5">
+              View all <ChevronRight size={10} />
+            </Link>
+          </div>
         </div>
         <div className="grid grid-cols-3 gap-2.5">
           {pillars.map((pillar) => <PillarCategoryCard key={pillar.id} pillar={pillar} dayLog={dayLog} />)}
         </div>
       </div>
 
-      {/* Task Checklist */}
-      <div>
-        <div className="flex items-center justify-between px-1 mb-3">
-          <span className="text-xs font-bold uppercase tracking-widest text-stone-400">{pendingTargets.length > 0 ? 'Pending Tasks' : 'Completed'}</span>
-          <span className="text-[11px] font-bold tabular-nums text-[#F05A36]">{completedCount}/{totalCount}</span>
+      {/* Daily Practice Targets - Tabbed & Filterable (matching Desktop) */}
+      <div className="card-bento p-4 space-y-3">
+        {/* Header & Pillar Filter & Add Target */}
+        <div className="flex items-center justify-between gap-2 flex-wrap pb-2 border-b border-black/5 dark:border-white/5">
+          <div>
+            <h3 className="text-sm font-extrabold text-[#18191E] dark:text-white">Daily Targets</h3>
+            <p className="text-[10px] text-stone-400 font-medium">Track & check off your non-negotiables</p>
+          </div>
+
+          <div className="flex items-center gap-2">
+            {/* Filter Pillar dropdown */}
+            <div className="relative">
+              <select
+                value={filterPillar}
+                onChange={(e) => setFilterPillar(e.target.value)}
+                className="appearance-none bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 text-[#18191E] dark:text-white text-[11px] font-extrabold px-2.5 py-1 pr-6 rounded-xl outline-none cursor-pointer"
+              >
+                <option value="all" className="text-stone-800">All Pillars</option>
+                {pillars.map((p) => <option key={p.id} value={p.id} className="text-stone-800">{p.english}</option>)}
+              </select>
+              <ChevronDown size={10} className="absolute right-2 top-1/2 -translate-y-1/2 text-stone-400 pointer-events-none" />
+            </div>
+
+            {/* Quick Add Target button */}
+            <Link
+              to="/sadhana"
+              state={{ addPillar: false }}
+              className="btn-coral text-[10px] px-2.5 py-1 flex items-center gap-1 shrink-0 shadow-sm"
+            >
+              <Plus size={11} /> Target
+            </Link>
+          </div>
         </div>
-        <div className="space-y-2">
-          {pendingTargets.map((target) => {
-            const Icon = PILLAR_ICONS[target.pillarIcon] || Zap;
-            const isNonCheckbox = isInputRequired(target);
-            return (
-              <button
-                key={target.id}
-                onClick={() => handleTaskClick(target)}
-                className="w-full flex items-center gap-3 p-3.5 rounded-2xl border text-left transition-all duration-200 active:scale-[0.97] bg-white dark:bg-[#181926] border-black/5 dark:border-white/8 hover:border-[#F05A36]/30 shadow-sm"
-              >
-                <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: `${target.pillarColor}18` }}>
-                  <Icon size={15} style={{ color: target.pillarColor }} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="text-[13px] font-bold text-[#18191E] dark:text-white truncate">{target.name}</div>
-                  <div className="text-[10px] text-stone-400 font-semibold uppercase tracking-wide mt-0.5 flex items-center gap-1.5">
-                    <span>{target.pillarName}</span>
-                    {isNonCheckbox && (
-                      <span className="text-[#F05A36] font-bold">
-                        • Goal: {target.comparison === 'lte' ? '≤' : '≥'} {target.targetValue} {target.unit || ''}
-                      </span>
-                    )}
+
+        {/* Status Tabs */}
+        <div className="flex items-center gap-1 bg-black/5 dark:bg-white/5 p-1 rounded-2xl border border-black/5 dark:border-white/8">
+          {[
+            { id: 'all', label: 'All', count: activeTargets.length },
+            { id: 'pending', label: 'Pending', count: pendingCount },
+            { id: 'done', label: 'Done', count: doneCount },
+          ].map((t) => (
+            <button
+              key={t.id}
+              onClick={() => setTab(t.id)}
+              className={`flex-1 py-1.5 px-2 rounded-xl text-[11px] font-extrabold transition-all text-center ${
+                tab === t.id
+                  ? 'bg-accent text-white shadow-sm'
+                  : 'text-stone-500 dark:text-stone-400 hover:text-[#18191E] dark:hover:text-white'
+              }`}
+            >
+              {t.label} <span className={`ml-1 text-[9px] px-1.5 py-0.2 rounded-full ${tab === t.id ? 'bg-white/20' : 'bg-black/5 dark:bg-white/10'}`}>{t.count}</span>
+            </button>
+          ))}
+        </div>
+
+        {/* Filtered Targets List */}
+        <div className="space-y-2 pt-1">
+          {filteredTargets.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-8 text-stone-400 dark:text-stone-500">
+              <CheckCircle2 size={28} className="mb-1.5 opacity-60" />
+              <span className="text-xs font-semibold">{tab === 'pending' ? 'All tasks completed! 🪷' : 'No targets match filter'}</span>
+            </div>
+          ) : (
+            filteredTargets.map((target) => {
+              const Icon = PILLAR_ICONS[target.pillarIcon] || Zap;
+              const isNonCheckbox = isInputRequired(target);
+
+              return (
+                <div
+                  key={target.id}
+                  onClick={() => handleTaskClick(target)}
+                  className={`flex items-center gap-3 p-3 rounded-2xl border text-left transition-all duration-200 cursor-pointer active:scale-[0.98] ${
+                    target.done
+                      ? 'bg-black/[0.02] dark:bg-white/[0.03] border-black/5 dark:border-white/5'
+                      : 'bg-white dark:bg-[#181926] border-black/5 dark:border-white/8 hover:border-[#F05A36]/30 shadow-sm'
+                  }`}
+                >
+                  {/* Checkbox button */}
+                  <div
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleTaskClick(target);
+                    }}
+                    className={`w-6 h-6 rounded-lg flex items-center justify-center shrink-0 border-2 transition-all ${
+                      target.done
+                        ? 'bg-accent border-accent text-white shadow-sm'
+                        : 'hover:border-accent'
+                    }`}
+                    style={{ borderColor: target.done ? undefined : `${target.pillarColor}50` }}
+                  >
+                    {target.done && <Check size={13} strokeWidth={3} />}
                   </div>
-                </div>
-                <div className="w-7 h-7 rounded-full flex items-center justify-center shrink-0 border-2 transition-all" style={{ borderColor: `${target.pillarColor}40` }}>
-                  <Plus size={12} style={{ color: target.pillarColor, opacity: 0.6 }} />
-                </div>
-              </button>
-            );
-          })}
-          {doneTargets.map((target) => {
-            const Icon = PILLAR_ICONS[target.pillarIcon] || Zap;
-            const isNonCheckbox = isInputRequired(target);
-            return (
-              <button
-                key={target.id}
-                onClick={() => handleTaskClick(target)}
-                className="w-full flex items-center gap-3 p-3.5 rounded-2xl border text-left transition-all duration-200 active:scale-[0.97] bg-black/[0.02] dark:bg-white/[0.03] border-black/5 dark:border-white/5"
-              >
-                <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: `${target.pillarColor}12` }}>
-                  <Icon size={15} style={{ color: target.pillarColor, opacity: 0.5 }} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="text-[13px] font-semibold text-stone-400 dark:text-stone-500 line-through truncate">{target.name}</div>
-                  <div className="text-[10px] text-stone-400 dark:text-stone-600 font-semibold uppercase tracking-wide mt-0.5 flex items-center gap-1.5">
-                    <span>{target.pillarName}</span>
-                    {isNonCheckbox && (
-                      <span className="text-emerald-500 font-bold no-underline">
-                        • Logged: {formatLoggedSummary(target)}
-                      </span>
-                    )}
+
+                  {/* Icon */}
+                  <div className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0" style={{ background: `${target.pillarColor}18` }}>
+                    <Icon size={14} style={{ color: target.pillarColor }} />
                   </div>
+
+                  {/* Task details */}
+                  <div className="flex-1 min-w-0">
+                    <div className={`text-xs font-bold truncate ${target.done ? 'line-through text-stone-400 dark:text-stone-500' : 'text-[#18191E] dark:text-white'}`}>
+                      {target.name}
+                    </div>
+                    <div className="text-[10px] text-stone-400 font-medium mt-0.5 flex items-center gap-1.5 flex-wrap">
+                      <span className="font-bold px-1.5 py-0.2 rounded-full" style={{ background: `${target.pillarColor}15`, color: target.pillarColor }}>
+                        {target.pillarName}
+                      </span>
+                      {isNonCheckbox && (
+                        target.done ? (
+                          <span className="text-emerald-500 font-bold">Logged: {formatLoggedSummary(target)}</span>
+                        ) : (
+                          <span className="text-stone-400">
+                            Target: {target.comparison === 'lte' ? '≤' : '≥'} {target.targetValue} {target.unit || ''}
+                          </span>
+                        )
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Action button if non-checkbox and pending */}
+                  {isNonCheckbox && !target.done && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setLoggingTarget(target);
+                      }}
+                      className="px-2.5 py-1 rounded-xl text-[10px] font-bold bg-[#F05A36]/10 text-[#F05A36] hover:bg-[#F05A36]/20 shrink-0 transition-all"
+                    >
+                      Log
+                    </button>
+                  )}
                 </div>
-                <div className="w-7 h-7 rounded-full flex items-center justify-center shrink-0 transition-all bg-[#F05A36] text-white">
-                  <Check size={13} strokeWidth={3} />
-                </div>
-              </button>
-            );
-          })}
+              );
+            })
+          )}
         </div>
       </div>
 

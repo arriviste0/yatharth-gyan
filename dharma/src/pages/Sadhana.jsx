@@ -1,4 +1,5 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Plus, Trash2, Edit3, X, Check, Moon, Soup, Dumbbell, Star, Heart, Flame, Zap, Wind, Sun, Layers, Target, Activity } from 'lucide-react';
 import { useStorage } from '../hooks/useStorage';
 import { DEFAULT_PILLARS } from '../data/defaultPillars';
@@ -421,6 +422,7 @@ function PillarEditor({ pillar, onSave, onCancel }) {
 
 /* ── Main ───────────────────────────────────────────────────────────── */
 export default function Sadhana() {
+  const location = useLocation();
   const { state, setPillars } = useStorage();
   const pillars = state.pillars || [];
   const [editingId,       setEditingId]       = useState(null);
@@ -428,6 +430,15 @@ export default function Sadhana() {
   const [editingTarget,   setEditingTarget]   = useState(null);
   const [addingPillar,    setAddingPillar]    = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
+
+  useEffect(() => {
+    if (location.state?.addPillar) {
+      setAddingPillar(true);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else if (location.state?.addTargetTo) {
+      setAddingTargetTo(location.state.addTargetTo);
+    }
+  }, [location.state]);
 
   function savePillar(updated) {
     setPillars(pillars.map((p) => (p.id === updated.id ? updated : p)));

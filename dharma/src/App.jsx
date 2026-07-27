@@ -239,7 +239,7 @@ function AppInner() {
 
 export default function App() {
   return (
-    <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID || ''}>
+    <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID || '259886949867-a3v5f3t4cklfv34j28plug0m6p2nsmhl.apps.googleusercontent.com'}>
       <BrowserRouter>
         <AuthProvider>
           <AppInner />

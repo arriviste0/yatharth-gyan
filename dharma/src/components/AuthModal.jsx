@@ -46,7 +46,7 @@ export default function AuthModal({ onClose, onSuccess }) {
     }
   }
 
-  const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+  const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '259886949867-a3v5f3t4cklfv34j28plug0m6p2nsmhl.apps.googleusercontent.com';
 
   return (
     <div
@@ -74,30 +74,29 @@ export default function AuthModal({ onClose, onSuccess }) {
         </div>
 
         {/* Google sign-in */}
-        {googleClientId && (
-          <div className="mb-5 space-y-3">
-            <div className="flex justify-center">
-              <GoogleLogin
-                onSuccess={handleGoogleSuccess}
-                onError={() => setError('Google sign-in failed. Please check your Google OAuth credentials or use Email below.')}
-                theme="outline"
-                shape="pill"
-                text="continue_with"
-                size="large"
-              />
+        <div className="mb-5 space-y-3">
+          <div className="flex justify-center min-h-[44px]">
+            <GoogleLogin
+              onSuccess={handleGoogleSuccess}
+              onError={() => setError('Google sign-in failed. Please check your Google OAuth credentials or use Email below.')}
+              theme="outline"
+              shape="pill"
+              text="continue_with"
+              size="large"
+              width="280"
+            />
+          </div>
+          <div className="relative my-4">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-black/10 dark:border-white/10" />
             </div>
-            <div className="relative my-4">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-black/10 dark:border-white/10" />
-              </div>
-              <div className="relative flex justify-center">
-                <span className="px-3 text-[10px] uppercase tracking-widest text-stone-400 dark:text-stone-500 font-extrabold bg-white dark:bg-[#181926]">
-                  or use email
-                </span>
-              </div>
+            <div className="relative flex justify-center">
+              <span className="px-3 text-[10px] uppercase tracking-widest text-stone-400 dark:text-stone-500 font-extrabold bg-white dark:bg-[#181926]">
+                or use email
+              </span>
             </div>
           </div>
-        )}
+        </div>
 
         {/* Tab Toggle Switch */}
         <div className="flex gap-1 bg-black/5 dark:bg-white/5 p-1 rounded-2xl border border-black/5 dark:border-white/8 mb-5">
