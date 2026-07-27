@@ -348,12 +348,12 @@ export default function Gyaan() {
 
   return (
     <div className="page-container page-transition">
-      <div className="flex items-center justify-between mb-5 flex-wrap gap-3">
+      <div className="flex items-start justify-between mb-5 gap-3 flex-wrap">
         <div>
           <h1 className="text-2xl font-extrabold text-[#18191E] dark:text-white">Wisdom</h1>
           <div className="text-xs text-stone-400 font-medium">Bhagavad Gita · 18 Chapters</div>
         </div>
-        <div className="text-right space-y-1.5">
+        <div className="space-y-1.5">
           <div className="text-xs font-extrabold text-[#18191E] dark:text-white flex items-center gap-1.5 justify-end">
             <span className="w-2 h-2 rounded-full bg-[#F05A36]" />
             {chapterProgress.length}/18 Chapters Read

@@ -83,7 +83,7 @@ export default function BottomNav({ onOpenProfile }) {
 /* ── Desktop side nav ───────────────────────────────────────────────────────── */
 export function SideNav({ onOpenFocus, onOpenProfile }) {
   const location  = useLocation();
-  const { state } = useStorage();
+  const { state, updateSettings } = useStorage();
   const pillars   = state.pillars || [];
   const { logs, settings } = state;
 

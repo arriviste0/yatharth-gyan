@@ -233,6 +233,34 @@
     backdrop-filter: blur(16px);
     border-top: 1px solid rgba(255, 255, 255, 0.08);
   }
+
+  /* iOS safe area bottom padding */
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  /* Page transition animation */
+  .page-transition {
+    animation: fade-in 0.2s ease-out;
+  }
+
+  /* Base card style (used in Drishti, Settings) */
+  .card {
+    @apply rounded-2xl p-4 transition-all duration-200;
+    background: #FFFFFF;
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+    margin-bottom: 1rem;
+  }
+  .dark .card {
+    background: #181926;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  /* Section label */
+  .section-label {
+    @apply text-[10px] font-extrabold uppercase tracking-widest text-stone-400;
+  }
 }
 
 /* Animations */

@@ -281,51 +281,45 @@ function TargetForm({ initial, onSave, onCancel }) {
             {subMetrics.length > 0 && (
               <div className="space-y-2 pt-1">
                 {subMetrics.map((sub, idx) => (
-                  <div key={sub.id || idx} className="grid grid-cols-12 gap-2 items-center bg-white dark:bg-[#181926] p-3 rounded-xl border border-black/5 dark:border-white/10">
-                    <div className="col-span-4">
+                  <div key={sub.id || idx} className="bg-white dark:bg-[#181926] p-3 rounded-xl border border-black/5 dark:border-white/10 space-y-2">
+                    <div className="flex items-center gap-2">
                       <input
                         value={sub.name}
                         onChange={(e) => updateSubMetric(idx, 'name', e.target.value)}
                         placeholder={type === 'DURATION' ? 'e.g. Cardio, Lifting' : 'e.g. Protein, Carbs'}
-                        className="w-full text-xs font-bold text-[#18191E] dark:text-white bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl px-2.5 py-2 outline-none"
+                        className="flex-1 text-xs font-bold text-[#18191E] dark:text-white bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl px-2.5 py-2 outline-none"
                       />
+                      <button
+                        type="button"
+                        onClick={() => removeSubMetric(idx)}
+                        className="w-8 h-8 flex items-center justify-center rounded-xl text-stone-400 hover:text-red-500 hover:bg-red-500/10 transition-all shrink-0"
+                      >
+                        <Trash2 size={14} />
+                      </button>
                     </div>
-                    <div className="col-span-3">
+                    <div className="flex gap-2">
                       <input
                         type="number"
                         step="any"
                         value={sub.targetValue}
                         onChange={(e) => updateSubMetric(idx, 'targetValue', parseFloat(e.target.value) || 0)}
                         placeholder="Goal"
-                        className="w-full text-xs font-bold text-[#18191E] dark:text-white bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl px-2.5 py-2 outline-none"
+                        className="flex-1 text-xs font-bold text-[#18191E] dark:text-white bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl px-2.5 py-2 outline-none"
                       />
-                    </div>
-                    <div className="col-span-2">
                       <input
                         value={sub.unit}
                         onChange={(e) => updateSubMetric(idx, 'unit', e.target.value)}
                         placeholder={type === 'DURATION' ? 'min, hr' : 'g, L, kcal'}
-                        className="w-full text-xs font-bold text-[#18191E] dark:text-white bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl px-2 py-2 outline-none"
+                        className="w-16 text-xs font-bold text-[#18191E] dark:text-white bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl px-2 py-2 outline-none"
                       />
-                    </div>
-                    <div className="col-span-2">
                       <select
                         value={sub.comparison}
                         onChange={(e) => updateSubMetric(idx, 'comparison', e.target.value)}
-                        className="w-full text-[11px] font-bold text-[#18191E] dark:text-white bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl px-1.5 py-2 outline-none"
+                        className="w-20 text-[11px] font-bold text-[#18191E] dark:text-white bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl px-1.5 py-2 outline-none"
                       >
                         <option value="gte">≥ Min</option>
                         <option value="lte">≤ Max</option>
                       </select>
-                    </div>
-                    <div className="col-span-1 text-center">
-                      <button
-                        type="button"
-                        onClick={() => removeSubMetric(idx)}
-                        className="text-stone-400 hover:text-red-500 transition-colors p-1"
-                      >
-                        <Trash2 size={14} />
-                      </button>
                     </div>
                   </div>
                 ))}
@@ -656,16 +650,16 @@ export default function Sadhana() {
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="flex items-center gap-1">
                         <button
                           onClick={() => setEditingTarget({ pillarId: pillar.id, target })}
-                          className="w-7 h-7 rounded-lg flex items-center justify-center text-stone-400 hover:text-[#18191E] dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5"
+                          className="w-7 h-7 rounded-lg flex items-center justify-center text-stone-400 hover:text-[#18191E] dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5 active:bg-black/10 transition-all"
                         >
                           <Edit3 size={12} />
                         </button>
                         <button
                           onClick={() => deleteTarget(pillar.id, target.id)}
-                          className="w-7 h-7 rounded-lg flex items-center justify-center text-stone-400 hover:text-red-500 hover:bg-red-500/10"
+                          className="w-7 h-7 rounded-lg flex items-center justify-center text-stone-400 hover:text-red-500 hover:bg-red-500/10 active:bg-red-500/20 transition-all"
                         >
                           <Trash2 size={12} />
                         </button>

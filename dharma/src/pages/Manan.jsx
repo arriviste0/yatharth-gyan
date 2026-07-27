@@ -227,46 +227,47 @@ function FileEditor({ file, onSave, onDelete, onBack }) {
     <div className="relative rounded-3xl p-6 space-y-5 bg-white dark:bg-[#181926] border border-black/5 dark:border-white/8 shadow-2xl">
 
       {/* Header bar */}
-      <div className="flex items-center justify-between flex-wrap gap-2">
+      <div className="flex items-start justify-between gap-2 flex-wrap">
         <button onClick={onBack} className="flex items-center gap-1.5 text-xs font-bold text-stone-500 hover:text-[#F05A36] transition-all">
           <ArrowLeft size={16} /> Back to Files
         </button>
 
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex items-center gap-1.5 flex-wrap">
           {/* Krishna AI Reflection Button */}
           <button
             onClick={fetchKrishnaAdvice}
             disabled={loadingAi}
-            className="px-3 py-1.5 rounded-xl bg-[#F05A36]/12 text-[#F05A36] hover:bg-[#F05A36]/20 transition-all text-xs font-extrabold flex items-center gap-1.5 border border-[#F05A36]/30"
+            className="px-2.5 py-1.5 rounded-xl bg-[#F05A36]/12 text-[#F05A36] hover:bg-[#F05A36]/20 active:bg-[#F05A36]/25 transition-all text-xs font-extrabold flex items-center gap-1 border border-[#F05A36]/30"
           >
             {loadingAi ? <Loader2 size={13} className="animate-spin" /> : <Sparkles size={13} />}
-            <span>{loadingAi ? 'Reflecting…' : 'Reflect with Krishna'}</span>
+            <span className="hidden xs:inline sm:inline">{loadingAi ? 'Reflecting…' : 'Reflect with Krishna'}</span>
+            <span className="xs:hidden sm:hidden">{loadingAi ? '…' : 'Reflect'}</span>
           </button>
 
           {/* File Type toggle */}
           <div className="flex items-center bg-black/5 dark:bg-white/5 rounded-xl p-0.5 border border-black/5 dark:border-white/8">
             <button
               onClick={() => setFileType('todo')}
-              className={`px-2.5 py-1 text-[10px] font-bold rounded-lg transition-all ${
+              className={`px-2 py-1 text-[10px] font-bold rounded-lg transition-all ${
                 fileType === 'todo' ? 'bg-[#F05A36] text-white' : 'text-stone-400 hover:text-stone-700 dark:hover:text-white'
               }`}
             >
-              .todo List
+              Todo
             </button>
             <button
               onClick={() => setFileType('txt')}
-              className={`px-2.5 py-1 text-[10px] font-bold rounded-lg transition-all ${
+              className={`px-2 py-1 text-[10px] font-bold rounded-lg transition-all ${
                 fileType === 'txt' ? 'bg-[#E6A04E] text-white' : 'text-stone-400 hover:text-stone-700 dark:hover:text-white'
               }`}
             >
-              .txt Note
+              Note
             </button>
           </div>
 
           <button
             onClick={handleCopy}
             title="Copy file text"
-            className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-black/5 dark:bg-white/5 text-stone-600 dark:text-white/70 hover:text-[#F05A36] text-xs font-semibold"
+            className="w-8 h-8 rounded-xl flex items-center justify-center bg-black/5 dark:bg-white/5 text-stone-600 dark:text-white/70 hover:text-[#F05A36] transition-all"
           >
             {copied ? <Check size={13} className="text-emerald-500" /> : <Copy size={13} />}
           </button>
@@ -280,7 +281,7 @@ function FileEditor({ file, onSave, onDelete, onBack }) {
           ) : (
             <button
               onClick={() => setConfirmDelete(true)}
-              className="w-8 h-8 rounded-xl flex items-center justify-center bg-black/5 dark:bg-white/5 text-stone-400 hover:text-red-500 hover:bg-red-500/10"
+              className="w-8 h-8 rounded-xl flex items-center justify-center bg-black/5 dark:bg-white/5 text-stone-400 hover:text-red-500 hover:bg-red-500/10 transition-all"
             >
               <Trash2 size={14} />
             </button>
@@ -630,7 +631,7 @@ export default function Manan() {
                   onClick={() => setActiveFile(file)}
                   className="card-bento p-4 bg-white dark:bg-[#181926] border border-black/5 dark:border-white/8 hover:border-[#F05A36]/40 transition-all cursor-pointer flex flex-col justify-between min-h-[120px] group shadow-sm hover:shadow-md"
                 >
-                  <div className="flex items-start justify-between">
+                    <div className="flex items-start justify-between">
                     <div className="flex items-center gap-2">
                       {file.fileType === 'todo' ? (
                         <CheckSquare size={16} className="text-[#F05A36]" />
@@ -641,7 +642,7 @@ export default function Manan() {
                     </div>
                     <button
                       onClick={(e) => { e.stopPropagation(); deleteNotebookEntry(file.id); }}
-                      className="opacity-0 group-hover:opacity-100 text-stone-400 hover:text-red-500 transition-opacity"
+                      className="text-stone-400 hover:text-red-500 active:text-red-500 transition-colors p-1"
                     >
                       <Trash2 size={13} />
                     </button>

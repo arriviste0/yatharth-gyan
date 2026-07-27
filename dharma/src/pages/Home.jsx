@@ -437,6 +437,61 @@ function MobileTodayView({ pillars, logs, metrics = {}, logTarget, dateStr, stre
     }
   }
 
+  // Weekly chart data
+  const weeklyData = useMemo(() => {
+    const days = [];
+    const today = new Date();
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(today);
+      d.setDate(today.getDate() - i);
+      const key = dateKey(d);
+      const rate = getDayCompletionRate(logs, pillars, key);
+      days.push({
+        key,
+        label: WEEKDAY_SHORT[d.getDay()],
+        rate: Math.round(rate * 100),
+        isToday: i === 0,
+      });
+    }
+    return days;
+  }, [logs, pillars]);
+
+  const weeklyAvg = weeklyData.length > 0
+    ? Math.round(weeklyData.reduce((s, d) => s + d.rate, 0) / weeklyData.length)
+    : 0;
+
+  // Pillar stats
+  const pillarStats = useMemo(() =>
+    pillars.map((p) => {
+      const dailyTargets = p.targets.filter((t) => t.frequency === 'daily' || !t.frequency);
+      const doneCount = dailyTargets.filter((t) => dayLog[t.id]?.done).length;
+      const totalCount = dailyTargets.length;
+      const pctP = totalCount > 0 ? Math.round((doneCount / totalCount) * 100) : 0;
+      return { id: p.id, name: p.english, sanskrit: p.sanskrit, color: p.color, icon: p.icon, doneCount, totalCount, pct: pctP };
+    }).sort((a, b) => b.pct - a.pct),
+    [pillars, dayLog]);
+
+  // Activity feed
+  const activities = useMemo(() => {
+    const items = [];
+    pillars.forEach((p) => {
+      p.targets.forEach((t) => {
+        const entry = dayLog[t.id];
+        if (entry?.done && entry?.timestamp) {
+          items.push({
+            id: t.id,
+            name: t.name,
+            pillarName: p.english,
+            pillarColor: p.color,
+            pillarIcon: p.icon,
+            timestamp: entry.timestamp,
+          });
+        }
+      });
+    });
+    return items.sort((a, b) => b.timestamp - a.timestamp);
+  }, [pillars, dayLog]);
+
   return (
     <div className="block lg:hidden space-y-5 mb-5">
       {/* Hero Progress Card */}
@@ -464,6 +519,64 @@ function MobileTodayView({ pillars, logs, metrics = {}, logTarget, dateStr, stre
               <span className="text-[9px] text-stone-400 font-medium -mt-0.5">complete</span>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* ── Mobile KPI Cards ────────────────────────────────────────── */}
+      <div className="grid grid-cols-2 gap-2.5">
+        {/* Completion Rate */}
+        <div className="card-bento p-4 flex flex-col justify-between">
+          <div className="flex items-start justify-between mb-2">
+            <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: `${pct >= 80 ? '#C9A961' : pct >= 50 ? '#E8843C' : '#5B6BAF'}18` }}>
+              <Target size={15} style={{ color: pct >= 80 ? '#C9A961' : pct >= 50 ? '#E8843C' : '#5B6BAF' }} />
+            </div>
+            <span className={`text-[9px] font-extrabold px-1.5 py-0.5 rounded-full ${(pct - weeklyAvg) >= 0 ? 'text-emerald-500 bg-emerald-500/10' : 'text-red-500 bg-red-500/10'}`}>
+              {(pct - weeklyAvg) >= 0 ? '↑' : '↓'} {Math.abs(pct - weeklyAvg)}%
+            </span>
+          </div>
+          <div className="text-2xl font-extrabold tabular-nums text-[#18191E] dark:text-white">{pct}%</div>
+          <div className="text-[10px] font-bold text-stone-500 dark:text-stone-400">Completion Rate</div>
+          <div className="text-[9px] text-stone-400 dark:text-white/40 font-medium mt-0.5">
+            {pct >= 100 ? 'All targets done!' : `${totalCount - completedCount} remaining`}
+          </div>
+        </div>
+
+        {/* Streak */}
+        <div className="card-bento p-4 flex flex-col justify-between">
+          <div className="flex items-start justify-between mb-2">
+            <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: `${streak >= 7 ? '#C9A961' : '#E8843C'}18` }}>
+              <Flame size={15} style={{ color: streak >= 7 ? '#C9A961' : '#E8843C' }} />
+            </div>
+          </div>
+          <div className="text-2xl font-extrabold tabular-nums text-[#18191E] dark:text-white">{streak}d</div>
+          <div className="text-[10px] font-bold text-stone-500 dark:text-stone-400">Current Streak</div>
+          <div className="text-[9px] text-stone-400 dark:text-white/40 font-medium mt-0.5">
+            {streak > 0 ? 'Keep the flame alive!' : 'Start your streak today'}
+          </div>
+        </div>
+
+        {/* Tasks Done */}
+        <div className="card-bento p-4 flex flex-col justify-between">
+          <div className="flex items-start justify-between mb-2">
+            <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: '#E8843C18' }}>
+              <CheckCircle2 size={15} style={{ color: '#E8843C' }} />
+            </div>
+          </div>
+          <div className="text-2xl font-extrabold tabular-nums text-[#18191E] dark:text-white">{completedCount}/{totalCount}</div>
+          <div className="text-[10px] font-bold text-stone-500 dark:text-stone-400">Tasks Done</div>
+          <div className="text-[9px] text-stone-400 dark:text-white/40 font-medium mt-0.5">Daily targets completed</div>
+        </div>
+
+        {/* Active Pillars */}
+        <div className="card-bento p-4 flex flex-col justify-between">
+          <div className="flex items-start justify-between mb-2">
+            <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: '#5A8A8A18' }}>
+              <Activity size={15} style={{ color: '#5A8A8A' }} />
+            </div>
+          </div>
+          <div className="text-2xl font-extrabold tabular-nums text-[#18191E] dark:text-white">{pillars.length}</div>
+          <div className="text-[10px] font-bold text-stone-500 dark:text-stone-400">Active Pillars</div>
+          <div className="text-[9px] text-stone-400 dark:text-white/40 font-medium mt-0.5">{totalCount} daily targets tracked</div>
         </div>
       </div>
 
@@ -517,7 +630,6 @@ function MobileTodayView({ pillars, logs, metrics = {}, logTarget, dateStr, stre
           {doneTargets.map((target) => {
             const Icon = PILLAR_ICONS[target.pillarIcon] || Zap;
             const isNonCheckbox = isInputRequired(target);
-            const loggedVal = target.logEntry?.value;
             return (
               <button
                 key={target.id}
@@ -545,6 +657,114 @@ function MobileTodayView({ pillars, logs, metrics = {}, logTarget, dateStr, stre
             );
           })}
         </div>
+      </div>
+
+      {/* ── Mobile Weekly Trend Chart ───────────────────────────────── */}
+      <div className="card-bento p-5">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h3 className="text-sm font-bold text-[#18191E] dark:text-white">Weekly Completion</h3>
+            <p className="text-[10px] text-stone-400 dark:text-white/40 mt-0.5">Last 7 days performance</p>
+          </div>
+          <div className="text-right">
+            <div className="text-xl font-extrabold tabular-nums text-accent">{weeklyAvg}%</div>
+            <div className="text-[9px] text-stone-400 dark:text-white/30">avg rate</div>
+          </div>
+        </div>
+        <ResponsiveContainer width="100%" height={140}>
+          <AreaChart data={weeklyData} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
+            <defs>
+              <linearGradient id="mobileWeekGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="var(--color-accent)" stopOpacity={0.3} />
+                <stop offset="100%" stopColor="var(--color-accent)" stopOpacity={0} />
+              </linearGradient>
+            </defs>
+            <XAxis dataKey="label" tick={{ fontSize: 10, fill: '#9CA3AF' }} axisLine={false} tickLine={false} />
+            <YAxis domain={[0, 100]} tick={{ fontSize: 9, fill: '#9CA3AF' }} axisLine={false} tickLine={false} />
+            <Tooltip
+              content={({ active, payload }) => {
+                if (!active || !payload?.length) return null;
+                return (
+                  <div className="bg-[#181926] border border-white/10 rounded-xl px-3 py-2 shadow-xl text-xs">
+                    <div className="font-bold text-white">{payload[0].payload.label}: {payload[0].value}%</div>
+                  </div>
+                );
+              }}
+            />
+            <Area type="monotone" dataKey="rate" stroke="var(--color-accent)" strokeWidth={2} fill="url(#mobileWeekGrad)" dot={{ r: 3, fill: 'var(--color-accent)', stroke: '#181926', strokeWidth: 2 }} />
+          </AreaChart>
+        </ResponsiveContainer>
+      </div>
+
+      {/* ── Mobile Pillar Breakdown ─────────────────────────────────── */}
+      <div className="card-bento p-5">
+        <div className="mb-4">
+          <h3 className="text-sm font-bold text-[#18191E] dark:text-white">Pillar Breakdown</h3>
+          <p className="text-[10px] text-stone-400 dark:text-white/40 mt-0.5">Today's completion by category</p>
+        </div>
+        <div className="space-y-2">
+          {pillarStats.map((p, i) => {
+            const Icon = PILLAR_ICONS[p.icon] || Zap;
+            return (
+              <div key={p.id} className="flex items-center gap-3 px-3 py-2.5 rounded-2xl bg-black/[0.02] dark:bg-white/[0.03] border border-black/5 dark:border-white/5">
+                <span className="text-[10px] font-bold text-stone-400 dark:text-white/30 w-4">{i + 1}</span>
+                <div className="w-7 h-7 rounded-xl flex items-center justify-center" style={{ background: `${p.color}18` }}>
+                  <Icon size={13} style={{ color: p.color }} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-xs font-bold text-[#18191E] dark:text-white truncate">{p.name}</div>
+                  <div className="mt-1 h-1 rounded-full bg-black/5 dark:bg-white/10 overflow-hidden">
+                    <div className="h-full rounded-full transition-all duration-500" style={{ width: `${p.pct}%`, background: p.color }} />
+                  </div>
+                </div>
+                <div className="text-right shrink-0">
+                  <div className="text-sm font-extrabold tabular-nums" style={{ color: p.color }}>{p.pct}%</div>
+                  <div className="text-[9px] text-stone-400 dark:text-white/30">{p.doneCount}/{p.totalCount}</div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* ── Mobile Activity Feed ────────────────────────────────────── */}
+      <div className="card-bento p-5">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h3 className="text-sm font-bold text-[#18191E] dark:text-white">Activity Feed</h3>
+            <p className="text-[10px] text-stone-500 dark:text-stone-400 mt-0.5 font-medium">Recent completions today</p>
+          </div>
+          <span className="text-[10px] font-extrabold px-2.5 py-1 rounded-full bg-black/5 dark:bg-white/5 text-stone-700 dark:text-stone-300 border border-black/5 dark:border-white/10">
+            {activities.length} entries
+          </span>
+        </div>
+        {activities.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-6 text-stone-500 dark:text-stone-400">
+            <Activity size={24} className="mb-2 text-stone-400 dark:text-stone-500" />
+            <span className="text-xs font-semibold text-stone-700 dark:text-stone-300">No completions yet today</span>
+            <span className="text-[10px] text-stone-500 dark:text-stone-400 mt-0.5 font-medium">Complete a target to see it here</span>
+          </div>
+        ) : (
+          <div className="space-y-1.5 max-h-[260px] overflow-y-auto no-scrollbar">
+            {activities.map((a) => {
+              const time = new Date(a.timestamp);
+              const timeStr = time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+              return (
+                <div key={a.id} className="flex items-center gap-3 px-3 py-2.5 rounded-2xl bg-black/[0.02] dark:bg-white/[0.03] border border-black/5 dark:border-white/5">
+                  <div className="flex items-center gap-2 flex-1 min-w-0">
+                    <div className="w-2 h-2 rounded-full shrink-0" style={{ background: a.pillarColor }} />
+                    <span className="text-xs font-extrabold text-[#18191E] dark:text-white truncate">{a.name}</span>
+                  </div>
+                  <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full shrink-0"
+                    style={{ background: `${a.pillarColor}15`, color: a.pillarColor }}>
+                    {a.pillarName}
+                  </span>
+                  <span className="text-[10px] text-stone-600 dark:text-stone-300 tabular-nums font-semibold shrink-0">{timeStr}</span>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {loggingTarget && (
