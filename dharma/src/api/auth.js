@@ -19,7 +19,8 @@ export async function logout() {
   await client.post('/auth/logout').catch(() => {});
 }
 
-export async function loginWithGoogle(credential) {
-  const { data } = await client.post('/auth/google', { credential });
+export async function loginWithGoogle(payload) {
+  const body = typeof payload === 'string' ? { credential: payload } : payload;
+  const { data } = await client.post('/auth/google', body);
   return data; // { token, user }
 }

@@ -56,23 +56,46 @@ router.post('/login', async (req, res) => {
 /* POST /api/auth/google */
 router.post('/google', async (req, res) => {
   try {
-    const { credential } = req.body;
-    if (!credential) return res.status(400).json({ error: 'credential required' });
-    if (!process.env.GOOGLE_CLIENT_ID) return res.status(501).json({ error: 'Google sign-in not configured' });
+    const { credential, access_token } = req.body;
+    if (!credential && !access_token) return res.status(400).json({ error: 'credential or access_token required' });
 
-    const clientIds = [
-      process.env.GOOGLE_CLIENT_ID,
-      process.env.VITE_GOOGLE_CLIENT_ID,
-      '259886949867-a3v5f3t4cklfv34j28plug0m6p2nsmhl.apps.googleusercontent.com',
-      '259886949867-7n73hh971etfnkvorj0km3296sjv879f.apps.googleusercontent.com',
-      '615878644272-t70b00ha1ile2edhoamk4306bqhf8t7h.apps.googleusercontent.com'
-    ].filter(Boolean);
+    let googleId, email, name, picture;
 
-    const ticket = await googleClient.verifyIdToken({
-      idToken: credential,
-      audience: clientIds.length > 0 ? clientIds : undefined,
-    });
-    const { sub: googleId, email, name, picture } = ticket.getPayload();
+    if (access_token) {
+      // Fetch user profile from Google userinfo API
+      const response = await fetch(`https://www.googleapis.com/oauth2/v3/userinfo?access_token=${access_token}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch user profile with access token');
+      }
+      const data = await response.json();
+      googleId = data.sub;
+      email = data.email;
+      name = data.name;
+      picture = data.picture;
+    } else {
+      // Verify ID token
+      const clientIds = [
+        process.env.GOOGLE_CLIENT_ID,
+        process.env.VITE_GOOGLE_CLIENT_ID,
+        '259886949867-a3v5f3t4cklfv34j28plug0m6p2nsmhl.apps.googleusercontent.com',
+        '259886949867-7n73hh971etfnkvorj0km3296sjv879f.apps.googleusercontent.com',
+        '615878644272-t70b00ha1ile2edhoamk4306bqhf8t7h.apps.googleusercontent.com'
+      ].filter(Boolean);
+
+      const ticket = await googleClient.verifyIdToken({
+        idToken: credential,
+        audience: clientIds.length > 0 ? clientIds : undefined,
+      });
+      const payload = ticket.getPayload();
+      googleId = payload.sub;
+      email = payload.email;
+      name = payload.name;
+      picture = payload.picture;
+    }
+
+    if (!googleId || !email) {
+      return res.status(400).json({ error: 'Google account details missing' });
+    }
 
     let user = await User.findOne({ googleId });
     if (!user) {
@@ -82,7 +105,7 @@ router.post('/google', async (req, res) => {
         if (!user.avatarPhoto && picture) user.avatarPhoto = picture;
         await user.save();
       } else {
-        user = await User.create({ name, email, googleId, avatarPhoto: picture || null });
+        user = await User.create({ name, email: email.toLowerCase(), googleId, avatarPhoto: picture || null });
       }
     }
 
