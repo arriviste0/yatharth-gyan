@@ -8,6 +8,59 @@ import { getDailyReportAI } from '../api/ai';
 
 const CHART_COLORS = ['#F05A36', '#14B8A6', '#E6A04E', '#8B5CF6', '#3B82F6', '#EC4899', '#10B981'];
 
+function TimeFilterControl({ timeFilter, setTimeFilter, customDays, setCustomDays, isOverlay = false }) {
+  return (
+    <div className="flex items-center gap-1.5 flex-wrap">
+      <div className={`flex items-center p-1 rounded-2xl border text-xs font-extrabold flex-wrap gap-0.5 ${
+        isOverlay ? 'bg-white/10 border-white/20' : 'bg-black/5 dark:bg-white/5 border-black/5 dark:border-white/10'
+      }`}>
+        {[
+          { id: 'today', label: 'Today' },
+          { id: '7day', label: '7D' },
+          { id: '30day', label: '30D' },
+          { id: '90day', label: '90D' },
+          { id: 'allTime', label: 'All-Time' },
+          { id: 'custom', label: 'Custom' },
+        ].map((tf) => (
+          <button
+            key={tf.id}
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setTimeFilter(tf.id);
+            }}
+            className={`px-2.5 py-1 rounded-xl transition-all ${
+              timeFilter === tf.id
+                ? 'bg-accent text-white shadow-sm'
+                : isOverlay
+                  ? 'text-white/70 hover:text-white'
+                  : 'text-stone-500 dark:text-stone-400 hover:text-[#18191E] dark:hover:text-white'
+            }`}
+          >
+            {tf.label}
+          </button>
+        ))}
+      </div>
+
+      {timeFilter === 'custom' && (
+        <div className={`flex items-center gap-1 px-2.5 py-1 rounded-xl border text-xs font-extrabold shrink-0 ${
+          isOverlay ? 'bg-white/10 border-white/20 text-white' : 'bg-black/5 dark:bg-white/5 border-black/10 dark:border-white/10 text-[#18191E] dark:text-white'
+        }`}>
+          <input
+            type="number"
+            min="1"
+            max="365"
+            value={customDays}
+            onChange={(e) => setCustomDays(Math.max(1, parseInt(e.target.value) || 1))}
+            className="w-10 bg-transparent text-center outline-none border-b border-accent font-extrabold"
+          />
+          <span className="text-[10px] opacity-70">days</span>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function AIDailyReportCard() {
   const { state } = useStorage();
   const pillars = state.pillars || [];
@@ -20,14 +73,41 @@ export default function AIDailyReportCard() {
   const [isUnlocked, setIsUnlocked] = useState(false);
   const [loading, setLoading] = useState(false);
   const [reportText, setReportText] = useState(null);
-  const [timeFilter, setTimeFilter] = useState('today'); // 'today' | '7day' | '30day'
+  const [timeFilter, setTimeFilter] = useState('today'); // 'today' | '7day' | '30day' | '90day' | 'allTime' | 'custom'
+  const [customDays, setCustomDays] = useState(14);
 
-  // Dynamic payload focusing on high-level KPIs for Today, 7-Day Avg, or 30-Day Avg
+  const allLogKeys = useMemo(() => {
+    const keys = new Set([...Object.keys(logs), ...Object.keys(metrics)]);
+    return Array.from(keys);
+  }, [logs, metrics]);
+
+  const totalAllTimeDays = useMemo(() => {
+    if (allLogKeys.length === 0) return 1;
+    const timestamps = allLogKeys.map(k => new Date(k).getTime()).filter(t => !isNaN(t));
+    if (timestamps.length === 0) return 1;
+    const minTime = Math.min(...timestamps);
+    const nowTime = new Date().getTime();
+    const diffDays = Math.max(1, Math.ceil((nowTime - minTime) / (1000 * 60 * 60 * 24)));
+    return diffDays;
+  }, [allLogKeys]);
+
+  // Dynamic payload focusing on high-level KPIs for Today, 7D, 30D, 90D, All-Time, or Custom Days
   const dailyPayload = useMemo(() => {
     const items = [];
     const d = new Date();
-    const daysRange = timeFilter === 'today' ? 1 : timeFilter === '7day' ? 7 : 30;
-    const periodLabel = timeFilter === 'today' ? 'Today' : timeFilter === '7day' ? '7-Day Average' : '30-Day Average';
+    const daysRange = timeFilter === 'today' ? 1
+      : timeFilter === '7day' ? 7
+      : timeFilter === '30day' ? 30
+      : timeFilter === '90day' ? 90
+      : timeFilter === 'allTime' ? totalAllTimeDays
+      : Math.max(1, parseInt(customDays) || 14);
+
+    const periodLabel = timeFilter === 'today' ? 'Today'
+      : timeFilter === '7day' ? '7-Day Average'
+      : timeFilter === '30day' ? '30-Day Average'
+      : timeFilter === '90day' ? '90-Day Average'
+      : timeFilter === 'allTime' ? `All-Time (${daysRange}d Avg)`
+      : `${daysRange}-Day Average`;
 
     // Helper: Safely parse numbers
     const safeParseNumber = (val) => {
@@ -327,26 +407,15 @@ export default function AIDailyReportCard() {
             Select a time period to analyze your protein, hydration, sleep & practice KPIs
           </p>
 
-          {/* Time Filter Pills in Overlay */}
-          <div className="flex items-center bg-white/10 p-1 rounded-2xl border border-white/20 text-xs font-extrabold mb-5">
-            {[
-              { id: 'today', label: 'Today' },
-              { id: '7day', label: '7-Day Avg' },
-              { id: '30day', label: '30-Day Avg' },
-            ].map((tf) => (
-              <button
-                key={tf.id}
-                type="button"
-                onClick={() => setTimeFilter(tf.id)}
-                className={`px-3.5 py-1.5 rounded-xl transition-all ${
-                  timeFilter === tf.id
-                    ? 'bg-accent text-white shadow-md'
-                    : 'text-white/70 hover:text-white'
-                }`}
-              >
-                {tf.label}
-              </button>
-            ))}
+          {/* Time Filter Control in Overlay */}
+          <div className="mb-5">
+            <TimeFilterControl
+              timeFilter={timeFilter}
+              setTimeFilter={setTimeFilter}
+              customDays={customDays}
+              setCustomDays={setCustomDays}
+              isOverlay={true}
+            />
           </div>
 
           <button
@@ -381,27 +450,14 @@ export default function AIDailyReportCard() {
           </div>
 
           <div className="flex items-center gap-3 flex-wrap">
-            {/* Time Filter Pills */}
-            <div className="flex items-center bg-black/5 dark:bg-white/5 p-1 rounded-2xl border border-black/5 dark:border-white/10 text-xs font-extrabold">
-              {[
-                { id: 'today', label: 'Today' },
-                { id: '7day', label: '7-Day Avg' },
-                { id: '30day', label: '30-Day Avg' },
-              ].map((tf) => (
-                <button
-                  key={tf.id}
-                  type="button"
-                  onClick={() => setTimeFilter(tf.id)}
-                  className={`px-3 py-1.5 rounded-xl transition-all ${
-                    timeFilter === tf.id
-                      ? 'bg-accent text-white shadow-sm'
-                      : 'text-stone-500 dark:text-stone-400 hover:text-[#18191E] dark:hover:text-white'
-                  }`}
-                >
-                  {tf.label}
-                </button>
-              ))}
-            </div>
+            {/* Time Filter Control */}
+            <TimeFilterControl
+              timeFilter={timeFilter}
+              setTimeFilter={setTimeFilter}
+              customDays={customDays}
+              setCustomDays={setCustomDays}
+              isOverlay={false}
+            />
 
             {isUnlocked && (
               <button
