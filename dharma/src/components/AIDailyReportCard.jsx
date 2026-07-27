@@ -9,52 +9,73 @@ import { getDailyReportAI } from '../api/ai';
 const CHART_COLORS = ['#F05A36', '#14B8A6', '#E6A04E', '#8B5CF6', '#3B82F6', '#EC4899', '#10B981'];
 
 function TimeFilterControl({ timeFilter, setTimeFilter, customDays, setCustomDays, isOverlay = false }) {
-  return (
-    <div className="flex items-center gap-1.5 flex-wrap">
-      <div className={`flex items-center p-1 rounded-2xl border text-xs font-extrabold flex-wrap gap-0.5 ${
-        isOverlay ? 'bg-white/10 border-white/20' : 'bg-black/5 dark:bg-white/5 border-black/5 dark:border-white/10'
-      }`}>
-        {[
-          { id: 'today', label: 'Today' },
-          { id: '7day', label: '7D' },
-          { id: '30day', label: '30D' },
-          { id: '90day', label: '90D' },
-          { id: 'allTime', label: 'All-Time' },
-          { id: 'custom', label: 'Custom' },
-        ].map((tf) => (
-          <button
-            key={tf.id}
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              setTimeFilter(tf.id);
-            }}
-            className={`px-2.5 py-1 rounded-xl transition-all ${
-              timeFilter === tf.id
-                ? 'bg-accent text-white shadow-sm'
-                : isOverlay
-                  ? 'text-white/70 hover:text-white'
-                  : 'text-stone-500 dark:text-stone-400 hover:text-[#18191E] dark:hover:text-white'
-            }`}
-          >
-            {tf.label}
-          </button>
-        ))}
-      </div>
+  const baseClasses = isOverlay
+    ? 'bg-white/10 border-white/20'
+    : 'bg-black/5 dark:bg-white/5 border-black/5 dark:border-white/10';
+  const activeClasses = 'bg-accent text-white shadow-sm';
+  const inactiveClasses = isOverlay
+    ? 'text-white/70 hover:text-white'
+    : 'text-stone-500 dark:text-stone-400 hover:text-[#18191E] dark:hover:text-white';
 
-      {timeFilter === 'custom' && (
-        <div className={`flex items-center gap-1 px-2.5 py-1 rounded-xl border text-xs font-extrabold shrink-0 ${
-          isOverlay ? 'bg-white/10 border-white/20 text-white' : 'bg-black/5 dark:bg-white/5 border-black/10 dark:border-white/10 text-[#18191E] dark:text-white'
-        }`}>
+  const presets = [
+    { id: 'today', label: 'Today' },
+    { id: '7day', label: '7D' },
+    { id: '30day', label: '30D' },
+    { id: '90day', label: '90D' },
+    { id: 'allTime', label: 'All' },
+  ];
+
+  return (
+    <div className={`inline-flex items-center p-1 rounded-2xl border text-[11px] font-extrabold flex-wrap gap-0.5 ${baseClasses}`}>
+      {presets.map((tf) => (
+        <button
+          key={tf.id}
+          type="button"
+          onClick={(e) => { e.stopPropagation(); setTimeFilter(tf.id); }}
+          className={`px-2.5 py-1 rounded-xl transition-all ${timeFilter === tf.id ? activeClasses : inactiveClasses}`}
+        >
+          {tf.label}
+        </button>
+      ))}
+
+      {/* Custom toggle + inline stepper */}
+      {timeFilter !== 'custom' ? (
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); setTimeFilter('custom'); }}
+          className={`px-2.5 py-1 rounded-xl transition-all ${inactiveClasses}`}
+        >
+          Custom
+        </button>
+      ) : (
+        <div className="flex items-center gap-0 bg-accent rounded-xl overflow-hidden shadow-sm">
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); setCustomDays(Math.max(1, customDays - 1)); }}
+            className="px-1.5 py-1 text-white/80 hover:text-white hover:bg-white/10 transition-colors font-bold"
+          >
+            −
+          </button>
           <input
-            type="number"
-            min="1"
-            max="365"
+            type="text"
+            inputMode="numeric"
             value={customDays}
-            onChange={(e) => setCustomDays(Math.max(1, parseInt(e.target.value) || 1))}
-            className="w-10 bg-transparent text-center outline-none border-b border-accent font-extrabold"
+            onClick={(e) => e.stopPropagation()}
+            onChange={(e) => {
+              const v = parseInt(e.target.value);
+              if (!isNaN(v) && v >= 1 && v <= 365) setCustomDays(v);
+              else if (e.target.value === '') setCustomDays(1);
+            }}
+            className="w-7 bg-transparent text-white text-center outline-none font-extrabold text-[11px] py-1 appearance-none [-moz-appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
           />
-          <span className="text-[10px] opacity-70">days</span>
+          <span className="text-white/60 text-[9px] pr-1 font-bold">d</span>
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); setCustomDays(Math.min(365, customDays + 1)); }}
+            className="px-1.5 py-1 text-white/80 hover:text-white hover:bg-white/10 transition-colors font-bold"
+          >
+            +
+          </button>
         </div>
       )}
     </div>
@@ -307,8 +328,246 @@ export default function AIDailyReportCard() {
       period: timeFilter,
       periodLabel,
       items,
+      // expose raw daily series for insight engine
+      _rawDailySeries: (() => {
+        const series = [];
+        for (let i = 0; i < daysRange; i++) {
+          const dd = new Date(d);
+          dd.setDate(d.getDate() - i);
+          const key = dateKey(dd);
+          const pl = logs[key] || {};
+          const pm = metrics[key] || {};
+          const allT = pillars.flatMap(p => p.targets.filter(t => t.frequency === 'daily' || !t.frequency));
+          const doneCount = allT.filter(t => pl[t.id]?.done).length;
+          series.push({ key, doneCount, totalTargets: allT.length, log: pl, metric: pm });
+        }
+        return series;
+      })(),
     };
-  }, [pillars, dayLog, dayMetrics, logs, metrics, today, timeFilter]);
+  }, [pillars, dayLog, dayMetrics, logs, metrics, today, timeFilter, totalAllTimeDays, customDays]);
+
+  // ═══════════════════════════════════════════════════════════════
+  // 🧬 DHARMA SCORE™ — Holistic 0-100 composite wellness score
+  // ═══════════════════════════════════════════════════════════════
+  const dharmaScore = useMemo(() => {
+    const kpiItems = dailyPayload.items.filter(i => typeof i.pct === 'number');
+    if (kpiItems.length === 0) return { score: 0, grade: 'F', color: '#EF4444', label: 'No Data' };
+
+    // Weighted categories
+    const weights = { Sleep: 22, Practice: 20, Hydration: 18, Nutrition: 18, Exercise: 15, Consistency: 7 };
+    let weightedSum = 0;
+    let totalWeight = 0;
+
+    kpiItems.forEach(item => {
+      const w = weights[item.category] || 10;
+      weightedSum += item.pct * w;
+      totalWeight += w;
+    });
+
+    // Balance bonus: reward well-rounded performance (low variance across KPIs)
+    const avgPct = kpiItems.reduce((s, i) => s + i.pct, 0) / kpiItems.length;
+    const variance = kpiItems.reduce((s, i) => s + Math.pow(i.pct - avgPct, 2), 0) / kpiItems.length;
+    const balanceBonus = Math.max(0, 5 - Math.round(Math.sqrt(variance) / 5));
+
+    const raw = totalWeight > 0 ? Math.round(weightedSum / totalWeight) + balanceBonus : 0;
+    const score = Math.min(100, Math.max(0, raw));
+
+    const grade = score >= 90 ? 'S' : score >= 80 ? 'A' : score >= 70 ? 'B' : score >= 55 ? 'C' : score >= 40 ? 'D' : 'F';
+    const color = score >= 90 ? '#10B981' : score >= 80 ? '#14B8A6' : score >= 70 ? '#3B82F6' : score >= 55 ? '#E6A04E' : score >= 40 ? '#F05A36' : '#EF4444';
+    const label = score >= 90 ? 'Exceptional' : score >= 80 ? 'Excellent' : score >= 70 ? 'Strong' : score >= 55 ? 'Developing' : score >= 40 ? 'Needs Focus' : 'Getting Started';
+
+    return { score, grade, color, label };
+  }, [dailyPayload]);
+
+  // ═══════════════════════════════════════════════════════════════
+  // 🔗 HIDDEN PATTERN CORRELATIONS — Cross-metric discovery
+  // ═══════════════════════════════════════════════════════════════
+  const patternInsights = useMemo(() => {
+    const series = dailyPayload._rawDailySeries || [];
+    if (series.length < 3) return [];
+
+    const insights = [];
+    const safeNum = (val) => {
+      if (val === null || val === undefined || typeof val === 'boolean') return null;
+      if (typeof val === 'string' && val.includes(':')) return null;
+      const n = parseFloat(val);
+      return isNaN(n) ? null : n;
+    };
+
+    // Build daily metric vectors
+    const dailyVectors = series.map(day => {
+      const vec = { completion: day.totalTargets > 0 ? Math.round((day.doneCount / day.totalTargets) * 100) : 0 };
+
+      // Extract numeric values from log entries
+      Object.entries(day.log).forEach(([tid, entry]) => {
+        if (!entry || typeof entry !== 'object') return;
+        const target = pillars.flatMap(p => p.targets).find(t => t.id === tid);
+        if (!target) return;
+        const name = (target.name || '').toLowerCase();
+        if (name.includes('water') || name.includes('jal')) {
+          const v = safeNum(entry.value);
+          if (v !== null) vec.water = v;
+          else if (entry.done) vec.water = 1;
+        } else if (name.includes('sleep')) {
+          const v = safeNum(entry.value);
+          if (v !== null && v <= 16) vec.sleep = v;
+          else if (entry.done) vec.sleep = 1;
+        } else if (name.includes('protein') || name.includes('prot')) {
+          const v = safeNum(entry.value);
+          if (v !== null) vec.protein = v;
+        } else if (name.includes('workout') || name.includes('exercise') || name.includes('gym')) {
+          const v = safeNum(entry.value);
+          if (v !== null) vec.workout = v;
+          else if (entry.done) vec.workout = 1;
+        }
+      });
+
+      // Day of week (0=Sun, 6=Sat)
+      const dt = new Date(day.key);
+      vec.isWeekend = dt.getDay() === 0 || dt.getDay() === 6;
+
+      return vec;
+    });
+
+    // Correlation: Sleep → Task Completion
+    const withSleep = dailyVectors.filter(v => v.sleep !== undefined);
+    if (withSleep.length >= 3) {
+      const median = withSleep.map(v => v.sleep).sort((a, b) => a - b)[Math.floor(withSleep.length / 2)];
+      const highSleep = withSleep.filter(v => v.sleep >= median);
+      const lowSleep = withSleep.filter(v => v.sleep < median);
+      if (highSleep.length > 0 && lowSleep.length > 0) {
+        const avgHigh = Math.round(highSleep.reduce((s, v) => s + v.completion, 0) / highSleep.length);
+        const avgLow = Math.round(lowSleep.reduce((s, v) => s + v.completion, 0) / lowSleep.length);
+        if (Math.abs(avgHigh - avgLow) >= 8) {
+          insights.push({
+            emoji: '😴',
+            icon: 'sleep',
+            title: 'Sleep ↔ Productivity',
+            text: `When you sleep ${median}+ hrs, task completion is ${avgHigh}% vs ${avgLow}% on lighter sleep nights`,
+            impact: avgHigh > avgLow ? 'positive' : 'warning',
+          });
+        }
+      }
+    }
+
+    // Correlation: Water → Workout
+    const withWater = dailyVectors.filter(v => v.water !== undefined && v.workout !== undefined);
+    if (withWater.length >= 3) {
+      const medianW = withWater.map(v => v.water).sort((a, b) => a - b)[Math.floor(withWater.length / 2)];
+      const highW = withWater.filter(v => v.water >= medianW);
+      const lowW = withWater.filter(v => v.water < medianW);
+      if (highW.length > 0 && lowW.length > 0) {
+        const avgHighWk = Math.round(highW.reduce((s, v) => s + (v.workout || 0), 0) / highW.length);
+        const avgLowWk = Math.round(lowW.reduce((s, v) => s + (v.workout || 0), 0) / lowW.length);
+        if (Math.abs(avgHighWk - avgLowWk) >= 5) {
+          insights.push({
+            emoji: '💧',
+            icon: 'water',
+            title: 'Hydration ↔ Exercise',
+            text: `Days with higher water intake correlate with ${avgHighWk > avgLowWk ? 'longer' : 'shorter'} workouts (${avgHighWk} vs ${avgLowWk} min)`,
+            impact: avgHighWk > avgLowWk ? 'positive' : 'neutral',
+          });
+        }
+      }
+    }
+
+    // Weekend vs Weekday pattern
+    const weekdays = dailyVectors.filter(v => !v.isWeekend);
+    const weekends = dailyVectors.filter(v => v.isWeekend);
+    if (weekdays.length >= 2 && weekends.length >= 1) {
+      const avgWd = Math.round(weekdays.reduce((s, v) => s + v.completion, 0) / weekdays.length);
+      const avgWe = Math.round(weekends.reduce((s, v) => s + v.completion, 0) / weekends.length);
+      if (Math.abs(avgWd - avgWe) >= 10) {
+        insights.push({
+          emoji: '📅',
+          icon: 'calendar',
+          title: 'Weekday vs Weekend',
+          text: avgWd > avgWe
+            ? `Your completion rate drops ${avgWd - avgWe}% on weekends (${avgWe}%) vs weekdays (${avgWd}%)`
+            : `You're actually ${avgWe - avgWd}% more productive on weekends (${avgWe}%) than weekdays (${avgWd}%)`,
+          impact: avgWd > avgWe ? 'warning' : 'positive',
+        });
+      }
+    }
+
+    // Streak analysis
+    let currentStreak = 0;
+    let longestStreak = 0;
+    let tempStreak = 0;
+    for (const day of series) {
+      const rate = day.totalTargets > 0 ? day.doneCount / day.totalTargets : 0;
+      if (rate >= 0.5) {
+        tempStreak++;
+        longestStreak = Math.max(longestStreak, tempStreak);
+        if (currentStreak === 0 || tempStreak === currentStreak + 1) currentStreak = tempStreak;
+      } else {
+        if (currentStreak > 0 && tempStreak < currentStreak) { /* streak already broken */ }
+        tempStreak = 0;
+      }
+    }
+    // Re-calculate current streak from today backwards
+    currentStreak = 0;
+    for (const day of series) {
+      if (day.totalTargets > 0 && day.doneCount / day.totalTargets >= 0.5) currentStreak++;
+      else break;
+    }
+    if (longestStreak >= 2 || currentStreak >= 2) {
+      insights.push({
+        emoji: '🔥',
+        icon: 'streak',
+        title: 'Consistency Streak',
+        text: currentStreak >= 2
+          ? `You're on a ${currentStreak}-day streak! Longest: ${longestStreak} days in this period`
+          : `Best streak: ${longestStreak} consecutive days of 50%+ completion`,
+        impact: currentStreak >= 3 ? 'positive' : 'neutral',
+      });
+    }
+
+    return insights.slice(0, 4);
+  }, [dailyPayload, pillars]);
+
+  // ═══════════════════════════════════════════════════════════════
+  // 🔮 TOMORROW'S PREDICTION — Trend-based forecasting
+  // ═══════════════════════════════════════════════════════════════
+  const predictions = useMemo(() => {
+    const series = dailyPayload._rawDailySeries || [];
+    if (series.length < 3) return null;
+
+    // Use last 5 days (or available) for trend
+    const trendDays = Math.min(5, series.length);
+    const recentSeries = series.slice(0, trendDays);
+
+    // Completion rate trend
+    const completionRates = recentSeries.map(d => d.totalTargets > 0 ? Math.round((d.doneCount / d.totalTargets) * 100) : 0);
+    const avgCompletion = Math.round(completionRates.reduce((s, v) => s + v, 0) / completionRates.length);
+
+    // Simple linear trend: compare first half vs second half
+    const firstHalf = completionRates.slice(Math.floor(completionRates.length / 2));
+    const secondHalf = completionRates.slice(0, Math.floor(completionRates.length / 2));
+    const firstAvg = firstHalf.length > 0 ? firstHalf.reduce((s, v) => s + v, 0) / firstHalf.length : 0;
+    const secondAvg = secondHalf.length > 0 ? secondHalf.reduce((s, v) => s + v, 0) / secondHalf.length : 0;
+
+    const trend = secondAvg - firstAvg; // positive = improving
+    const predictedCompletion = Math.min(100, Math.max(0, Math.round(avgCompletion + trend * 0.5)));
+
+    // Confidence based on variance
+    const variance = completionRates.reduce((s, v) => s + Math.pow(v - avgCompletion, 2), 0) / completionRates.length;
+    const stdDev = Math.sqrt(variance);
+    const confidence = stdDev < 10 ? 'High' : stdDev < 25 ? 'Medium' : 'Low';
+    const confidenceColor = confidence === 'High' ? '#10B981' : confidence === 'Medium' ? '#E6A04E' : '#EF4444';
+
+    const trendDirection = trend > 5 ? 'improving' : trend < -5 ? 'declining' : 'steady';
+    const trendEmoji = trend > 5 ? '📈' : trend < -5 ? '📉' : '➡️';
+
+    return {
+      predictedCompletion,
+      confidence,
+      confidenceColor,
+      trendDirection,
+      trendEmoji,
+      avgRecent: avgCompletion,
+    };
+  }, [dailyPayload]);
 
   // Recharts Data
   const barChartData = useMemo(() => {
@@ -571,6 +830,62 @@ export default function AIDailyReportCard() {
             </div>
           </div>
         </div>
+
+        {/* Unique AI Feature 1: Holistic Dharma Score™ & Tomorrow Prediction */}
+        <div className="p-4 rounded-3xl bg-gradient-to-r from-accent/10 via-amber-500/10 to-teal-500/10 border border-accent/20 flex items-center justify-between flex-wrap gap-4">
+          <div className="flex items-center gap-3">
+            <div
+              className="w-14 h-14 rounded-2xl flex flex-col items-center justify-center font-extrabold text-white shadow-lg shrink-0"
+              style={{ backgroundColor: dharmaScore.color }}
+            >
+              <span className="text-xl leading-none">{dharmaScore.score}</span>
+              <span className="text-[9px] opacity-80 uppercase tracking-tighter">Grade {dharmaScore.grade}</span>
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h4 className="text-sm font-extrabold text-[#18191E] dark:text-white">Dharma Score™</h4>
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase text-white shadow-xs" style={{ backgroundColor: dharmaScore.color }}>
+                  {dharmaScore.label}
+                </span>
+              </div>
+              <p className="text-xs text-stone-500 dark:text-stone-400 font-medium mt-0.5">
+                Holistic composite score across hydration, nutrition, sleep, practice & consistency
+              </p>
+            </div>
+          </div>
+
+          {predictions && (
+            <div className="flex items-center gap-3 bg-black/5 dark:bg-white/5 px-3.5 py-2 rounded-2xl border border-black/5 dark:border-white/10 text-xs font-extrabold text-[#18191E] dark:text-white">
+              <span>{predictions.trendEmoji} Tomorrow Forecast:</span>
+              <span className="text-accent font-black">{predictions.predictedCompletion}% Completion</span>
+              <span className="text-[10px] px-2 py-0.5 rounded-full font-bold text-white" style={{ backgroundColor: predictions.confidenceColor }}>
+                {predictions.confidence} Conf.
+              </span>
+            </div>
+          )}
+        </div>
+
+        {/* Unique AI Feature 2: Hidden Pattern Correlations */}
+        {patternInsights.length > 0 && (
+          <div className="space-y-2">
+            <div className="flex items-center justify-between text-xs font-extrabold text-[#18191E] dark:text-white">
+              <span className="flex items-center gap-1.5 text-accent">
+                <Sparkles size={14} /> AI-Discovered Pattern Correlations ({dailyPayload.periodLabel})
+              </span>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              {patternInsights.map((insight, idx) => (
+                <div key={idx} className="p-3 rounded-2xl bg-black/[0.02] dark:bg-white/5 border border-black/5 dark:border-white/8 flex items-start gap-2.5">
+                  <span className="text-base shrink-0 mt-0.5">{insight.emoji}</span>
+                  <div className="space-y-0.5">
+                    <h5 className="text-xs font-extrabold text-[#18191E] dark:text-white">{insight.title}</h5>
+                    <p className="text-[11px] text-stone-600 dark:text-stone-300 font-medium leading-snug">{insight.text}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Scannable Clean AI Report Content */}
         {parsedSections && (
