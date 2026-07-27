@@ -111,37 +111,26 @@ export default function DynamicIsland({ onOpenFocus, onOpenProfile }) {
                 <Timer size={11} /> Focus
               </button>
 
-              {/* Profile or Sign In Button inside Collapsed Island */}
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  if (onOpenProfile) onOpenProfile();
-                }}
-                title={user ? user.name : 'Sign in'}
-                className={`flex items-center gap-1 text-[10px] sm:text-[11px] font-extrabold px-2.5 py-1 rounded-full shrink-0 hover:scale-105 active:scale-95 transition-all shadow-sm ${
-                  user
-                    ? 'text-white bg-white/10 hover:bg-white/20 border border-white/20'
-                    : 'text-white bg-accent'
-                }`}
-              >
-                {user ? (
-                  <>
-                    {user.avatarPhoto ? (
-                      <img src={user.avatarPhoto} alt={user.name} className="w-3.5 h-3.5 rounded-full object-cover shrink-0" />
-                    ) : (
-                      <span className="w-3.5 h-3.5 rounded-full bg-accent text-white flex items-center justify-center text-[7px] font-black shrink-0">
-                        {user.name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase()}
-                      </span>
-                    )}
-                    <span className="truncate max-w-[55px] sm:max-w-[70px]">{user.name.split(' ')[0]}</span>
-                  </>
-                ) : (
-                  <>
-                    <LogIn size={11} className="shrink-0" />
-                    <span>Sign in</span>
-                  </>
-                )}
-              </button>
+              {/* Profile button inside Collapsed Island if logged in */}
+              {user && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (onOpenProfile) onOpenProfile();
+                  }}
+                  title={user.name}
+                  className="flex items-center gap-1 text-[10px] sm:text-[11px] font-extrabold px-2.5 py-1 rounded-full shrink-0 hover:scale-105 active:scale-95 transition-all shadow-sm text-white bg-white/10 hover:bg-white/20 border border-white/20"
+                >
+                  {user.avatarPhoto ? (
+                    <img src={user.avatarPhoto} alt={user.name} className="w-3.5 h-3.5 rounded-full object-cover shrink-0" />
+                  ) : (
+                    <span className="w-3.5 h-3.5 rounded-full bg-accent text-white flex items-center justify-center text-[7px] font-black shrink-0">
+                      {user.name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase()}
+                    </span>
+                  )}
+                  <span className="truncate max-w-[55px] sm:max-w-[70px]">{user.name.split(' ')[0]}</span>
+                </button>
+              )}
 
               <ChevronDown size={12} className="text-white/40 ml-0.5" />
             </div>
@@ -175,32 +164,25 @@ export default function DynamicIsland({ onOpenFocus, onOpenProfile }) {
                 </button>
 
                 <div className="flex items-center gap-2">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setExpanded(false);
-                      if (onOpenProfile) onOpenProfile();
-                    }}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/15 text-white transition-all text-xs font-bold border border-white/10"
-                  >
-                    {user ? (
-                      <>
-                        <div className="w-4 h-4 rounded-full overflow-hidden bg-accent text-white flex items-center justify-center text-[8px] font-extrabold shrink-0">
-                          {user.avatarPhoto ? (
-                            <img src={user.avatarPhoto} alt={user.name} className="w-full h-full object-cover" />
-                          ) : (
-                            user.name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase()
-                          )}
-                        </div>
-                        <span className="truncate max-w-[70px]">{user.name.split(' ')[0]}</span>
-                      </>
-                    ) : (
-                      <>
-                        <LogIn size={13} className="text-accent" />
-                        <span>Sign in</span>
-                      </>
-                    )}
-                  </button>
+                  {user && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setExpanded(false);
+                        if (onOpenProfile) onOpenProfile();
+                      }}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/15 text-white transition-all text-xs font-bold border border-white/10"
+                    >
+                      <div className="w-4 h-4 rounded-full overflow-hidden bg-accent text-white flex items-center justify-center text-[8px] font-extrabold shrink-0">
+                        {user.avatarPhoto ? (
+                          <img src={user.avatarPhoto} alt={user.name} className="w-full h-full object-cover" />
+                        ) : (
+                          user.name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase()
+                        )}
+                      </div>
+                      <span className="truncate max-w-[70px]">{user.name.split(' ')[0]}</span>
+                    </button>
+                  )}
 
                   <button
                     onClick={(e) => { e.stopPropagation(); setExpanded(false); }}
