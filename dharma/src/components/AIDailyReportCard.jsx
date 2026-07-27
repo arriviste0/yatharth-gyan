@@ -20,341 +20,215 @@ export default function AIDailyReportCard() {
   const [isUnlocked, setIsUnlocked] = useState(false);
   const [loading, setLoading] = useState(false);
   const [reportText, setReportText] = useState(null);
+  const [timeFilter, setTimeFilter] = useState('today'); // 'today' | '7day' | '30day'
 
-  // Dynamic payload focusing strictly on high-level Daily & 7-Day Average KPIs derived from Daily Practice Targets
+  // Dynamic payload focusing on high-level KPIs for Today, 7-Day Avg, or 30-Day Avg
   const dailyPayload = useMemo(() => {
     const items = [];
     const d = new Date();
+    const daysRange = timeFilter === 'today' ? 1 : timeFilter === '7day' ? 7 : 30;
+    const periodLabel = timeFilter === 'today' ? 'Today' : timeFilter === '7day' ? '7-Day Average' : '30-Day Average';
 
-    // All active daily targets across all pillars
-    const allDailyTargets = pillars.flatMap((p) =>
-      p.targets.filter((t) => t.frequency === 'daily' || !t.frequency)
-    );
-
-    // Helper: Safely parse numbers (ignoring booleans, objects, and clock time strings like '23:00')
+    // Helper: Safely parse numbers
     const safeParseNumber = (val) => {
       if (val === null || val === undefined || typeof val === 'boolean') return NaN;
-      if (typeof val === 'string' && val.includes(':')) return NaN; // skip clock time strings
+      if (typeof val === 'string' && val.includes(':')) return NaN;
       const num = parseFloat(val);
       return isNaN(num) ? NaN : num;
     };
 
-    // --- 1. WATER INTAKE & 7-DAY AVG WATER ---
-    let waterTarget = null;
-    for (const p of pillars) {
-      for (const t of p.targets) {
-        const name = (t.name || '').toLowerCase();
-        const unit = (t.unit || '').toLowerCase();
-        if (name.includes('water') || name.includes('jal') || unit === 'l' || unit === 'ml' || t.id.includes('water')) {
-          waterTarget = t;
-          break;
+    // Helper to get average/sum for a target over N days
+    const getMetricValForDays = (targetMatcher, metricKey, goalDefault, isMl = false) => {
+      let goal = goalDefault;
+      let targetObj = null;
+
+      for (const p of pillars) {
+        for (const t of p.targets) {
+          if (targetMatcher(t, p)) {
+            targetObj = t;
+            break;
+          }
+        }
+        if (targetObj) break;
+      }
+
+      if (targetObj) {
+        const tv = safeParseNumber(targetObj.targetValue);
+        if (!isNaN(tv) && tv > 0) {
+          goal = (isMl || targetObj.unit === 'ml' || tv > 20) ? +(tv / 1000).toFixed(1) : tv;
         }
       }
-      if (waterTarget) break;
-    }
 
-    let waterGoal = 3.0;
-    if (waterTarget) {
-      const tv = safeParseNumber(waterTarget.targetValue);
-      if (!isNaN(tv) && tv > 0) {
-        waterGoal = (waterTarget.unit === 'ml' || tv > 20) ? +(tv / 1000).toFixed(1) : tv;
-      }
-    }
+      let totalSum = 0;
+      let activeDaysCount = 0;
 
-    let waterToday = 0;
-    if (waterTarget && dayLog[waterTarget.id]?.value != null) {
-      const v = safeParseNumber(dayLog[waterTarget.id].value);
-      if (!isNaN(v)) {
-        waterToday = (waterTarget.unit === 'ml' || v > 20) ? +(v / 1000).toFixed(1) : v;
-      } else if (dayLog[waterTarget.id]?.done) {
-        waterToday = waterGoal;
-      }
-    } else if (dayMetrics.water) {
-      const w = safeParseNumber(dayMetrics.water);
-      if (!isNaN(w)) {
-        waterToday = w >= 1000 ? +(w / 1000).toFixed(1) : w;
-      }
-    } else if (waterTarget && dayLog[waterTarget.id]?.done) {
-      waterToday = waterGoal;
-    }
-    if (isNaN(waterToday)) waterToday = 0;
+      for (let i = 0; i < daysRange; i++) {
+        const dd = new Date(d);
+        dd.setDate(d.getDate() - i);
+        const key = dateKey(dd);
+        const pastLog = logs[key] || {};
+        const pastMetric = metrics[key] || {};
+        let dayVal = null;
 
-    let water7Sum = 0;
-    let waterDaysCount = 0;
-    for (let i = 0; i < 7; i++) {
-      const dd = new Date(d);
-      dd.setDate(d.getDate() - i);
-      const key = dateKey(dd);
-      const pastLog = logs[key] || {};
-      const pastMetric = metrics[key] || {};
-      let dayVal = null;
-
-      if (waterTarget && pastLog[waterTarget.id]?.value != null) {
-        const v = safeParseNumber(pastLog[waterTarget.id].value);
-        if (!isNaN(v)) {
-          dayVal = (waterTarget.unit === 'ml' || v > 20) ? v / 1000 : v;
-        } else if (pastLog[waterTarget.id]?.done) {
-          dayVal = waterGoal;
-        }
-      } else if (pastMetric.water) {
-        const w = safeParseNumber(pastMetric.water);
-        if (!isNaN(w)) dayVal = w >= 1000 ? w / 1000 : w;
-      } else if (waterTarget && pastLog[waterTarget.id]?.done) {
-        dayVal = waterGoal;
-      }
-
-      if (dayVal !== null && !isNaN(dayVal)) {
-        water7Sum += dayVal;
-        waterDaysCount++;
-      }
-    }
-    const avgWater = waterDaysCount > 0 ? +(water7Sum / waterDaysCount).toFixed(1) : waterToday;
-
-    items.push({
-      category: 'Hydration',
-      name: 'Water Intake',
-      value: waterToday,
-      unit: 'L',
-      goal: waterGoal,
-      pct: waterGoal > 0 ? Math.min(100, Math.round((waterToday / waterGoal) * 100)) : 0,
-    });
-
-    items.push({
-      category: 'Hydration',
-      name: 'Avg Daily Water',
-      value: avgWater,
-      unit: 'L/day',
-      goal: waterGoal,
-      pct: waterGoal > 0 ? Math.min(100, Math.round((avgWater / waterGoal) * 100)) : 0,
-    });
-
-    // --- 2. PROTEIN INTAKE & 7-DAY AVG PROTEIN ---
-    let proteinTarget = null;
-    for (const p of pillars) {
-      for (const t of p.targets) {
-        const name = (t.name || '').toLowerCase();
-        const unit = (t.unit || '').toLowerCase();
-        if (name.includes('protein') || (unit === 'g' && name.includes('prot')) || t.id.includes('protein')) {
-          proteinTarget = t;
-          break;
-        }
-      }
-      if (proteinTarget) break;
-    }
-
-    let proteinGoal = 90;
-    if (proteinTarget) {
-      const tv = safeParseNumber(proteinTarget.targetValue);
-      if (!isNaN(tv) && tv > 0) proteinGoal = tv;
-    } else {
-      const foodPillar = pillars.find(p => p.id === 'ahara' || p.english.toLowerCase().includes('food') || p.english.toLowerCase().includes('diet'));
-      if (foodPillar) {
-        const numTarget = foodPillar.targets.find(t => (t.type === 'NUMBER' || t.type === 'DURATION') && safeParseNumber(t.targetValue) > 10);
-        if (numTarget) {
-          const tv = safeParseNumber(numTarget.targetValue);
-          if (!isNaN(tv)) proteinGoal = tv;
-        }
-      }
-    }
-
-    let proteinToday = 0;
-    // Check if sub-metrics for protein exist in any target log today
-    let subProteinSumToday = 0;
-    Object.values(dayLog).forEach(entry => {
-      if (entry?.subValues) {
-        Object.entries(entry.subValues).forEach(([k, v]) => {
-          if (k.toLowerCase().includes('protein') || k.toLowerCase().includes('prot')) {
-            const num = safeParseNumber(v);
-            if (!isNaN(num)) subProteinSumToday += num;
+        let subSum = 0;
+        Object.values(pastLog).forEach(entry => {
+          if (entry?.subValues) {
+            Object.entries(entry.subValues).forEach(([k, v]) => {
+              if (targetMatcher({ name: k, unit: '' }, {})) {
+                const num = safeParseNumber(v);
+                if (!isNaN(num)) subSum += num;
+              }
+            });
           }
         });
+
+        if (subSum > 0) {
+          dayVal = subSum;
+        } else if (targetObj && pastLog[targetObj.id]?.value != null) {
+          const v = safeParseNumber(pastLog[targetObj.id].value);
+          if (!isNaN(v)) {
+            dayVal = (isMl || targetObj.unit === 'ml' || v > 20) ? v / 1000 : v;
+          } else if (pastLog[targetObj.id]?.done) {
+            dayVal = goal;
+          }
+        } else if (metricKey && pastMetric[metricKey]) {
+          const m = safeParseNumber(pastMetric[metricKey]);
+          if (!isNaN(m)) dayVal = (isMl && m >= 1000) ? m / 1000 : m;
+        } else if (targetObj && pastLog[targetObj.id]?.done) {
+          dayVal = goal;
+        }
+
+        if (dayVal !== null && !isNaN(dayVal)) {
+          totalSum += dayVal;
+          activeDaysCount++;
+        }
       }
+
+      const calculatedVal = daysRange === 1
+        ? totalSum
+        : (activeDaysCount > 0 ? totalSum / activeDaysCount : 0);
+
+      return {
+        value: typeof calculatedVal === 'number' && calculatedVal % 1 !== 0 ? +calculatedVal.toFixed(1) : Math.round(calculatedVal),
+        goal,
+        activeDays: activeDaysCount,
+      };
+    };
+
+    // 1. Water
+    const waterData = getMetricValForDays(
+      (t) => (t.name || '').toLowerCase().includes('water') || (t.name || '').toLowerCase().includes('jal') || (t.unit || '').toLowerCase() === 'l' || (t.unit || '').toLowerCase() === 'ml',
+      'water', 3.0, true
+    );
+    items.push({
+      category: 'Hydration',
+      name: timeFilter === 'today' ? 'Water Intake' : 'Avg Water',
+      value: waterData.value,
+      unit: daysRange > 1 ? 'L/day' : 'L',
+      goal: waterData.goal,
+      pct: waterData.goal > 0 ? Math.min(100, Math.round((waterData.value / waterData.goal) * 100)) : 0,
     });
 
-    if (subProteinSumToday > 0) {
-      proteinToday = subProteinSumToday;
-    } else if (proteinTarget && dayLog[proteinTarget.id]?.value != null) {
-      const v = safeParseNumber(dayLog[proteinTarget.id].value);
-      if (!isNaN(v)) proteinToday = v;
-      else if (dayLog[proteinTarget.id]?.done) proteinToday = proteinGoal;
-    } else if (dayMetrics.protein) {
-      const v = safeParseNumber(dayMetrics.protein);
-      if (!isNaN(v)) proteinToday = v;
-    } else if (proteinTarget && dayLog[proteinTarget.id]?.done) {
-      proteinToday = proteinGoal;
-    } else {
-      const foodPillar = pillars.find(p => p.id === 'ahara' || p.english.toLowerCase().includes('food') || p.english.toLowerCase().includes('diet'));
-      if (foodPillar && foodPillar.targets.length > 0) {
-        const foodDone = foodPillar.targets.filter(t => dayLog[t.id]?.done).length;
-        proteinToday = foodDone > 0 ? Math.round((foodDone / foodPillar.targets.length) * proteinGoal) : 0;
-      }
-    }
-    if (isNaN(proteinToday)) proteinToday = 0;
+    // 2. Protein
+    const proteinData = getMetricValForDays(
+      (t) => (t.name || '').toLowerCase().includes('protein') || (t.name || '').toLowerCase().includes('prot'),
+      'protein', 90, false
+    );
+    items.push({
+      category: 'Nutrition',
+      name: timeFilter === 'today' ? 'Protein Intake' : 'Avg Protein',
+      value: proteinData.value,
+      unit: daysRange > 1 ? 'g/day' : 'g',
+      goal: proteinData.goal,
+      pct: proteinData.goal > 0 ? Math.min(100, Math.round((proteinData.value / proteinData.goal) * 100)) : 0,
+    });
 
-    let protein7Sum = 0;
-    let proteinDaysCount = 0;
-    for (let i = 0; i < 7; i++) {
+    // 3. Sleep & Rest
+    const sleepData = getMetricValForDays(
+      (t) => (t.unit || '').toLowerCase() === 'hr' || (t.unit || '').toLowerCase() === 'hours' || (t.name || '').toLowerCase().includes('sleep'),
+      'sleep', 8.0, false
+    );
+    items.push({
+      category: 'Sleep',
+      name: timeFilter === 'today' ? 'Sleep & Rest' : 'Avg Sleep',
+      value: sleepData.value,
+      unit: daysRange > 1 ? 'hr/day' : 'hr',
+      goal: sleepData.goal,
+      pct: sleepData.goal > 0 ? Math.min(100, Math.round((sleepData.value / sleepData.goal) * 100)) : 0,
+    });
+
+    // 4. Workout / Exercise
+    const workoutData = getMetricValForDays(
+      (t) => (t.unit || '').toLowerCase() === 'min' || (t.name || '').toLowerCase().includes('workout') || (t.name || '').toLowerCase().includes('gym') || (t.name || '').toLowerCase().includes('exercise'),
+      'workout', 45, false
+    );
+    items.push({
+      category: 'Exercise',
+      name: timeFilter === 'today' ? 'Workout Time' : 'Avg Workout',
+      value: workoutData.value,
+      unit: daysRange > 1 ? 'min/day' : 'min',
+      goal: workoutData.goal,
+      pct: workoutData.goal > 0 ? Math.min(100, Math.round((workoutData.value / workoutData.goal) * 100)) : 0,
+    });
+
+    // 5. Tasks Completed
+    const allDailyTargets = pillars.flatMap((p) => p.targets.filter((t) => t.frequency === 'daily' || !t.frequency));
+    const totalGoal = allDailyTargets.length;
+    let tasksSum = 0;
+    let periodRatesSum = 0;
+
+    for (let i = 0; i < daysRange; i++) {
       const dd = new Date(d);
       dd.setDate(d.getDate() - i);
       const key = dateKey(dd);
       const pastLog = logs[key] || {};
-      const pastMetric = metrics[key] || {};
-      let dayVal = null;
-
-      let subProtSum = 0;
-      Object.values(pastLog).forEach(entry => {
-        if (entry?.subValues) {
-          Object.entries(entry.subValues).forEach(([k, v]) => {
-            if (k.toLowerCase().includes('protein') || k.toLowerCase().includes('prot')) {
-              const num = safeParseNumber(v);
-              if (!isNaN(num)) subProtSum += num;
-            }
-          });
-        }
-      });
-
-      if (subProtSum > 0) {
-        dayVal = subProtSum;
-      } else if (proteinTarget && pastLog[proteinTarget.id]?.value != null) {
-        const v = safeParseNumber(pastLog[proteinTarget.id].value);
-        if (!isNaN(v)) dayVal = v;
-        else if (pastLog[proteinTarget.id]?.done) dayVal = proteinGoal;
-      } else if (pastMetric.protein) {
-        const v = safeParseNumber(pastMetric.protein);
-        if (!isNaN(v)) dayVal = v;
-      } else if (proteinTarget && pastLog[proteinTarget.id]?.done) {
-        dayVal = proteinGoal;
-      } else {
-        const foodPillar = pillars.find(p => p.id === 'ahara' || p.english.toLowerCase().includes('food') || p.english.toLowerCase().includes('diet'));
-        if (foodPillar && foodPillar.targets.length > 0) {
-          const foodDone = foodPillar.targets.filter(t => pastLog[t.id]?.done).length;
-          if (foodDone > 0) dayVal = Math.round((foodDone / foodPillar.targets.length) * proteinGoal);
-        }
-      }
-
-      if (dayVal !== null && !isNaN(dayVal)) {
-        protein7Sum += dayVal;
-        proteinDaysCount++;
-      }
-    }
-    const avgProtein = proteinDaysCount > 0 ? Math.round(protein7Sum / proteinDaysCount) : proteinToday;
-
-    items.push({
-      category: 'Nutrition',
-      name: 'Avg Daily Protein',
-      value: avgProtein,
-      unit: 'g/day',
-      goal: proteinGoal,
-      pct: proteinGoal > 0 ? Math.min(100, Math.round((avgProtein / proteinGoal) * 100)) : 0,
-    });
-
-    // --- 3. SLEEP & REST ---
-    let sleepTarget = null;
-    for (const p of pillars) {
-      for (const t of p.targets) {
-        const name = (t.name || '').toLowerCase();
-        const unit = (t.unit || '').toLowerCase();
-        if (unit === 'hr' || unit === 'hours' || (t.type === 'NUMBER' && name.includes('sleep')) || (t.type === 'DURATION' && name.includes('sleep'))) {
-          sleepTarget = t;
-          break;
-        }
-      }
-      if (sleepTarget) break;
+      const doneC = allDailyTargets.filter(t => pastLog[t.id]?.done).length;
+      tasksSum += doneC;
+      if (totalGoal > 0) periodRatesSum += (doneC / totalGoal);
     }
 
-    let sleepGoal = 8.0;
-    if (sleepTarget) {
-      const tv = safeParseNumber(sleepTarget.targetValue);
-      if (!isNaN(tv) && tv > 0 && tv <= 16) sleepGoal = tv;
-    }
-
-    let sleepToday = 0;
-    if (sleepTarget && dayLog[sleepTarget.id]?.value != null) {
-      const v = safeParseNumber(dayLog[sleepTarget.id].value);
-      if (!isNaN(v) && v <= 16) sleepToday = v;
-      else if (dayLog[sleepTarget.id]?.done) sleepToday = sleepGoal;
-    } else {
-      const sleepPillar = pillars.find(p => p.id === 'nidra' || p.english.toLowerCase().includes('sleep'));
-      if (sleepPillar && sleepPillar.targets.length > 0) {
-        const sleepDone = sleepPillar.targets.filter(t => dayLog[t.id]?.done).length;
-        if (sleepDone > 0) {
-          sleepToday = +( (sleepDone / sleepPillar.targets.length) * sleepGoal ).toFixed(1);
-        }
-      }
-    }
-    if (isNaN(sleepToday)) sleepToday = 0;
-
-    items.push({
-      category: 'Sleep',
-      name: 'Sleep & Rest',
-      value: sleepToday,
-      unit: 'hr',
-      goal: sleepGoal,
-      pct: sleepGoal > 0 ? Math.min(100, Math.round((sleepToday / sleepGoal) * 100)) : 0,
-    });
-
-    // --- 4. WORKOUT / EXERCISE TIME ---
-    let workoutTarget = null;
-    for (const p of pillars) {
-      for (const t of p.targets) {
-        const name = (t.name || '').toLowerCase();
-        const unit = (t.unit || '').toLowerCase();
-        if ((t.type === 'NUMBER' || t.type === 'DURATION') && (unit === 'min' || name.includes('duration') || name.includes('workout') || name.includes('exercise'))) {
-          workoutTarget = t;
-          break;
-        }
-      }
-      if (workoutTarget) break;
-    }
-
-    let workoutGoal = 45;
-    if (workoutTarget) {
-      const tv = safeParseNumber(workoutTarget.targetValue);
-      if (!isNaN(tv) && tv > 0) workoutGoal = tv;
-    }
-
-    let workoutToday = 0;
-    if (workoutTarget && dayLog[workoutTarget.id]?.value != null) {
-      const v = safeParseNumber(dayLog[workoutTarget.id].value);
-      if (!isNaN(v)) workoutToday = v;
-      else if (dayLog[workoutTarget.id]?.done) workoutToday = workoutGoal;
-    } else {
-      const movePillar = pillars.find(p => p.id === 'vyayama' || p.english.toLowerCase().includes('gym') || p.english.toLowerCase().includes('move') || p.english.toLowerCase().includes('workout'));
-      if (movePillar && movePillar.targets.length > 0) {
-        const moveDone = movePillar.targets.filter(t => dayLog[t.id]?.done).length;
-        workoutToday = moveDone > 0 ? Math.round((moveDone / movePillar.targets.length) * workoutGoal) : 0;
-      }
-    }
-    if (isNaN(workoutToday)) workoutToday = 0;
-
-    items.push({
-      category: 'Exercise',
-      name: 'Workout Time',
-      value: workoutToday,
-      unit: 'min',
-      goal: workoutGoal,
-      pct: workoutGoal > 0 ? Math.min(100, Math.round((workoutToday / workoutGoal) * 100)) : 0,
-    });
-
-    // --- 5. TASKS COMPLETED (PRACTICE) ---
-    const totalDone = allDailyTargets.filter(t => dayLog[t.id]?.done).length;
-    const totalGoal = allDailyTargets.length;
-    const totalPct = totalGoal > 0 ? Math.round((totalDone / totalGoal) * 100) : 0;
+    const avgTasksPerDay = daysRange > 1 ? +(tasksSum / daysRange).toFixed(1) : tasksSum;
+    const avgCompletionPct = daysRange > 1
+      ? Math.round((periodRatesSum / daysRange) * 100)
+      : (totalGoal > 0 ? Math.round((tasksSum / totalGoal) * 100) : 0);
 
     items.push({
       category: 'Practice',
-      name: 'Tasks Completed',
-      value: totalDone,
+      name: timeFilter === 'today' ? 'Tasks Done' : 'Avg Tasks/Day',
+      value: avgTasksPerDay,
       unit: 'tasks',
       goal: totalGoal,
-      pct: totalPct,
+      pct: totalGoal > 0 ? Math.min(100, Math.round((avgTasksPerDay / totalGoal) * 100)) : 0,
+    });
+
+    // 6. Completion Rate %
+    items.push({
+      category: 'Practice',
+      name: 'Completion Rate',
+      value: `${avgCompletionPct}%`,
+      unit: '%',
+      goal: 100,
+      pct: avgCompletionPct,
+    });
+
+    // 7. Active Logging Days
+    const loggedDays = Math.max(1, waterData.activeDays || (daysRange === 1 ? (totalGoal > 0 ? 1 : 0) : Math.min(daysRange, Math.round(daysRange * (avgCompletionPct / 100 || 0.8)))));
+    items.push({
+      category: 'Consistency',
+      name: 'Active Days',
+      value: `${loggedDays}/${daysRange}`,
+      unit: 'days',
+      goal: daysRange,
+      pct: Math.round((loggedDays / daysRange) * 100),
     });
 
     return {
       date: today,
+      period: timeFilter,
+      periodLabel,
       items,
     };
-  }, [pillars, dayLog, dayMetrics, logs, metrics, today]);
+  }, [pillars, dayLog, dayMetrics, logs, metrics, today, timeFilter]);
 
   // Recharts Data
   const barChartData = useMemo(() => {
@@ -440,25 +314,48 @@ export default function AIDailyReportCard() {
   return (
     <div className="relative rounded-[28px] p-5 lg:p-6 bg-gradient-to-br from-white via-white to-orange-50/30 dark:from-[#181926] dark:via-[#181926] dark:to-[#F05A36]/10 border border-black/5 dark:border-[#F05A36]/20 shadow-xl overflow-hidden min-h-[320px]">
       
-      {/* Glassmorphism Blur Overlay when locked - matching rounded-[28px] */}
+      {/* Glassmorphism Blur Overlay when locked */}
       {!isUnlocked && (
-        <div className="absolute inset-0 z-30 flex flex-col items-center justify-center p-6 bg-black/20 dark:bg-black/60 backdrop-blur-lg rounded-[28px] transition-all duration-500">
-          <div className="w-13 h-13 rounded-2xl bg-accent text-white flex items-center justify-center shadow-xl shadow-accent mb-3.5 animate-pulse">
-            <Sparkles size={26} />
+        <div className="absolute inset-0 z-30 flex flex-col items-center justify-center p-6 bg-black/25 dark:bg-black/65 backdrop-blur-lg rounded-[28px] transition-all duration-500">
+          <div className="w-12 h-12 rounded-2xl bg-accent text-white flex items-center justify-center shadow-xl shadow-accent mb-3 animate-pulse">
+            <Sparkles size={24} />
           </div>
           <h4 className="text-base sm:text-lg font-extrabold text-white mb-1 tracking-tight">
             Full Body & Practice AI Analysis
           </h4>
-          <p className="text-xs text-stone-200 font-medium mb-5 text-center max-w-sm">
-            Analyze your daily & 7-day average protein, water intake, sleep & practice KPIs
+          <p className="text-xs text-stone-200 font-medium mb-3 text-center max-w-sm">
+            Select a time period to analyze your protein, hydration, sleep & practice KPIs
           </p>
+
+          {/* Time Filter Pills in Overlay */}
+          <div className="flex items-center bg-white/10 p-1 rounded-2xl border border-white/20 text-xs font-extrabold mb-5">
+            {[
+              { id: 'today', label: 'Today' },
+              { id: '7day', label: '7-Day Avg' },
+              { id: '30day', label: '30-Day Avg' },
+            ].map((tf) => (
+              <button
+                key={tf.id}
+                type="button"
+                onClick={() => setTimeFilter(tf.id)}
+                className={`px-3.5 py-1.5 rounded-xl transition-all ${
+                  timeFilter === tf.id
+                    ? 'bg-accent text-white shadow-md'
+                    : 'text-white/70 hover:text-white'
+                }`}
+              >
+                {tf.label}
+              </button>
+            ))}
+          </div>
+
           <button
             onClick={handleUnlockAndAnalyze}
             disabled={loading}
             className="btn-coral px-8 py-3 text-xs font-extrabold shadow-2xl hover:scale-105 active:scale-95 transition-all flex items-center gap-2"
           >
             {loading ? <RefreshCw size={16} className="animate-spin" /> : <Zap size={16} />}
-            <span>{loading ? 'Analyzing Your KPIs…' : 'Analyze Day with AI'}</span>
+            <span>{loading ? 'Analyzing Your KPIs…' : `Analyze ${dailyPayload.periodLabel} with AI`}</span>
           </button>
         </div>
       )}
@@ -478,21 +375,45 @@ export default function AIDailyReportCard() {
                 Practice & Body AI Analysis
               </h3>
               <p className="text-xs text-stone-500 dark:text-stone-400 font-medium">
-                High-level daily & 7-day average protein, hydration & rest KPIs
+                High-level {dailyPayload.periodLabel.toLowerCase()} protein, hydration, sleep & practice KPIs
               </p>
             </div>
           </div>
 
-          {isUnlocked && (
-            <button
-              onClick={handleUnlockAndAnalyze}
-              disabled={loading}
-              className="btn-coral flex items-center gap-2 text-xs font-extrabold px-3.5 py-1.5 shadow-md hover:scale-105 active:scale-95 transition-all disabled:opacity-50"
-            >
-              {loading ? <RefreshCw size={13} className="animate-spin" /> : <Zap size={13} />}
-              <span>Re-Analyze</span>
-            </button>
-          )}
+          <div className="flex items-center gap-3 flex-wrap">
+            {/* Time Filter Pills */}
+            <div className="flex items-center bg-black/5 dark:bg-white/5 p-1 rounded-2xl border border-black/5 dark:border-white/10 text-xs font-extrabold">
+              {[
+                { id: 'today', label: 'Today' },
+                { id: '7day', label: '7-Day Avg' },
+                { id: '30day', label: '30-Day Avg' },
+              ].map((tf) => (
+                <button
+                  key={tf.id}
+                  type="button"
+                  onClick={() => setTimeFilter(tf.id)}
+                  className={`px-3 py-1.5 rounded-xl transition-all ${
+                    timeFilter === tf.id
+                      ? 'bg-accent text-white shadow-sm'
+                      : 'text-stone-500 dark:text-stone-400 hover:text-[#18191E] dark:hover:text-white'
+                  }`}
+                >
+                  {tf.label}
+                </button>
+              ))}
+            </div>
+
+            {isUnlocked && (
+              <button
+                onClick={handleUnlockAndAnalyze}
+                disabled={loading}
+                className="btn-coral flex items-center gap-2 text-xs font-extrabold px-3.5 py-2 shadow-md hover:scale-105 active:scale-95 transition-all disabled:opacity-50"
+              >
+                {loading ? <RefreshCw size={13} className="animate-spin" /> : <Zap size={13} />}
+                <span>Re-Analyze ({dailyPayload.periodLabel})</span>
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Core KPI Snapshot Cards with progress bars */}
