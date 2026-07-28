@@ -356,6 +356,83 @@ export default function AIDailyReportCard() {
   }, [pillars, dayLog, dayMetrics, logs, metrics, goals, today, timeFilter, totalAllTimeDays, customDays]);
 
   // ═══════════════════════════════════════════════════════════════
+  // 🎯 GOAL PROGRESS — compute logged progress vs user-set goals
+  // ═══════════════════════════════════════════════════════════════
+  const goalProgress = useMemo(() => {
+    if (!goals || goals.length === 0) return [];
+    const allTargets = pillars.flatMap(p => p.targets);
+    const d = new Date();
+    const daysRange = timeFilter === 'today' ? 1
+      : timeFilter === '7day' ? 7
+      : timeFilter === '30day' ? 30
+      : timeFilter === '90day' ? 90
+      : timeFilter === 'allTime' ? totalAllTimeDays
+      : Math.max(1, parseInt(customDays) || 14);
+
+    return goals.map(goal => {
+      // Find linked pillar target
+      const linkedTarget = goal.pillarTargetId ? allTargets.find(t => t.id === goal.pillarTargetId) : null;
+
+      let loggedValue = null;
+
+      if (linkedTarget) {
+        // Sum/avg logged values over period
+        let totalSum = 0;
+        let activeDays = 0;
+        for (let i = 0; i < daysRange; i++) {
+          const dd = new Date(d);
+          dd.setDate(d.getDate() - i);
+          const key = dateKey(dd);
+          const pastLog = logs[key] || {};
+          const entry = pastLog[linkedTarget.id];
+          if (entry?.value != null) {
+            const n = parseFloat(entry.value);
+            if (!isNaN(n)) { totalSum += n; activeDays++; }
+          } else if (entry?.done) {
+            totalSum += goal.value; // treat as full if done with no value
+            activeDays++;
+          }
+        }
+        if (activeDays > 0) {
+          loggedValue = daysRange === 1 ? +totalSum.toFixed(1) : +(totalSum / activeDays).toFixed(1);
+        }
+      }
+
+      // Compute progress %
+      let pct = 0;
+      if (loggedValue !== null && goal.value > 0) {
+        if (goal.direction === 'lte') {
+          // Lower is better — 100% if at or below goal, scales down above
+          pct = loggedValue <= goal.value ? 100 : Math.round((goal.value / loggedValue) * 100);
+        } else if (goal.direction === 'eq') {
+          const diff = Math.abs(loggedValue - goal.value);
+          pct = Math.round(Math.max(0, 100 - (diff / goal.value) * 100));
+        } else {
+          // gte — more is better
+          pct = Math.min(100, Math.round((loggedValue / goal.value) * 100));
+        }
+      }
+
+      const status = pct >= 100 ? 'achieved' : pct >= 75 ? 'close' : pct >= 40 ? 'progress' : 'start';
+      const statusColor = status === 'achieved' ? '#10B981' : status === 'close' ? '#3B82F6' : status === 'progress' ? '#E6A04E' : '#F05A36';
+
+      const daysLeft = goal.deadline
+        ? Math.ceil((new Date(goal.deadline) - new Date()) / 86400000)
+        : null;
+
+      return {
+        ...goal,
+        loggedValue,
+        pct,
+        status,
+        statusColor,
+        daysLeft,
+        linkedTarget,
+      };
+    });
+  }, [goals, pillars, logs, timeFilter, totalAllTimeDays, customDays]);
+
+  // ═══════════════════════════════════════════════════════════════
   // 🧬 DHARMA SCORE™ — Holistic 0-100 composite wellness score
   // ═══════════════════════════════════════════════════════════════
   const dharmaScore = useMemo(() => {
@@ -601,6 +678,7 @@ export default function AIDailyReportCard() {
     const rawLines = reportText.split('\n').map(l => l.trim()).filter(Boolean);
     let summary = null;
     let categoryItems = [];
+    let goalProgressLines = [];
     let bestWin = null;
     let worthAttention = null;
     let tomorrowTips = [];
@@ -632,16 +710,20 @@ export default function AIDailyReportCard() {
         currentMode = 'tomorrow';
       } else if (lower.includes('category breakdown') || lower.includes('breakdown:')) {
         currentMode = 'category';
+      } else if (lower.includes('goal progress') || lower.includes('🎯')) {
+        currentMode = 'goalProgress';
       } else if (currentMode === 'tomorrow') {
         if (cleaned) tomorrowTips.push(cleaned);
       } else if (currentMode === 'category') {
         if (cleaned) categoryItems.push(cleaned);
+      } else if (currentMode === 'goalProgress') {
+        if (cleaned) goalProgressLines.push(cleaned);
       } else if (!summary) {
         summary = cleaned;
       }
     });
 
-    return { summary, categoryItems, bestWin, worthAttention, tomorrowTips };
+    return { summary, categoryItems, goalProgressLines, bestWin, worthAttention, tomorrowTips };
   }, [reportText]);
 
   async function handleUnlockAndAnalyze() {
@@ -763,6 +845,70 @@ export default function AIDailyReportCard() {
             </div>
           ))}
         </div>
+
+        {/* 🎯 Goal Progress Cards — shows user-set goals vs logged data */}
+        {goalProgress.length > 0 && (
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-extrabold text-[#18191E] dark:text-white flex items-center gap-1.5">
+                <span>🎯</span> Your Goals — {dailyPayload.periodLabel} Progress
+              </span>
+              {goalProgress.some(g => g.status === 'achieved') && (
+                <span className="text-[10px] font-bold text-emerald-500 px-2 py-0.5 rounded-full bg-emerald-500/10">
+                  {goalProgress.filter(g => g.status === 'achieved').length} achieved 🎉
+                </span>
+              )}
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {goalProgress.map((goal, i) => (
+                <div key={i} className="p-3.5 rounded-2xl bg-white dark:bg-white/5 border border-black/5 dark:border-white/10 space-y-2.5 shadow-sm">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex-1 min-w-0">
+                      <h5 className="text-xs font-extrabold text-[#18191E] dark:text-white truncate">{goal.name}</h5>
+                      <p className="text-[10px] text-stone-400 font-medium mt-0.5">
+                        {goal.direction === 'lte' ? '≤ At most' : goal.direction === 'eq' ? '= Exactly' : '≥ At least'} {goal.value} {goal.unit}
+                        {goal.linkedTarget && <span className="ml-1 text-accent">· via {goal.linkedTarget.name}</span>}
+                      </p>
+                    </div>
+                    <div className="shrink-0 text-right">
+                      <span
+                        className="text-[11px] font-extrabold px-2 py-0.5 rounded-full text-white"
+                        style={{ backgroundColor: goal.statusColor }}
+                      >
+                        {goal.pct}%
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Progress bar */}
+                  <div className="w-full h-2 rounded-full bg-black/5 dark:bg-white/10 overflow-hidden">
+                    <div
+                      className="h-full rounded-full transition-all duration-700"
+                      style={{ width: `${goal.pct}%`, backgroundColor: goal.statusColor }}
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-semibold text-stone-500 dark:text-stone-400">
+                      {goal.loggedValue !== null
+                        ? `Logged: ${goal.loggedValue} ${goal.unit}`
+                        : goal.linkedTarget ? 'Not logged yet' : 'No tracker linked'}
+                    </span>
+                    {goal.daysLeft !== null && (
+                      <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${
+                        goal.daysLeft < 0 ? 'bg-red-500/10 text-red-500' :
+                        goal.daysLeft <= 7 ? 'bg-amber-500/10 text-amber-600' :
+                        'bg-emerald-500/10 text-emerald-600'
+                      }`}>
+                        {goal.daysLeft < 0 ? `${Math.abs(goal.daysLeft)}d overdue` : `${goal.daysLeft}d left`}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Charts Split View: Bar Chart + Donut Pie Chart */}
         <div className="grid grid-cols-1 md:grid-cols-12 gap-5 p-4 rounded-3xl bg-black/[0.02] dark:bg-white/[0.03] border border-black/5 dark:border-white/8">
@@ -921,6 +1067,23 @@ export default function AIDailyReportCard() {
                 <div className="p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/25 text-emerald-700 dark:text-emerald-300 font-bold flex items-center gap-2.5">
                   <CheckCircle2 size={18} className="shrink-0 text-emerald-500" />
                   <span>Best Win: {parsedSections.bestWin}</span>
+                </div>
+              )}
+
+              {/* Goal Progress from AI */}
+              {parsedSections.goalProgressLines && parsedSections.goalProgressLines.length > 0 && (
+                <div className="space-y-2">
+                  <span className="text-xs font-extrabold text-[#18191E] dark:text-white uppercase tracking-wider block flex items-center gap-1.5">
+                    🎯 AI Goal Progress Analysis
+                  </span>
+                  <div className="space-y-1.5">
+                    {parsedSections.goalProgressLines.map((line, idx) => (
+                      <div key={idx} className="p-3 rounded-2xl bg-accent/5 border border-accent/15 text-[#18191E] dark:text-white flex items-start gap-2.5">
+                        <span className="text-accent shrink-0 font-bold mt-0.5">→</span>
+                        <span className="text-xs font-medium leading-snug">{line}</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
 
