@@ -24,8 +24,23 @@ function TargetRow({ target, logEntry, onLog }) {
 
   function handleNumberSubmit(e) {
     e.preventDefault();
-    const num = parseFloat(inputVal);
-    if (isNaN(num)) return;
+    if (!inputVal) return;
+
+    let num = 0;
+    if (target.type === 'DURATION') {
+      if (inputVal.includes(':')) {
+        const [h, m] = inputVal.split(':').map(Number);
+        const totalMins = (h || 0) * 60 + (m || 0);
+        const u = (target.unit || 'min').toLowerCase();
+        num = (u === 'hr' || u === 'hrs' || u === 'hour' || u === 'hours') ? +(totalMins / 60).toFixed(2) : totalMins;
+      } else {
+        num = parseFloat(inputVal) || 0;
+      }
+    } else {
+      num = parseFloat(inputVal);
+      if (isNaN(num)) return;
+    }
+
     const tv   = target.targetValue ?? 0;
     const done = target.comparison === 'gte' ? num >= tv : num <= tv;
     onLog(target.id, { done, value: num });
@@ -53,12 +68,37 @@ function TargetRow({ target, logEntry, onLog }) {
       setOpen(false);
     } else {
       haptic(6);
+      if (target.type === 'DURATION' && !inputVal) {
+        const tv = target.targetValue;
+        if (tv) {
+          const u = (target.unit || 'min').toLowerCase();
+          const totalMins = (u === 'hr' || u === 'hrs' || u === 'hour' || u === 'hours') ? Math.round(tv * 60) : Math.round(tv);
+          const h = String(Math.floor(totalMins / 60)).padStart(2, '0');
+          const m = String(totalMins % 60).padStart(2, '0');
+          setInputVal(`${h}:${m}`);
+        } else {
+          setInputVal('00:45');
+        }
+      }
       setOpen((v) => !v);
     }
   }
 
   function handleEditClick() {
-    setInputVal(logEntry?.value != null ? String(logEntry.value) : '');
+    if (target.type === 'DURATION' && logEntry?.value != null) {
+      const num = parseFloat(logEntry.value);
+      if (!isNaN(num)) {
+        const u = (target.unit || 'min').toLowerCase();
+        const totalMins = (u === 'hr' || u === 'hrs' || u === 'hour' || u === 'hours') ? Math.round(num * 60) : Math.round(num);
+        const h = String(Math.floor(totalMins / 60)).padStart(2, '0');
+        const m = String(totalMins % 60).padStart(2, '0');
+        setInputVal(`${h}:${m}`);
+      } else {
+        setInputVal(String(logEntry.value));
+      }
+    } else {
+      setInputVal(logEntry?.value != null ? String(logEntry.value) : '');
+    }
     setOpen(true);
   }
 
@@ -69,6 +109,24 @@ function TargetRow({ target, logEntry, onLog }) {
     'flex-1 text-sm text-[#1a1a2e] dark:text-white bg-white dark:bg-white/15 ' +
     'border border-black/10 dark:border-white/20 rounded-xl px-3 py-2.5 ' +
     'outline-none focus:border-[#E8843C] transition-colors';
+
+  const formatDisplayVal = (val, unit, type) => {
+    if (val == null) return '';
+    if (type === 'DURATION') {
+      const num = parseFloat(val);
+      if (!isNaN(num)) {
+        const u = (unit || 'min').toLowerCase();
+        const totalMins = (u === 'hr' || u === 'hrs' || u === 'hour' || u === 'hours') ? Math.round(num * 60) : Math.round(num);
+        if (totalMins >= 60) {
+          const h = Math.floor(totalMins / 60);
+          const m = totalMins % 60;
+          return m > 0 ? `${h}h ${m}m` : `${h}h`;
+        }
+        return `${totalMins} min`;
+      }
+    }
+    return `${val}${unit ? ` ${unit}` : ''}`;
+  };
 
   return (
     <div className={`rounded-xl transition-all duration-200 overflow-hidden ${
@@ -100,7 +158,7 @@ function TargetRow({ target, logEntry, onLog }) {
           {/* Hint for non-checkbox when closed */}
           {isNonCheckbox && !isDone && !open && (
             <p className="text-[10px] text-stone-400 mt-0.5">
-              {target.type === 'TIME' ? 'Tap ○ to log time' : `Tap ○ to log${target.unit ? ` (${target.unit})` : ''}`}
+              {target.type === 'TIME' ? 'Tap ○ to log time' : target.type === 'DURATION' ? 'Tap ○ to log duration (hh:mm)' : `Tap ○ to log${target.unit ? ` (${target.unit})` : ''}`}
             </p>
           )}
         </div>
@@ -110,7 +168,7 @@ function TargetRow({ target, logEntry, onLog }) {
           <div className="flex items-center gap-1 flex-shrink-0">
             {logEntry?.value != null && (
               <span className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold">
-                {logEntry.value}{target.unit ? ` ${target.unit}` : ''}
+                {formatDisplayVal(logEntry.value, target.unit, target.type)}
               </span>
             )}
             <button
@@ -130,13 +188,32 @@ function TargetRow({ target, logEntry, onLog }) {
           {(target.type === 'NUMBER' || target.type === 'DURATION') && (
             <form onSubmit={handleNumberSubmit} className="flex items-center gap-2">
               <input
-                type="number"
+                type={target.type === 'DURATION' ? 'time' : 'number'}
+                step={target.type === 'NUMBER' ? 'any' : undefined}
                 value={inputVal}
                 onChange={(e) => setInputVal(e.target.value)}
-                placeholder={target.targetValue != null ? String(target.targetValue) : '0'}
+                placeholder={target.type === 'DURATION' ? '00:45' : (target.targetValue != null ? String(target.targetValue) : '0')}
                 autoFocus
                 className={inputBase}
               />
+              {target.unit && target.type !== 'DURATION' && (
+                <span className="text-sm text-stone-400 flex-shrink-0 font-medium">{target.unit}</span>
+              )}
+              <button
+                type="submit"
+                className="flex-shrink-0 h-10 px-5 rounded-full text-white text-xs font-extrabold uppercase tracking-wider transition-all active:scale-95 bg-accent hover:bg-accent-hover shadow-md"
+              >
+                Log
+              </button>
+              <button
+                type="button"
+                onClick={() => setOpen(false)}
+                className="flex-shrink-0 h-10 px-3 rounded-full text-stone-400 text-sm border border-stone-200 dark:border-white/10 transition-all hover:text-white"
+              >
+                ✕
+              </button>
+            </form>
+          )}
               {target.unit && (
                 <span className="text-sm text-stone-400 flex-shrink-0 font-medium">{target.unit}</span>
               )}

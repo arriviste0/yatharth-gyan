@@ -101,3 +101,55 @@ export function getMonthLabel(dateStr) {
   const d = new Date(dateStr);
   return `${MONTHS_EN[d.getMonth()]} ${d.getFullYear()}`;
 }
+
+/**
+ * Convert HH:MM time string to total minutes or hours based on unit
+ */
+export function timeStringToValue(timeStr, unit = 'min') {
+  if (!timeStr) return 0;
+  if (typeof timeStr === 'number') return timeStr;
+  if (!timeStr.includes(':')) return parseFloat(timeStr) || 0;
+  const [h, m] = timeStr.split(':').map(Number);
+  const totalMins = (h || 0) * 60 + (m || 0);
+  const u = (unit || 'min').toLowerCase();
+  if (u === 'hr' || u === 'hrs' || u === 'hour' || u === 'hours') {
+    return +(totalMins / 60).toFixed(2);
+  }
+  return totalMins;
+}
+
+/**
+ * Convert numeric value (mins/hrs) to HH:MM string for <input type="time" />
+ */
+export function valueToTimeString(val, unit = 'min') {
+  if (val === null || val === undefined || val === '') return '00:45';
+  if (typeof val === 'string' && val.includes(':')) return val;
+  const num = parseFloat(val);
+  if (isNaN(num) || num <= 0) return '00:45';
+
+  const u = (unit || 'min').toLowerCase();
+  const totalMins = (u === 'hr' || u === 'hrs' || u === 'hour' || u === 'hours') ? Math.round(num * 60) : Math.round(num);
+
+  const h = String(Math.floor(totalMins / 60)).padStart(2, '0');
+  const m = String(totalMins % 60).padStart(2, '0');
+  return `${h}:${m}`;
+}
+
+/**
+ * Format numeric value to human-readable duration display (e.g. 1h 30m or 45 min)
+ */
+export function formatDurationDisplay(val, unit = 'min') {
+  if (val === null || val === undefined || val === '') return '';
+  const num = parseFloat(val);
+  if (isNaN(num)) return String(val);
+
+  const u = (unit || 'min').toLowerCase();
+  const totalMins = (u === 'hr' || u === 'hrs' || u === 'hour' || u === 'hours') ? Math.round(num * 60) : Math.round(num);
+
+  if (totalMins >= 60) {
+    const h = Math.floor(totalMins / 60);
+    const m = totalMins % 60;
+    return m > 0 ? `${h}h ${m}m` : `${h}h`;
+  }
+  return `${totalMins} min`;
+}

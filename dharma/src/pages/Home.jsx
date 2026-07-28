@@ -16,6 +16,7 @@ import { useDailyVerse } from '../hooks/useDailyVerse';
 import { DEFAULT_PILLARS } from '../data/defaultPillars';
 import {
   formatDateDisplay, todayKey, isAfterElevenPM, dateKey,
+  timeStringToValue, valueToTimeString,
 } from '../utils/dateUtils';
 import {
   getDayCompletionRate, getTodayCompletedCount, getCurrentStreak,
@@ -203,7 +204,17 @@ function LogValueModal({ target, dateStr, onLog, onClose }) {
   const subMetrics = target.subMetrics || [];
   const isMulti = subMetrics.length > 0 || target.type === 'MULTI_METRIC';
 
-  const initialVal = target.logEntry?.value != null ? String(target.logEntry.value) : (target.targetValue != null ? String(target.targetValue) : '');
+  const isDuration = target.type === 'DURATION';
+  const unit = target.unit || (isDuration ? 'min' : '');
+
+  const initialVal = useMemo(() => {
+    const raw = target.logEntry?.value != null ? target.logEntry.value : (target.targetValue != null ? target.targetValue : '');
+    if (isDuration) {
+      return valueToTimeString(raw, unit);
+    }
+    return String(raw);
+  }, [target, isDuration, unit]);
+
   const [val, setVal] = useState(initialVal);
 
   const [subVals, setSubVals] = useState(() => {
@@ -211,12 +222,11 @@ function LogValueModal({ target, dateStr, onLog, onClose }) {
     const initial = {};
     subMetrics.forEach((sub) => {
       const idKey = sub.id || sub.name;
-      initial[idKey] = existing[idKey] != null ? String(existing[idKey]) : String(sub.targetValue || 0);
+      const raw = existing[idKey] != null ? existing[idKey] : (sub.targetValue || 0);
+      initial[idKey] = isDuration ? valueToTimeString(raw, sub.unit || unit) : String(raw);
     });
     return initial;
   });
-
-  const unit = target.unit || '';
 
   function handleSubmit(e) {
     e.preventDefault();
@@ -224,11 +234,12 @@ function LogValueModal({ target, dateStr, onLog, onClose }) {
       const parsedSub = {};
       subMetrics.forEach((sub) => {
         const idKey = sub.id || sub.name;
-        const num = parseFloat(subVals[idKey]) || 0;
+        const rawInput = subVals[idKey];
+        const num = isDuration ? timeStringToValue(rawInput, sub.unit || unit) : (parseFloat(rawInput) || 0);
         parsedSub[idKey] = num;
       });
 
-      const primaryVal = parseFloat(Object.values(subVals)[0]) || parseFloat(val) || 0;
+      const primaryVal = isDuration ? timeStringToValue(val, unit) : (parseFloat(Object.values(subVals)[0]) || parseFloat(val) || 0);
       onLog(dateStr, target.id, {
         done: true,
         value: primaryVal,
@@ -236,7 +247,12 @@ function LogValueModal({ target, dateStr, onLog, onClose }) {
         timestamp: Date.now()
       });
     } else {
-      const num = parseFloat(val);
+      let num = 0;
+      if (isDuration) {
+        num = timeStringToValue(val, unit);
+      } else {
+        num = parseFloat(val);
+      }
       if (isNaN(num)) return;
       const tv = target.targetValue ?? 0;
       const done = target.comparison === 'gte' ? num >= tv : num <= tv;
@@ -286,20 +302,20 @@ function LogValueModal({ target, dateStr, onLog, onClose }) {
                     <div className="flex items-center justify-between text-xs font-bold text-[#18191E] dark:text-white">
                       <span>{sub.name}</span>
                       <span className="text-[10px] text-stone-400">
-                        Goal: {sub.comparison === 'lte' ? '≤' : '≥'} {sub.targetValue} {sub.unit}
+                        Goal: {sub.comparison === 'lte' ? '≤' : '≥'} {sub.targetValue} {sub.unit || unit}
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
                       <input
-                        type="number"
-                        step="any"
+                        type={isDuration ? 'time' : 'number'}
+                        step={!isDuration ? 'any' : undefined}
                         value={subVals[idKey] ?? ''}
                         onChange={(e) => setSubVals({ ...subVals, [idKey]: e.target.value })}
-                        placeholder="0"
+                        placeholder={isDuration ? '00:30' : '0'}
                         className="flex-1 text-base font-bold text-[#18191E] dark:text-white bg-white dark:bg-[#181926] border border-black/10 dark:border-white/10 rounded-xl px-3.5 py-2.5 outline-none focus:border-accent"
                       />
                       <span className="text-xs font-bold text-stone-500 px-3 py-2.5 rounded-xl bg-black/5 dark:bg-white/5">
-                        {sub.unit}
+                        {sub.unit || unit}
                       </span>
                     </div>
                   </div>
@@ -309,19 +325,19 @@ function LogValueModal({ target, dateStr, onLog, onClose }) {
           ) : (
             <div>
               <label className="block text-xs font-bold text-stone-600 dark:text-stone-300 uppercase tracking-wider mb-2">
-                Enter Logged {unit ? `Amount (${unit})` : 'Value'}
+                {isDuration ? 'Select Duration (hh:mm)' : `Enter Logged ${unit ? `Amount (${unit})` : 'Value'}`}
               </label>
               <div className="flex items-center gap-2">
                 <input
-                  type="number"
-                  step="any"
+                  type={isDuration ? 'time' : 'number'}
+                  step={!isDuration ? 'any' : undefined}
                   value={val}
                   onChange={(e) => setVal(e.target.value)}
-                  placeholder={target.targetValue != null ? String(target.targetValue) : '0'}
+                  placeholder={isDuration ? '00:45' : (target.targetValue != null ? String(target.targetValue) : '0')}
                   autoFocus
                   className="flex-1 text-base font-bold text-[#18191E] dark:text-white bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-2xl px-4 py-3 outline-none focus:border-[#F05A36] transition-colors"
                 />
-                {unit && (
+                {unit && !isDuration && (
                   <span className="text-sm font-bold text-stone-500 dark:text-stone-400 px-3.5 py-3 rounded-2xl bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10">
                     {unit}
                   </span>

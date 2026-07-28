@@ -3,6 +3,7 @@ import { useLocation } from 'react-router-dom';
 import { Plus, Trash2, Edit3, X, Check, Moon, Soup, Dumbbell, Star, Heart, Flame, Zap, Wind, Sun, Layers, Target, Activity } from 'lucide-react';
 import { useStorage } from '../hooks/useStorage';
 import { DEFAULT_PILLARS } from '../data/defaultPillars';
+import { timeStringToValue, valueToTimeString } from '../utils/dateUtils';
 
 const ICON_OPTIONS = [
   { id: 'moon', Icon: Moon }, { id: 'bowl', Icon: Soup }, { id: 'dumbbell', Icon: Dumbbell },
@@ -26,32 +27,22 @@ const TARGET_TYPES = [
   { id: 'DURATION', label: 'Duration',  desc: 'Workout mins, Meditate mins, Sleep hrs' },
 ];
 
-const TARGET_TEMPLATES = [
-  {
-    name: 'Lunch (Protein + Carbs + Cals)',
-    type: 'NUMBER',
-    targetValue: 1,
-    unit: 'meal',
-    subMetrics: [
-      { id: 'sub-prot', name: 'Protein', targetValue: 40, unit: 'g', comparison: 'gte' },
-      { id: 'sub-carbs', name: 'Carbs', targetValue: 60, unit: 'g', comparison: 'lte' },
-      { id: 'sub-cal', name: 'Calories', targetValue: 600, unit: 'kcal', comparison: 'lte' },
+const TEMPLATE_TARGETS = [
+  { name: 'Water 3 Liters', type: 'NUMBER', targetValue: 3, comparison: 'gte', unit: 'L' },
+  { name: 'Protein 90g', type: 'NUMBER', targetValue: 90, comparison: 'gte', unit: 'g', subMetrics: [
+      { id: 'sub-p1', name: 'Protein', targetValue: 90, unit: 'g', comparison: 'gte' },
+      { id: 'sub-p2', name: 'Carbs', targetValue: 250, unit: 'g', comparison: 'gte' },
+      { id: 'sub-p3', name: 'Calories', targetValue: 2200, unit: 'kcal', comparison: 'gte' },
     ]
   },
-  {
-    name: 'Full Workout (Mins + Cals)',
-    type: 'DURATION',
-    targetValue: 45,
-    unit: 'min',
-    subMetrics: [
-      { id: 'sub-dur', name: 'Duration', targetValue: 45, unit: 'min', comparison: 'gte' },
-      { id: 'sub-cal', name: 'Calories Burned', targetValue: 350, unit: 'kcal', comparison: 'gte' },
+  { name: 'Workout 45 mins', type: 'DURATION', targetValue: 45, comparison: 'gte', unit: 'min', subMetrics: [
+      { id: 'sub-dur1', name: 'Cardio', targetValue: 20, unit: 'min', comparison: 'gte' },
+      { id: 'sub-dur2', name: 'Lifting', targetValue: 25, unit: 'min', comparison: 'gte' },
     ]
   },
-  { name: 'Drink 3L Water', type: 'NUMBER', targetValue: 3, comparison: 'gte', unit: 'L' },
-  { name: 'Eat 90g Protein', type: 'NUMBER', targetValue: 90, comparison: 'gte', unit: 'g' },
-  { name: 'Workout 45 mins', type: 'DURATION', targetValue: 45, comparison: 'gte', unit: 'min' },
   { name: 'Sleep 8 Hours', type: 'DURATION', targetValue: 8, comparison: 'gte', unit: 'hr' },
+  { name: '10,000 Steps', type: 'NUMBER', targetValue: 10000, comparison: 'gte', unit: 'steps' },
+  { name: 'Gita 1 Chapter', type: 'CHECKBOX', targetValue: 0, comparison: 'gte', unit: '' },
   { name: 'Cold shower', type: 'CHECKBOX', targetValue: 0, comparison: 'gte', unit: '' },
 ];
 
@@ -61,10 +52,29 @@ const QUICK_UNITS = ['g', 'L', 'ml', 'min', 'hr', 'kcal', 'steps', 'pages', 'ses
 function TargetForm({ initial, onSave, onCancel }) {
   const [name,        setName]        = useState(initial?.name        ?? '');
   const [type,        setType]        = useState(initial?.type === 'TIME' || initial?.type === 'MULTI_METRIC' ? 'NUMBER' : (initial?.type ?? 'CHECKBOX'));
-  const [targetValue, setTargetValue] = useState(initial?.targetValue != null && typeof initial.targetValue === 'number' ? String(initial.targetValue) : '0');
   const [unit,        setUnit]        = useState(initial?.unit        ?? '');
+
+  const initialTargetVal = useMemo(() => {
+    const raw = initial?.targetValue;
+    if (initial?.type === 'DURATION' || type === 'DURATION') {
+      return valueToTimeString(raw != null ? raw : 45, initial?.unit || unit);
+    }
+    return raw != null ? String(raw) : '0';
+  }, [initial, type, unit]);
+
+  const [targetValue, setTargetValue] = useState(initialTargetVal);
   const [comparison,  setComparison]  = useState(initial?.comparison  ?? 'gte');
-  const [subMetrics,  setSubMetrics]  = useState(initial?.subMetrics  ?? []);
+
+  const [subMetrics,  setSubMetrics]  = useState(() => {
+    const existing = initial?.subMetrics || [];
+    return existing.map(s => ({
+      ...s,
+      targetValue: (initial?.type === 'DURATION' || type === 'DURATION') && typeof s.targetValue === 'number'
+        ? valueToTimeString(s.targetValue, s.unit || unit)
+        : s.targetValue
+    }));
+  });
+
   const [showTemplates, setShowTemplates] = useState(false);
 
   const fieldCls =
@@ -75,9 +85,19 @@ function TargetForm({ initial, onSave, onCancel }) {
   function applyTemplate(t) {
     setName(t.name);
     setType(t.type);
-    setTargetValue(t.targetValue != null ? String(t.targetValue) : '0');
     setUnit(t.unit || '');
-    setSubMetrics(t.subMetrics ? JSON.parse(JSON.stringify(t.subMetrics)) : []);
+    if (t.type === 'DURATION') {
+      setTargetValue(valueToTimeString(t.targetValue, t.unit));
+    } else {
+      setTargetValue(t.targetValue != null ? String(t.targetValue) : '0');
+    }
+    const subs = t.subMetrics ? JSON.parse(JSON.stringify(t.subMetrics)) : [];
+    if (t.type === 'DURATION') {
+      subs.forEach(s => {
+        s.targetValue = valueToTimeString(s.targetValue, s.unit);
+      });
+    }
+    setSubMetrics(subs);
     setShowTemplates(false);
   }
 
@@ -87,7 +107,7 @@ function TargetForm({ initial, onSave, onCancel }) {
       {
         id: `sub-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
         name: '',
-        targetValue: 0,
+        targetValue: type === 'DURATION' ? '00:20' : 0,
         unit: type === 'DURATION' ? 'min' : 'g',
         comparison: 'gte'
       }
@@ -107,13 +127,25 @@ function TargetForm({ initial, onSave, onCancel }) {
   function handleSave(e) {
     e.preventDefault();
     if (!name.trim()) return;
-    const cleanSub = (type === 'NUMBER' || type === 'DURATION') ? subMetrics.filter(s => s.name.trim().length > 0) : [];
+
+    let parsedTargetVal = 0;
+    if (type === 'DURATION') {
+      parsedTargetVal = timeStringToValue(targetValue, unit);
+    } else if (type === 'NUMBER') {
+      parsedTargetVal = parseFloat(targetValue) || 0;
+    }
+
+    const cleanSub = (type === 'NUMBER' || type === 'DURATION') ? subMetrics.filter(s => s.name.trim().length > 0).map(s => ({
+      ...s,
+      targetValue: type === 'DURATION' ? timeStringToValue(s.targetValue, s.unit || unit) : (parseFloat(s.targetValue) || 0)
+    })) : [];
+
     onSave({
       id: initial?.id ?? `custom-${Date.now()}`,
       name: name.trim(),
       type,
-      targetValue: (type === 'NUMBER' || type === 'DURATION') ? parseFloat(targetValue) || 0 : null,
-      unit: type === 'CHECKBOX' ? '' : unit.trim(),
+      targetValue: (type === 'NUMBER' || type === 'DURATION') ? parsedTargetVal : null,
+      unit: type === 'CHECKBOX' ? '' : (unit.trim() || (type === 'DURATION' ? 'min' : '')),
       comparison: comparison || 'gte',
       subMetrics: cleanSub,
       frequency: 'daily',
@@ -200,11 +232,11 @@ function TargetForm({ initial, onSave, onCancel }) {
                     Target Value (Goal)
                   </label>
                   <input
-                    type="number"
-                    step="any"
+                    type={type === 'DURATION' ? 'time' : 'number'}
+                    step={type === 'NUMBER' ? 'any' : undefined}
                     value={targetValue}
                     onChange={(e) => setTargetValue(e.target.value)}
-                    placeholder="0"
+                    placeholder={type === 'DURATION' ? '00:45' : '0'}
                     className={fieldCls}
                   />
                 </div>
@@ -215,7 +247,7 @@ function TargetForm({ initial, onSave, onCancel }) {
                   <input
                     value={unit}
                     onChange={(e) => setUnit(e.target.value)}
-                    placeholder="e.g. g, L, min, hrs"
+                    placeholder={type === 'DURATION' ? 'min or hr' : 'e.g. g, L, min, hrs'}
                     className={fieldCls}
                   />
                 </div>
@@ -300,11 +332,11 @@ function TargetForm({ initial, onSave, onCancel }) {
                     </div>
                     <div className="flex gap-2">
                       <input
-                        type="number"
-                        step="any"
+                        type={type === 'DURATION' ? 'time' : 'number'}
+                        step={type === 'NUMBER' ? 'any' : undefined}
                         value={sub.targetValue}
-                        onChange={(e) => updateSubMetric(idx, 'targetValue', parseFloat(e.target.value) || 0)}
-                        placeholder="Goal"
+                        onChange={(e) => updateSubMetric(idx, 'targetValue', e.target.value)}
+                        placeholder={type === 'DURATION' ? '00:20' : 'Goal'}
                         className="flex-1 text-xs font-bold text-[#18191E] dark:text-white bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl px-2.5 py-2 outline-none"
                       />
                       <input
