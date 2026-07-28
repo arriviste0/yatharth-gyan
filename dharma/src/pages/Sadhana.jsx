@@ -226,66 +226,83 @@ function TargetForm({ initial, onSave, onCancel }) {
         <>
           {subMetrics.length === 0 && (
             <div className="space-y-3 p-4 rounded-2xl bg-black/[0.02] dark:bg-white/[0.02] border border-black/5 dark:border-white/5">
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {type === 'DURATION' ? (
                 <div>
                   <label className="block text-[10px] font-extrabold uppercase tracking-wider text-stone-400 mb-1">
-                    Target Value (Goal)
+                    Target Duration Goal (hh:mm)
                   </label>
                   <input
-                    type={type === 'DURATION' ? 'time' : 'number'}
-                    step={type === 'NUMBER' ? 'any' : undefined}
+                    type="time"
                     value={targetValue}
                     onChange={(e) => setTargetValue(e.target.value)}
-                    placeholder={type === 'DURATION' ? '00:45' : '0'}
+                    placeholder="00:45"
                     className={fieldCls}
                   />
                 </div>
-                <div>
-                  <label className="block text-[10px] font-extrabold uppercase tracking-wider text-stone-400 mb-1">
-                    Unit (g, L, min...)
-                  </label>
-                  <input
-                    value={unit}
-                    onChange={(e) => setUnit(e.target.value)}
-                    placeholder={type === 'DURATION' ? 'min or hr' : 'e.g. g, L, min, hrs'}
-                    className={fieldCls}
-                  />
-                </div>
-                <div>
-                  <label className="block text-[10px] font-extrabold uppercase tracking-wider text-stone-400 mb-1">
-                    Comparison Goal
-                  </label>
-                  <select
-                    value={comparison}
-                    onChange={(e) => setComparison(e.target.value)}
-                    className={`${fieldCls} cursor-pointer`}
-                  >
-                    <option value="gte">≥ At least (Min Goal)</option>
-                    <option value="lte">≤ At most (Max Limit)</option>
-                  </select>
-                </div>
-              </div>
+              ) : (
+                <>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div>
+                      <label className="block text-[10px] font-extrabold uppercase tracking-wider text-stone-400 mb-1">
+                        Target Value (Goal)
+                      </label>
+                      <input
+                        type="number"
+                        step="any"
+                        value={targetValue}
+                        onChange={(e) => setTargetValue(e.target.value)}
+                        placeholder="0"
+                        className={fieldCls}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-extrabold uppercase tracking-wider text-stone-400 mb-1">
+                        Unit (g, L, kcal...)
+                      </label>
+                      <input
+                        value={unit}
+                        onChange={(e) => setUnit(e.target.value)}
+                        placeholder="e.g. g, L, kcal"
+                        className={fieldCls}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-extrabold uppercase tracking-wider text-stone-400 mb-1">
+                        Comparison Goal
+                      </label>
+                      <select
+                        value={comparison}
+                        onChange={(e) => setComparison(e.target.value)}
+                        className={`${fieldCls} cursor-pointer`}
+                      >
+                        <option value="gte">≥ At least (Min Goal)</option>
+                        <option value="lte">≤ At most (Max Limit)</option>
+                      </select>
+                    </div>
+                  </div>
 
-              {/* Quick Unit Suggestion Chips */}
-              <div>
-                <span className="text-[10px] font-extrabold uppercase tracking-wider text-stone-400 mr-2">Quick Units:</span>
-                <div className="inline-flex gap-1.5 flex-wrap mt-1">
-                  {QUICK_UNITS.map((u) => (
-                    <button
-                      key={u}
-                      type="button"
-                      onClick={() => setUnit(u)}
-                      className={`text-[11px] font-bold px-2.5 py-1 rounded-full transition-all border ${
-                        unit === u
-                          ? 'bg-accent text-white border-accent'
-                          : 'bg-black/5 dark:bg-white/5 border-black/5 dark:border-white/10 text-stone-500 hover:text-accent'
-                      }`}
-                    >
-                      {u}
-                    </button>
-                  ))}
-                </div>
-              </div>
+                  {/* Quick Unit Suggestion Chips for Number targets */}
+                  <div>
+                    <span className="text-[10px] font-extrabold uppercase tracking-wider text-stone-400 mr-2">Quick Units:</span>
+                    <div className="inline-flex gap-1.5 flex-wrap mt-1">
+                      {QUICK_UNITS.map((u) => (
+                        <button
+                          key={u}
+                          type="button"
+                          onClick={() => setUnit(u)}
+                          className={`text-[11px] font-bold px-2.5 py-1 rounded-full transition-all border ${
+                            unit === u
+                              ? 'bg-accent text-white border-accent'
+                              : 'bg-black/5 dark:bg-white/5 border-black/5 dark:border-white/10 text-stone-500 hover:text-accent'
+                          }`}
+                        >
+                          {u}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
           )}
 
@@ -330,30 +347,43 @@ function TargetForm({ initial, onSave, onCancel }) {
                         <Trash2 size={14} />
                       </button>
                     </div>
-                    <div className="flex gap-2">
-                      <input
-                        type={type === 'DURATION' ? 'time' : 'number'}
-                        step={type === 'NUMBER' ? 'any' : undefined}
-                        value={sub.targetValue}
-                        onChange={(e) => updateSubMetric(idx, 'targetValue', e.target.value)}
-                        placeholder={type === 'DURATION' ? '00:20' : 'Goal'}
-                        className="flex-1 text-xs font-bold text-[#18191E] dark:text-white bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl px-2.5 py-2 outline-none"
-                      />
-                      <input
-                        value={sub.unit}
-                        onChange={(e) => updateSubMetric(idx, 'unit', e.target.value)}
-                        placeholder={type === 'DURATION' ? 'min, hr' : 'g, L, kcal'}
-                        className="w-16 text-xs font-bold text-[#18191E] dark:text-white bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl px-2 py-2 outline-none"
-                      />
-                      <select
-                        value={sub.comparison}
-                        onChange={(e) => updateSubMetric(idx, 'comparison', e.target.value)}
-                        className="w-20 text-[11px] font-bold text-[#18191E] dark:text-white bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl px-1.5 py-2 outline-none"
-                      >
-                        <option value="gte">≥ Min</option>
-                        <option value="lte">≤ Max</option>
-                      </select>
-                    </div>
+                    {type === 'DURATION' ? (
+                      <div className="flex items-center gap-2">
+                        <label className="text-[10px] font-extrabold text-stone-400 uppercase tracking-wider shrink-0">Time Goal:</label>
+                        <input
+                          type="time"
+                          value={sub.targetValue}
+                          onChange={(e) => updateSubMetric(idx, 'targetValue', e.target.value)}
+                          placeholder="00:20"
+                          className="flex-1 text-xs font-bold text-[#18191E] dark:text-white bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl px-2.5 py-2 outline-none"
+                        />
+                      </div>
+                    ) : (
+                      <div className="flex gap-2">
+                        <input
+                          type="number"
+                          step="any"
+                          value={sub.targetValue}
+                          onChange={(e) => updateSubMetric(idx, 'targetValue', e.target.value)}
+                          placeholder="Goal"
+                          className="flex-1 text-xs font-bold text-[#18191E] dark:text-white bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl px-2.5 py-2 outline-none"
+                        />
+                        <input
+                          value={sub.unit}
+                          onChange={(e) => updateSubMetric(idx, 'unit', e.target.value)}
+                          placeholder="g, L, kcal"
+                          className="w-16 text-xs font-bold text-[#18191E] dark:text-white bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl px-2 py-2 outline-none"
+                        />
+                        <select
+                          value={sub.comparison}
+                          onChange={(e) => updateSubMetric(idx, 'comparison', e.target.value)}
+                          className="w-20 text-[11px] font-bold text-[#18191E] dark:text-white bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl px-1.5 py-2 outline-none"
+                        >
+                          <option value="gte">≥ Min</option>
+                          <option value="lte">≤ Max</option>
+                        </select>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
