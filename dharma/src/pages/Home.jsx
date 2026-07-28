@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell,
-  PieChart, Pie, AreaChart, Area,
+  PieChart, Pie, AreaChart, Area, LineChart, Line, CartesianGrid,
 } from 'recharts';
 import { useAuth } from '../context/AuthContext';
 import { useStorage } from '../hooks/useStorage';
@@ -426,6 +426,229 @@ function formatLoggedSummary(target) {
   return 'Done';
 }
 
+/* ── Mobile Weekly Chart ───────────────────────────────────────────── */
+function MobileWeeklyChart({ logs, pillars }) {
+  const [selectedPillar, setSelectedPillar] = useState('all');
+  const [activeGraph, setActiveGraph] = useState('completion');
+
+  const activePillar = selectedPillar === 'all' ? null : pillars.find(p => p.id === selectedPillar);
+  const METRIC_COLORS = ['#F05A36', '#14B8A6', '#E6A04E', '#8B5CF6', '#3B82F6', '#10B981'];
+
+  const data = useMemo(() => {
+    const days = [];
+    const today = new Date();
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(today);
+      d.setDate(today.getDate() - i);
+      const key = dateKey(d);
+      const dayLog = logs[key] || {};
+
+      let rate = 0;
+      if (selectedPillar === 'all') {
+        rate = getDayCompletionRate(logs, pillars, key);
+      } else if (activePillar) {
+        const targets = activePillar.targets.filter(t => t.frequency === 'daily' || !t.frequency);
+        const done = targets.filter(t => dayLog[t.id]?.done).length;
+        rate = targets.length > 0 ? done / targets.length : 0;
+      }
+
+      let durationTotal = 0;
+      let durationUnit = 'min';
+      const durationTargets = (activePillar ? [activePillar] : pillars)
+        .flatMap(p => p.targets.filter(t => t.type === 'DURATION' && (t.frequency === 'daily' || !t.frequency)));
+      durationTargets.forEach(t => {
+        const entry = dayLog[t.id];
+        if (entry?.value != null) {
+          const n = parseFloat(entry.value);
+          if (!isNaN(n)) {
+            const u = (t.unit || 'min').toLowerCase();
+            durationTotal += (u === 'hr' || u === 'hrs' || u === 'hour' || u === 'hours') ? n * 60 : n;
+          }
+        }
+      });
+      const durationDisplay = durationTotal >= 60 ? +(durationTotal / 60).toFixed(1) : Math.round(durationTotal);
+      if (durationTotal >= 60) durationUnit = 'hr';
+
+      const numericSeries = {};
+      const numericTargets = (activePillar ? [activePillar] : pillars)
+        .flatMap(p => p.targets.filter(t => t.type === 'NUMBER' && (t.frequency === 'daily' || !t.frequency)));
+      numericTargets.forEach(t => {
+        const entry = dayLog[t.id];
+        if (entry?.value != null) {
+          const n = parseFloat(entry.value);
+          if (!isNaN(n)) numericSeries[t.id] = { name: t.name, value: n, unit: t.unit || '' };
+        }
+      });
+
+      days.push({
+        key,
+        label: WEEKDAY_SHORT[d.getDay()],
+        rate: Math.round(rate * 100),
+        duration: durationDisplay,
+        durationUnit,
+        isToday: i === 0,
+        ...Object.fromEntries(Object.entries(numericSeries).map(([id, v]) => [`n_${id}`, v.value])),
+      });
+    }
+    return days;
+  }, [logs, pillars, selectedPillar, activePillar]);
+
+  const avg = data.length > 0 ? Math.round(data.reduce((s, d) => s + d.rate, 0) / data.length) : 0;
+
+  const numericTargetDefs = useMemo(() => {
+    const seen = new Map();
+    (activePillar ? [activePillar] : pillars)
+      .flatMap(p => p.targets.filter(t => t.type === 'NUMBER' && (t.frequency === 'daily' || !t.frequency))
+        .map(t => ({ ...t, pillarColor: p.color })))
+      .forEach(t => { if (!seen.has(t.id)) seen.set(t.id, t); });
+    return Array.from(seen.values());
+  }, [pillars, activePillar]);
+
+  const GRAPH_TABS = [
+    { id: 'completion', label: '✓ %' },
+    { id: 'duration',   label: '⏱ Hrs' },
+    { id: 'numeric',    label: '📊 Intake' },
+  ];
+
+  return (
+    <div className="card-bento p-4 space-y-3">
+      <div className="flex items-start justify-between">
+        <div>
+          <h3 className="text-sm font-bold text-[#18191E] dark:text-white">Weekly Completion</h3>
+          <p className="text-[10px] text-stone-400 dark:text-white/40 mt-0.5">Last 7 days</p>
+        </div>
+        <div className="text-right">
+          <div className="text-xl font-extrabold tabular-nums text-accent">{avg}%</div>
+          <div className="text-[9px] text-stone-400 dark:text-white/30">avg rate</div>
+        </div>
+      </div>
+
+      {/* Pillar Filter */}
+      {pillars.length > 0 && (
+        <div className="flex flex-wrap gap-1.5 pb-2 border-b border-black/5 dark:border-white/5">
+          <button
+            onClick={() => setSelectedPillar('all')}
+            className={`text-[10px] font-extrabold px-2.5 py-1 rounded-full transition-all border ${
+              selectedPillar === 'all'
+                ? 'bg-accent text-white border-accent'
+                : 'bg-black/5 dark:bg-white/5 border-black/8 dark:border-white/10 text-stone-500 dark:text-stone-400'
+            }`}
+          >
+            All
+          </button>
+          {pillars.map(p => (
+            <button
+              key={p.id}
+              onClick={() => setSelectedPillar(p.id)}
+              className={`text-[10px] font-extrabold px-2.5 py-1 rounded-full transition-all border ${
+                selectedPillar === p.id ? 'text-white border-transparent' : 'bg-black/5 dark:bg-white/5 border-black/8 dark:border-white/10 text-stone-500 dark:text-stone-400'
+              }`}
+              style={selectedPillar === p.id ? { backgroundColor: p.color, borderColor: p.color } : {}}
+            >
+              {p.english}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Graph Tabs */}
+      <div className="flex gap-1 p-1 rounded-xl bg-black/5 dark:bg-white/5">
+        {GRAPH_TABS.map(tab => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveGraph(tab.id)}
+            className={`flex-1 py-1 rounded-lg text-[10px] font-extrabold transition-all ${
+              activeGraph === tab.id
+                ? 'bg-white dark:bg-[#181926] text-[#18191E] dark:text-white shadow-sm'
+                : 'text-stone-500 dark:text-stone-400'
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Completion % */}
+      {activeGraph === 'completion' && (
+        <ResponsiveContainer width="100%" height={130}>
+          <AreaChart data={data} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
+            <defs>
+              <linearGradient id="mobileWeekGrad2" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor={activePillar?.color || 'var(--color-accent)'} stopOpacity={0.3} />
+                <stop offset="100%" stopColor={activePillar?.color || 'var(--color-accent)'} stopOpacity={0} />
+              </linearGradient>
+            </defs>
+            <XAxis dataKey="label" tick={{ fontSize: 10, fill: '#9CA3AF' }} axisLine={false} tickLine={false} />
+            <YAxis domain={[0, 100]} tick={{ fontSize: 9, fill: '#9CA3AF' }} axisLine={false} tickLine={false} />
+            <Tooltip content={({ active, payload }) => {
+              if (!active || !payload?.length) return null;
+              return <div className="bg-[#181926] border border-white/10 rounded-xl px-2.5 py-1.5 text-xs font-bold text-white">{payload[0].payload.label}: {payload[0].value}%</div>;
+            }} />
+            <Area type="monotone" dataKey="rate" stroke={activePillar?.color || 'var(--color-accent)'} strokeWidth={2} fill="url(#mobileWeekGrad2)" dot={{ r: 3, fill: activePillar?.color || 'var(--color-accent)', stroke: '#181926', strokeWidth: 2 }} />
+          </AreaChart>
+        </ResponsiveContainer>
+      )}
+
+      {/* Duration */}
+      {activeGraph === 'duration' && (
+        <ResponsiveContainer width="100%" height={130}>
+          <BarChart data={data} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
+            <XAxis dataKey="label" tick={{ fontSize: 10, fill: '#9CA3AF' }} axisLine={false} tickLine={false} />
+            <YAxis tick={{ fontSize: 9, fill: '#9CA3AF' }} axisLine={false} tickLine={false} />
+            <Tooltip content={({ active, payload }) => {
+              if (!active || !payload?.length) return null;
+              const d = payload[0].payload;
+              return <div className="bg-[#181926] border border-white/10 rounded-xl px-2.5 py-1.5 text-xs font-bold text-white">{d.label}: {d.duration}{d.durationUnit}</div>;
+            }} />
+            <Bar dataKey="duration" radius={[5, 5, 0, 0]}>
+              {data.map((entry, i) => <Cell key={i} fill={activePillar?.color || (entry.isToday ? 'var(--color-accent)' : '#5B6BAF')} opacity={entry.isToday ? 1 : 0.7} />)}
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
+      )}
+
+      {/* Intake/Numeric */}
+      {activeGraph === 'numeric' && (
+        numericTargetDefs.length === 0 ? (
+          <p className="text-[11px] text-stone-400 text-center py-4">No quantity trackers. Add NUMBER type in Pillars.</p>
+        ) : (
+          <div className="space-y-1.5">
+            <ResponsiveContainer width="100%" height={130}>
+              <LineChart data={data} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
+                <XAxis dataKey="label" tick={{ fontSize: 10, fill: '#9CA3AF' }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 9, fill: '#9CA3AF' }} axisLine={false} tickLine={false} />
+                <Tooltip content={({ active, payload, label }) => {
+                  if (!active || !payload?.length) return null;
+                  return (
+                    <div className="bg-[#181926] border border-white/10 rounded-xl px-2.5 py-1.5 text-xs space-y-0.5">
+                      <div className="font-bold text-white">{label}</div>
+                      {payload.map((p, i) => {
+                        const tDef = numericTargetDefs.find(t => `n_${t.id}` === p.dataKey);
+                        return <div key={i} className="text-stone-300">{tDef?.name}: <span className="text-white font-bold">{p.value} {tDef?.unit}</span></div>;
+                      })}
+                    </div>
+                  );
+                }} />
+                {numericTargetDefs.map((t, i) => (
+                  <Line key={t.id} type="monotone" dataKey={`n_${t.id}`} stroke={t.pillarColor || METRIC_COLORS[i % METRIC_COLORS.length]} strokeWidth={2} dot={{ r: 2.5, fill: t.pillarColor || METRIC_COLORS[i % METRIC_COLORS.length], stroke: '#181926', strokeWidth: 1 }} connectNulls={false} />
+                ))}
+              </LineChart>
+            </ResponsiveContainer>
+            <div className="flex flex-wrap gap-1.5">
+              {numericTargetDefs.map((t, i) => (
+                <span key={t.id} className="flex items-center gap-1 text-[9px] font-semibold text-stone-500 dark:text-stone-400">
+                  <span className="w-2 h-2 rounded-full" style={{ backgroundColor: t.pillarColor || METRIC_COLORS[i % METRIC_COLORS.length] }} />
+                  {t.name}{t.unit ? ` (${t.unit})` : ''}
+                </span>
+              ))}
+            </div>
+          </div>
+        )
+      )}
+    </div>
+  );
+}
+
 /* ── Mobile Today View ─────────────────────────────────────────────── */
 function MobileTodayView({ pillars, logs, metrics = {}, logTarget, dateStr, streak, settings, onOpenFocus }) {
   const [loggingTarget, setLoggingTarget] = useState(null);
@@ -774,41 +997,7 @@ function MobileTodayView({ pillars, logs, metrics = {}, logTarget, dateStr, stre
       </div>
 
       {/* ── Mobile Weekly Trend Chart ───────────────────────────────── */}
-      <div className="card-bento p-5">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h3 className="text-sm font-bold text-[#18191E] dark:text-white">Weekly Completion</h3>
-            <p className="text-[10px] text-stone-400 dark:text-white/40 mt-0.5">Last 7 days performance</p>
-          </div>
-          <div className="text-right">
-            <div className="text-xl font-extrabold tabular-nums text-accent">{weeklyAvg}%</div>
-            <div className="text-[9px] text-stone-400 dark:text-white/30">avg rate</div>
-          </div>
-        </div>
-        <ResponsiveContainer width="100%" height={140}>
-          <AreaChart data={weeklyData} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
-            <defs>
-              <linearGradient id="mobileWeekGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="var(--color-accent)" stopOpacity={0.3} />
-                <stop offset="100%" stopColor="var(--color-accent)" stopOpacity={0} />
-              </linearGradient>
-            </defs>
-            <XAxis dataKey="label" tick={{ fontSize: 10, fill: '#9CA3AF' }} axisLine={false} tickLine={false} />
-            <YAxis domain={[0, 100]} tick={{ fontSize: 9, fill: '#9CA3AF' }} axisLine={false} tickLine={false} />
-            <Tooltip
-              content={({ active, payload }) => {
-                if (!active || !payload?.length) return null;
-                return (
-                  <div className="bg-[#181926] border border-white/10 rounded-xl px-3 py-2 shadow-xl text-xs">
-                    <div className="font-bold text-white">{payload[0].payload.label}: {payload[0].value}%</div>
-                  </div>
-                );
-              }}
-            />
-            <Area type="monotone" dataKey="rate" stroke="var(--color-accent)" strokeWidth={2} fill="url(#mobileWeekGrad)" dot={{ r: 3, fill: 'var(--color-accent)', stroke: '#181926', strokeWidth: 2 }} />
-          </AreaChart>
-        </ResponsiveContainer>
-      </div>
+      <MobileWeeklyChart logs={logs} pillars={pillars} />
 
       {/* ── Mobile Pillar Breakdown ─────────────────────────────────── */}
       <div className="card-bento p-5">
@@ -1191,6 +1380,12 @@ function DesktopTaskManager({ pillars, logs, logTarget, dateStr, setPillars }) {
 
 /* ── Desktop Weekly Trend Chart ───────────────────────────────────── */
 function DesktopWeeklyChart({ logs, pillars }) {
+  const [selectedPillar, setSelectedPillar] = useState('all');
+  const [activeGraph, setActiveGraph] = useState('completion'); // 'completion' | 'duration' | 'numeric'
+
+  const activePillar = selectedPillar === 'all' ? null : pillars.find(p => p.id === selectedPillar);
+
+  // Build 7-day data
   const data = useMemo(() => {
     const days = [];
     const today = new Date();
@@ -1198,59 +1393,295 @@ function DesktopWeeklyChart({ logs, pillars }) {
       const d = new Date(today);
       d.setDate(today.getDate() - i);
       const key = dateKey(d);
-      const rate = getDayCompletionRate(logs, pillars, key);
+      const dayLog = logs[key] || {};
+
+      // Completion rate — scoped to selected pillar or all
+      let rate = 0;
+      if (selectedPillar === 'all') {
+        rate = getDayCompletionRate(logs, pillars, key);
+      } else if (activePillar) {
+        const targets = activePillar.targets.filter(t => t.frequency === 'daily' || !t.frequency);
+        const done = targets.filter(t => dayLog[t.id]?.done).length;
+        rate = targets.length > 0 ? done / targets.length : 0;
+      }
+
+      // Duration values — sum all DURATION targets for the selected pillar (or all pillars)
+      let durationTotal = 0;
+      let durationUnit = 'min';
+      const durationTargets = (activePillar ? [activePillar] : pillars)
+        .flatMap(p => p.targets.filter(t => t.type === 'DURATION' && (t.frequency === 'daily' || !t.frequency)));
+      durationTargets.forEach(t => {
+        const entry = dayLog[t.id];
+        if (entry?.value != null) {
+          const n = parseFloat(entry.value);
+          if (!isNaN(n)) {
+            // If unit is hr/hrs, convert to mins for uniform comparison
+            const u = (t.unit || 'min').toLowerCase();
+            durationTotal += (u === 'hr' || u === 'hrs' || u === 'hour' || u === 'hours') ? n * 60 : n;
+          }
+        }
+      });
+      // Display in hours if > 60 mins
+      const durationDisplay = durationTotal >= 60 ? +(durationTotal / 60).toFixed(1) : Math.round(durationTotal);
+      if (durationTotal >= 60) durationUnit = 'hr';
+
+      // Numeric values — per-target series for selected pillar
+      const numericSeries = {};
+      const numericTargets = (activePillar ? [activePillar] : pillars)
+        .flatMap(p => p.targets.filter(t => t.type === 'NUMBER' && (t.frequency === 'daily' || !t.frequency)));
+      numericTargets.forEach(t => {
+        const entry = dayLog[t.id];
+        if (entry?.value != null) {
+          const n = parseFloat(entry.value);
+          if (!isNaN(n)) {
+            const shortName = t.name.length > 10 ? t.name.slice(0, 10) + '…' : t.name;
+            numericSeries[t.id] = { name: shortName, value: n, unit: t.unit || '' };
+          }
+        }
+      });
+
       days.push({
         key,
         label: WEEKDAY_FULL[d.getDay()],
         short: WEEKDAY_SHORT[d.getDay()],
         rate: Math.round(rate * 100),
+        duration: durationDisplay,
+        durationUnit,
         isToday: i === 0,
+        ...Object.fromEntries(Object.entries(numericSeries).map(([id, v]) => [`n_${id}`, v.value])),
+        _numericSeries: numericSeries,
       });
     }
     return days;
-  }, [logs, pillars]);
+  }, [logs, pillars, selectedPillar, activePillar]);
 
   const avg = data.length > 0 ? Math.round(data.reduce((s, d) => s + d.rate, 0) / data.length) : 0;
 
+  // Get unique numeric targets (for multi-line chart)
+  const numericTargetDefs = useMemo(() => {
+    const seen = new Map();
+    const targets = (activePillar ? [activePillar] : pillars)
+      .flatMap(p => p.targets.filter(t => t.type === 'NUMBER' && (t.frequency === 'daily' || !t.frequency))
+        .map(t => ({ ...t, pillarColor: p.color })));
+    targets.forEach(t => { if (!seen.has(t.id)) seen.set(t.id, t); });
+    return Array.from(seen.values());
+  }, [pillars, activePillar]);
+
+  const METRIC_COLORS = ['#F05A36', '#14B8A6', '#E6A04E', '#8B5CF6', '#3B82F6', '#10B981', '#EC4899'];
+
+  const GRAPH_TABS = [
+    { id: 'completion', label: '✓ Completion %' },
+    { id: 'duration',   label: '⏱ Duration (hrs)' },
+    { id: 'numeric',    label: '📊 Intake / Metrics' },
+  ];
+
   return (
-    <div className="card-bento p-5">
-      <div className="flex items-center justify-between mb-4">
+    <div className="card-bento p-5 space-y-4">
+      {/* Header */}
+      <div className="flex items-start justify-between gap-3">
         <div>
           <h3 className="text-base font-bold text-[#18191E] dark:text-white">Weekly Completion</h3>
           <p className="text-[11px] text-stone-400 dark:text-white/40 mt-0.5">Last 7 days performance</p>
         </div>
-        <div className="text-right">
+        <div className="text-right shrink-0">
           <div className="text-2xl font-extrabold tabular-nums text-accent">{avg}%</div>
           <div className="text-[10px] text-stone-400 dark:text-white/30">avg rate</div>
         </div>
       </div>
 
-      <ResponsiveContainer width="100%" height={180}>
-        <AreaChart data={data} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
-          <defs>
-            <linearGradient id="weekGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="var(--color-accent)" stopOpacity={0.3} />
-              <stop offset="100%" stopColor="var(--color-accent)" stopOpacity={0} />
-            </linearGradient>
-          </defs>
-          <XAxis dataKey="label" tick={{ fontSize: 10, fill: '#9CA3AF' }} axisLine={false} tickLine={false} />
-          <YAxis domain={[0, 100]} tick={{ fontSize: 10, fill: '#9CA3AF' }} axisLine={false} tickLine={false} />
-          <Tooltip
-            content={({ active, payload }) => {
-              if (!active || !payload?.length) return null;
-              return (
-                <div className="bg-[#181926] border border-white/10 rounded-xl px-3 py-2 shadow-xl text-xs">
-                  <div className="font-bold text-white">{payload[0].payload.label}: {payload[0].value}%</div>
-                </div>
-              );
-            }}
-          />
-          <Area type="monotone" dataKey="rate" stroke="var(--color-accent)" strokeWidth={2.5} fill="url(#weekGrad)" dot={{ r: 4, fill: 'var(--color-accent)', stroke: '#181926', strokeWidth: 2 }} />
-        </AreaChart>
-      </ResponsiveContainer>
+      {/* Pillar Filter Pills */}
+      {pillars.length > 0 && (
+        <div className="flex flex-wrap gap-1.5 pb-1 border-b border-black/5 dark:border-white/5">
+          <button
+            onClick={() => setSelectedPillar('all')}
+            className={`text-[11px] font-extrabold px-3 py-1.5 rounded-full transition-all border ${
+              selectedPillar === 'all'
+                ? 'bg-accent text-white border-accent shadow-sm'
+                : 'bg-black/5 dark:bg-white/5 border-black/8 dark:border-white/10 text-stone-500 dark:text-stone-400 hover:text-accent hover:border-accent/40'
+            }`}
+          >
+            All Pillars
+          </button>
+          {pillars.map(p => (
+            <button
+              key={p.id}
+              onClick={() => setSelectedPillar(p.id)}
+              className={`text-[11px] font-extrabold px-3 py-1.5 rounded-full transition-all border ${
+                selectedPillar === p.id
+                  ? 'text-white border-transparent shadow-sm'
+                  : 'bg-black/5 dark:bg-white/5 border-black/8 dark:border-white/10 text-stone-500 dark:text-stone-400 hover:border-accent/40'
+              }`}
+              style={selectedPillar === p.id ? { backgroundColor: p.color, borderColor: p.color } : {}}
+            >
+              {p.english}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Graph Type Tabs */}
+      <div className="flex gap-1 p-1 rounded-2xl bg-black/5 dark:bg-white/5">
+        {GRAPH_TABS.map(tab => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveGraph(tab.id)}
+            className={`flex-1 py-1.5 px-2 rounded-xl text-[10px] font-extrabold transition-all ${
+              activeGraph === tab.id
+                ? 'bg-white dark:bg-[#181926] text-[#18191E] dark:text-white shadow-sm'
+                : 'text-stone-500 dark:text-stone-400 hover:text-[#18191E] dark:hover:text-white'
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {/* ── Graph: Completion % ── */}
+      {activeGraph === 'completion' && (
+        <ResponsiveContainer width="100%" height={180}>
+          <AreaChart data={data} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
+            <defs>
+              <linearGradient id="weekGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor={activePillar?.color || 'var(--color-accent)'} stopOpacity={0.3} />
+                <stop offset="100%" stopColor={activePillar?.color || 'var(--color-accent)'} stopOpacity={0} />
+              </linearGradient>
+            </defs>
+            <XAxis dataKey="label" tick={{ fontSize: 10, fill: '#9CA3AF' }} axisLine={false} tickLine={false} />
+            <YAxis domain={[0, 100]} tick={{ fontSize: 10, fill: '#9CA3AF' }} axisLine={false} tickLine={false} />
+            <Tooltip
+              content={({ active, payload }) => {
+                if (!active || !payload?.length) return null;
+                return (
+                  <div className="bg-[#181926] border border-white/10 rounded-xl px-3 py-2 shadow-xl text-xs">
+                    <div className="font-bold text-white">{payload[0].payload.label}: {payload[0].value}%</div>
+                  </div>
+                );
+              }}
+            />
+            <Area
+              type="monotone"
+              dataKey="rate"
+              stroke={activePillar?.color || 'var(--color-accent)'}
+              strokeWidth={2.5}
+              fill="url(#weekGrad)"
+              dot={{ r: 4, fill: activePillar?.color || 'var(--color-accent)', stroke: '#181926', strokeWidth: 2 }}
+            />
+          </AreaChart>
+        </ResponsiveContainer>
+      )}
+
+      {/* ── Graph: Duration / hrs ── */}
+      {activeGraph === 'duration' && (
+        <div className="space-y-2">
+          <p className="text-[10px] text-stone-400 font-medium">
+            {activePillar ? activePillar.english : 'All'} duration trackers · converted to minutes
+          </p>
+          <ResponsiveContainer width="100%" height={180}>
+            <BarChart data={data} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" vertical={false} />
+              <XAxis dataKey="label" tick={{ fontSize: 10, fill: '#9CA3AF' }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fontSize: 10, fill: '#9CA3AF' }} axisLine={false} tickLine={false} />
+              <Tooltip
+                content={({ active, payload }) => {
+                  if (!active || !payload?.length) return null;
+                  const d = payload[0].payload;
+                  return (
+                    <div className="bg-[#181926] border border-white/10 rounded-xl px-3 py-2 shadow-xl text-xs">
+                      <div className="font-bold text-white">{d.label}</div>
+                      <div className="text-stone-300 mt-1">{d.duration} {d.durationUnit}</div>
+                    </div>
+                  );
+                }}
+              />
+              <Bar dataKey="duration" radius={[6, 6, 0, 0]}>
+                {data.map((entry, i) => (
+                  <Cell
+                    key={i}
+                    fill={activePillar?.color || (entry.isToday ? 'var(--color-accent)' : '#5B6BAF')}
+                    opacity={entry.isToday ? 1 : 0.7}
+                  />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+          {data.every(d => d.duration === 0) && (
+            <p className="text-[11px] text-stone-400 text-center py-2 font-medium">
+              No duration data logged yet — add DURATION trackers in Pillars
+            </p>
+          )}
+        </div>
+      )}
+
+      {/* ── Graph: Numeric Intake / Metrics ── */}
+      {activeGraph === 'numeric' && (
+        <div className="space-y-2">
+          <p className="text-[10px] text-stone-400 font-medium">
+            {activePillar ? activePillar.english : 'All'} quantity trackers (protein, water, carbs, steps…)
+          </p>
+          {numericTargetDefs.length === 0 ? (
+            <div className="flex flex-col items-center py-8 text-stone-400 text-center">
+              <span className="text-2xl mb-2">📊</span>
+              <p className="text-xs font-semibold">No quantity trackers found</p>
+              <p className="text-[10px] mt-1">Add NUMBER type trackers in Pillars → they'll appear here</p>
+            </div>
+          ) : (
+            <>
+              <ResponsiveContainer width="100%" height={180}>
+                <LineChart data={data} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" vertical={false} />
+                  <XAxis dataKey="label" tick={{ fontSize: 10, fill: '#9CA3AF' }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fontSize: 10, fill: '#9CA3AF' }} axisLine={false} tickLine={false} />
+                  <Tooltip
+                    content={({ active, payload, label }) => {
+                      if (!active || !payload?.length) return null;
+                      return (
+                        <div className="bg-[#181926] border border-white/10 rounded-xl px-3 py-2 shadow-xl text-xs space-y-1">
+                          <div className="font-bold text-white mb-1">{label}</div>
+                          {payload.map((p, i) => {
+                            const tDef = numericTargetDefs.find(t => `n_${t.id}` === p.dataKey);
+                            return (
+                              <div key={i} className="flex items-center gap-2">
+                                <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: p.color }} />
+                                <span className="text-stone-300">{tDef?.name}: <span className="text-white font-bold">{p.value ?? '—'} {tDef?.unit}</span></span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      );
+                    }}
+                  />
+                  {numericTargetDefs.map((t, i) => (
+                    <Line
+                      key={t.id}
+                      type="monotone"
+                      dataKey={`n_${t.id}`}
+                      name={t.name}
+                      stroke={t.pillarColor || METRIC_COLORS[i % METRIC_COLORS.length]}
+                      strokeWidth={2}
+                      dot={{ r: 3, fill: t.pillarColor || METRIC_COLORS[i % METRIC_COLORS.length], stroke: '#181926', strokeWidth: 1.5 }}
+                      connectNulls={false}
+                    />
+                  ))}
+                </LineChart>
+              </ResponsiveContainer>
+
+              {/* Legend */}
+              <div className="flex flex-wrap gap-2 pt-1">
+                {numericTargetDefs.map((t, i) => (
+                  <span key={t.id} className="flex items-center gap-1.5 text-[10px] font-semibold text-stone-500 dark:text-stone-400">
+                    <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: t.pillarColor || METRIC_COLORS[i % METRIC_COLORS.length] }} />
+                    {t.name}{t.unit ? ` (${t.unit})` : ''}
+                  </span>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+      )}
     </div>
   );
 }
+
 
 /* ── Desktop Pillar Breakdown (Donut + Table) ─────────────────────── */
 function DesktopPillarBreakdown({ pillars, logs, dateStr }) {
