@@ -1,6 +1,11 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Plus, Trash2, Edit3, X, Check, Moon, Soup, Dumbbell, Star, Heart, Flame, Zap, Wind, Sun, Layers, Target, Activity } from 'lucide-react';
+import {
+  Plus, Trash2, Edit3, X, Check,
+  Moon, Soup, Dumbbell, Star, Heart, Flame, Zap, Wind, Sun,
+  Layers, Target, Activity, ChevronRight, Flag, Calendar,
+  TrendingUp, TrendingDown, Minus,
+} from 'lucide-react';
 import { useStorage } from '../hooks/useStorage';
 import { DEFAULT_PILLARS } from '../data/defaultPillars';
 import { timeStringToValue, valueToTimeString } from '../utils/dateUtils';
@@ -23,83 +28,48 @@ const ICON_MAP = {
 
 const TARGET_TYPES = [
   { id: 'CHECKBOX', label: 'Checklist', desc: 'Simple Yes / No habit toggle' },
-  { id: 'NUMBER',   label: 'Quantity',  desc: 'Water L, Protein g, Steps, Meals...' },
-  { id: 'DURATION', label: 'Duration',  desc: 'Workout mins, Meditate mins, Sleep hrs' },
+  { id: 'NUMBER',   label: 'Quantity',  desc: 'Water, Protein, Steps, Meals...' },
+  { id: 'DURATION', label: 'Duration',  desc: 'Workout, Meditate, Sleep time' },
 ];
 
-const TEMPLATE_TARGETS = [
-  { name: 'Water 3 Liters', type: 'NUMBER', targetValue: 3, comparison: 'gte', unit: 'L' },
-  { name: 'Protein 90g', type: 'NUMBER', targetValue: 90, comparison: 'gte', unit: 'g', subMetrics: [
-      { id: 'sub-p1', name: 'Protein', targetValue: 90, unit: 'g', comparison: 'gte' },
-      { id: 'sub-p2', name: 'Carbs', targetValue: 250, unit: 'g', comparison: 'gte' },
-      { id: 'sub-p3', name: 'Calories', targetValue: 2200, unit: 'kcal', comparison: 'gte' },
-    ]
-  },
-  { name: 'Workout 45 mins', type: 'DURATION', targetValue: 45, comparison: 'gte', unit: 'min', subMetrics: [
-      { id: 'sub-dur1', name: 'Cardio', targetValue: 20, unit: 'min', comparison: 'gte' },
-      { id: 'sub-dur2', name: 'Lifting', targetValue: 25, unit: 'min', comparison: 'gte' },
-    ]
-  },
-  { name: 'Sleep 8 Hours', type: 'DURATION', targetValue: 8, comparison: 'gte', unit: 'hr' },
-  { name: '10,000 Steps', type: 'NUMBER', targetValue: 10000, comparison: 'gte', unit: 'steps' },
-  { name: 'Gita 1 Chapter', type: 'CHECKBOX', targetValue: 0, comparison: 'gte', unit: '' },
-  { name: 'Cold shower', type: 'CHECKBOX', targetValue: 0, comparison: 'gte', unit: '' },
+const QUICK_UNITS = ['g', 'L', 'ml', 'kg', 'kcal', 'steps', 'pages', 'sessions', 'reps'];
+
+/* ── Goal direction icons ──────────────────────────────────────── */
+const GOAL_DIRECTIONS = [
+  { id: 'gte', label: '≥ At least', icon: TrendingUp, desc: 'Minimum goal (more is better)' },
+  { id: 'lte', label: '≤ At most',  icon: TrendingDown, desc: 'Maximum limit (less is better)' },
+  { id: 'eq',  label: '= Exactly',  icon: Minus, desc: 'Hit a specific number' },
 ];
 
-const QUICK_UNITS = ['g', 'L', 'ml', 'min', 'hr', 'kcal', 'steps', 'pages', 'sessions'];
+const GOAL_QUICK_UNITS = ['g', 'L', 'ml', 'kg', 'kcal', 'steps', 'min', 'hr', 'pages', 'sessions', 'reps', '%'];
 
-/* ── Target Form (add OR edit) ─────────────────────────────────────── */
+const GOAL_TEMPLATES = [
+  { name: 'Drink 3L Water', value: 3, unit: 'L', direction: 'gte', emoji: '💧' },
+  { name: 'Protein 90g / day', value: 90, unit: 'g', direction: 'gte', emoji: '🥩' },
+  { name: 'Workout 45 min', value: 45, unit: 'min', direction: 'gte', emoji: '🏋️' },
+  { name: 'Sleep 8 hrs', value: 8, unit: 'hr', direction: 'gte', emoji: '😴' },
+  { name: '10,000 Steps', value: 10000, unit: 'steps', direction: 'gte', emoji: '👟' },
+  { name: 'Calories < 2000', value: 2000, unit: 'kcal', direction: 'lte', emoji: '🔥' },
+  { name: 'Read 20 pages', value: 20, unit: 'pages', direction: 'gte', emoji: '📖' },
+  { name: 'Weight goal', value: 70, unit: 'kg', direction: 'lte', emoji: '⚖️' },
+];
+
+/* ── Target Form (add OR edit) — pure measurement, no goals ──── */
 function TargetForm({ initial, onSave, onCancel }) {
-  const [name,        setName]        = useState(initial?.name        ?? '');
-  const [type,        setType]        = useState(initial?.type === 'TIME' || initial?.type === 'MULTI_METRIC' ? 'NUMBER' : (initial?.type ?? 'CHECKBOX'));
-  const [unit,        setUnit]        = useState(initial?.unit        ?? '');
-
-  const initialTargetVal = useMemo(() => {
-    const raw = initial?.targetValue;
-    if (initial?.type === 'DURATION' || type === 'DURATION') {
-      return valueToTimeString(raw != null ? raw : 45, initial?.unit || unit);
-    }
-    return raw != null ? String(raw) : '0';
-  }, [initial, type, unit]);
-
-  const [targetValue, setTargetValue] = useState(initialTargetVal);
-  const [comparison,  setComparison]  = useState(initial?.comparison  ?? 'gte');
-
-  const [subMetrics,  setSubMetrics]  = useState(() => {
+  const [name, setName] = useState(initial?.name ?? '');
+  const [type, setType] = useState(
+    initial?.type === 'TIME' || initial?.type === 'MULTI_METRIC' ? 'NUMBER' : (initial?.type ?? 'CHECKBOX')
+  );
+  const [unit, setUnit] = useState(initial?.unit ?? '');
+  const [subMetrics, setSubMetrics] = useState(() => {
     const existing = initial?.subMetrics || [];
-    return existing.map(s => ({
-      ...s,
-      targetValue: (initial?.type === 'DURATION' || type === 'DURATION') && typeof s.targetValue === 'number'
-        ? valueToTimeString(s.targetValue, s.unit || unit)
-        : s.targetValue
-    }));
+    return existing.map(s => ({ ...s }));
   });
-
-  const [showTemplates, setShowTemplates] = useState(false);
 
   const fieldCls =
     'w-full text-sm font-bold text-[#18191E] dark:text-white placeholder-stone-400 ' +
     'bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 ' +
     'rounded-2xl px-4 py-3 outline-none focus:border-accent transition-colors';
-
-  function applyTemplate(t) {
-    setName(t.name);
-    setType(t.type);
-    setUnit(t.unit || '');
-    if (t.type === 'DURATION') {
-      setTargetValue(valueToTimeString(t.targetValue, t.unit));
-    } else {
-      setTargetValue(t.targetValue != null ? String(t.targetValue) : '0');
-    }
-    const subs = t.subMetrics ? JSON.parse(JSON.stringify(t.subMetrics)) : [];
-    if (t.type === 'DURATION') {
-      subs.forEach(s => {
-        s.targetValue = valueToTimeString(s.targetValue, s.unit);
-      });
-    }
-    setSubMetrics(subs);
-    setShowTemplates(false);
-  }
 
   function addSubMetric() {
     setSubMetrics([
@@ -107,9 +77,7 @@ function TargetForm({ initial, onSave, onCancel }) {
       {
         id: `sub-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
         name: '',
-        targetValue: type === 'DURATION' ? '00:20' : 0,
         unit: type === 'DURATION' ? 'min' : 'g',
-        comparison: 'gte'
       }
     ]);
   }
@@ -128,25 +96,21 @@ function TargetForm({ initial, onSave, onCancel }) {
     e.preventDefault();
     if (!name.trim()) return;
 
-    let parsedTargetVal = 0;
-    if (type === 'DURATION') {
-      parsedTargetVal = timeStringToValue(targetValue, unit);
-    } else if (type === 'NUMBER') {
-      parsedTargetVal = parseFloat(targetValue) || 0;
-    }
-
-    const cleanSub = (type === 'NUMBER' || type === 'DURATION') ? subMetrics.filter(s => s.name.trim().length > 0).map(s => ({
-      ...s,
-      targetValue: type === 'DURATION' ? timeStringToValue(s.targetValue, s.unit || unit) : (parseFloat(s.targetValue) || 0)
-    })) : [];
+    const cleanSub = (type === 'NUMBER' || type === 'DURATION')
+      ? subMetrics.filter(s => s.name.trim().length > 0).map(s => ({
+          id: s.id,
+          name: s.name.trim(),
+          unit: s.unit || '',
+        }))
+      : [];
 
     onSave({
       id: initial?.id ?? `custom-${Date.now()}`,
       name: name.trim(),
       type,
-      targetValue: (type === 'NUMBER' || type === 'DURATION') ? parsedTargetVal : null,
+      targetValue: null,
       unit: type === 'CHECKBOX' ? '' : (unit.trim() || (type === 'DURATION' ? 'min' : '')),
-      comparison: comparison || 'gte',
+      comparison: 'gte',
       subMetrics: cleanSub,
       frequency: 'daily',
       reminder: null,
@@ -157,42 +121,36 @@ function TargetForm({ initial, onSave, onCancel }) {
     <form onSubmit={handleSave} className="rounded-3xl p-5 space-y-4 bg-white dark:bg-[#181926] border border-black/8 dark:border-white/10 shadow-xl animate-[fadeIn_0.2s_ease-out]">
       <div className="flex items-center justify-between">
         <p className="text-xs font-extrabold text-accent uppercase tracking-wider">
-          {initial?.id ? 'Edit Target' : 'New Daily Target'}
+          {initial?.id ? 'Edit Tracker' : 'New Tracker'}
         </p>
-        {!initial?.id && (
-          <button type="button" onClick={() => setShowTemplates(!showTemplates)}
-            className="text-xs text-accent font-bold hover:underline flex items-center gap-1">
-            {showTemplates ? 'Hide templates' : 'Quick templates ▾'}
-          </button>
-        )}
+        <span className="text-[10px] text-stone-400 font-medium px-2 py-1 rounded-full bg-black/5 dark:bg-white/5">
+          📏 Measurement only
+        </span>
       </div>
 
-      {showTemplates && (
-        <div className="flex flex-wrap gap-1.5 pb-3 border-b border-black/6 dark:border-white/6">
-          {TARGET_TEMPLATES.map((t) => (
-            <button key={t.name} type="button" onClick={() => applyTemplate(t)}
-              className="text-xs font-semibold px-3 py-1.5 rounded-full border border-black/8 dark:border-white/10 text-stone-600 dark:text-stone-300 hover:border-accent hover:text-accent transition-all bg-black/5 dark:bg-white/5">
-              {t.name}
-            </button>
-          ))}
-        </div>
-      )}
+      {/* Info banner */}
+      <div className="flex items-start gap-2.5 p-3 rounded-2xl bg-accent/8 border border-accent/20">
+        <Flag size={13} className="text-accent mt-0.5 shrink-0" />
+        <p className="text-[11px] text-stone-600 dark:text-stone-300 font-medium leading-snug">
+          Pillars track <strong>what you do</strong>. Set aspirational goals (like "90g protein/day") in the <strong>Goals</strong> tab — AI will compare them against your logs.
+        </p>
+      </div>
 
       {/* Target Name */}
       <div>
         <label className="block text-[11px] font-extrabold uppercase tracking-wider text-stone-500 dark:text-stone-400 mb-1.5">
-          Target Name
+          What are you tracking?
         </label>
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="e.g. Lunch, Daily Nutrition, Full Workout"
+          placeholder="e.g. Water intake, Workout, Sleep duration"
           autoFocus
           className={fieldCls}
         />
       </div>
 
-      {/* Target Type Selector */}
+      {/* Type Selector */}
       <div>
         <label className="block text-[11px] font-extrabold uppercase tracking-wider text-stone-500 dark:text-stone-400 mb-1.5">
           Tracking Type
@@ -204,7 +162,7 @@ function TargetForm({ initial, onSave, onCancel }) {
               type="button"
               onClick={() => {
                 setType(t.id);
-                if (t.id === 'CHECKBOX') { setTargetValue('0'); setUnit(''); setSubMetrics([]); }
+                if (t.id === 'CHECKBOX') { setUnit(''); setSubMetrics([]); }
               }}
               className={`p-3 rounded-2xl text-left transition-all border ${
                 type === t.id
@@ -221,175 +179,101 @@ function TargetForm({ initial, onSave, onCancel }) {
         </div>
       </div>
 
-      {/* Target Value & Unit Configuration for single NUMBER / DURATION (hidden if sub-metrics are present) */}
+      {/* Unit (for Quantity and Duration) */}
       {(type === 'NUMBER' || type === 'DURATION') && (
-        <>
-          {subMetrics.length === 0 && (
-            <div className="space-y-3 p-4 rounded-2xl bg-black/[0.02] dark:bg-white/[0.02] border border-black/5 dark:border-white/5">
-              {type === 'DURATION' ? (
-                <div>
-                  <label className="block text-[10px] font-extrabold uppercase tracking-wider text-stone-400 mb-1">
-                    Target Duration Goal (hh:mm)
-                  </label>
-                  <input
-                    type="time"
-                    value={targetValue}
-                    onChange={(e) => setTargetValue(e.target.value)}
-                    placeholder="00:45"
-                    className={fieldCls}
-                  />
+        <div className="space-y-3 p-4 rounded-2xl bg-black/[0.02] dark:bg-white/[0.02] border border-black/5 dark:border-white/5">
+          {type === 'DURATION' ? (
+            <p className="text-[11px] text-stone-500 dark:text-stone-400 font-medium">
+              Duration is logged as <strong>hh:mm</strong> when you tap to log each day. Leave blank or any time is valid.
+            </p>
+          ) : (
+            <>
+              <div>
+                <label className="block text-[10px] font-extrabold uppercase tracking-wider text-stone-400 mb-1">
+                  Unit (optional)
+                </label>
+                <input
+                  value={unit}
+                  onChange={(e) => setUnit(e.target.value)}
+                  placeholder="e.g. L, g, kcal, steps"
+                  className={fieldCls}
+                />
+              </div>
+              <div>
+                <span className="text-[10px] font-extrabold uppercase tracking-wider text-stone-400 mr-2">Quick Units:</span>
+                <div className="inline-flex gap-1.5 flex-wrap mt-1">
+                  {QUICK_UNITS.map((u) => (
+                    <button
+                      key={u}
+                      type="button"
+                      onClick={() => setUnit(u)}
+                      className={`text-[11px] font-bold px-2.5 py-1 rounded-full transition-all border ${
+                        unit === u
+                          ? 'bg-accent text-white border-accent'
+                          : 'bg-black/5 dark:bg-white/5 border-black/5 dark:border-white/10 text-stone-500 hover:text-accent'
+                      }`}
+                    >
+                      {u}
+                    </button>
+                  ))}
                 </div>
-              ) : (
-                <>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    <div>
-                      <label className="block text-[10px] font-extrabold uppercase tracking-wider text-stone-400 mb-1">
-                        Target Value (Goal)
-                      </label>
-                      <input
-                        type="number"
-                        step="any"
-                        value={targetValue}
-                        onChange={(e) => setTargetValue(e.target.value)}
-                        placeholder="0"
-                        className={fieldCls}
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[10px] font-extrabold uppercase tracking-wider text-stone-400 mb-1">
-                        Unit (g, L, kcal...)
-                      </label>
-                      <input
-                        value={unit}
-                        onChange={(e) => setUnit(e.target.value)}
-                        placeholder="e.g. g, L, kcal"
-                        className={fieldCls}
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[10px] font-extrabold uppercase tracking-wider text-stone-400 mb-1">
-                        Comparison Goal
-                      </label>
-                      <select
-                        value={comparison}
-                        onChange={(e) => setComparison(e.target.value)}
-                        className={`${fieldCls} cursor-pointer`}
-                      >
-                        <option value="gte">≥ At least (Min Goal)</option>
-                        <option value="lte">≤ At most (Max Limit)</option>
-                      </select>
-                    </div>
-                  </div>
+              </div>
+            </>
+          )}
+        </div>
+      )}
 
-                  {/* Quick Unit Suggestion Chips for Number targets */}
-                  <div>
-                    <span className="text-[10px] font-extrabold uppercase tracking-wider text-stone-400 mr-2">Quick Units:</span>
-                    <div className="inline-flex gap-1.5 flex-wrap mt-1">
-                      {QUICK_UNITS.map((u) => (
-                        <button
-                          key={u}
-                          type="button"
-                          onClick={() => setUnit(u)}
-                          className={`text-[11px] font-bold px-2.5 py-1 rounded-full transition-all border ${
-                            unit === u
-                              ? 'bg-accent text-white border-accent'
-                              : 'bg-black/5 dark:bg-white/5 border-black/5 dark:border-white/10 text-stone-500 hover:text-accent'
-                          }`}
-                        >
-                          {u}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                </>
-              )}
+      {/* Sub-Metrics Section */}
+      {(type === 'NUMBER' || type === 'DURATION') && (
+        <div className="space-y-3 p-4 rounded-2xl bg-black/[0.02] dark:bg-white/[0.02] border border-accent/20">
+          <div className="flex items-center justify-between">
+            <div>
+              <span className="text-xs font-extrabold text-accent uppercase tracking-wider">
+                {type === 'DURATION' ? 'Multiple Time Blocks' : 'Multiple Sub-Metrics'}
+              </span>
+              <p className="text-[10px] text-stone-400 font-medium">
+                {type === 'DURATION'
+                  ? 'Track specific blocks (e.g. Cardio 20m, Lifting 30m)'
+                  : 'Track breakdowns (e.g. Protein, Carbs, Calories)'}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={addSubMetric}
+              className="text-xs font-bold text-accent hover:underline flex items-center gap-1 shrink-0 ml-2"
+            >
+              <Plus size={14} /> Add
+            </button>
+          </div>
+
+          {subMetrics.length > 0 && (
+            <div className="space-y-2 pt-1">
+              {subMetrics.map((sub, idx) => (
+                <div key={sub.id || idx} className="bg-white dark:bg-[#181926] p-3 rounded-xl border border-black/5 dark:border-white/10 flex items-center gap-2">
+                  <input
+                    value={sub.name}
+                    onChange={(e) => updateSubMetric(idx, 'name', e.target.value)}
+                    placeholder={type === 'DURATION' ? 'e.g. Cardio, Lifting' : 'e.g. Protein, Carbs'}
+                    className="flex-1 text-xs font-bold text-[#18191E] dark:text-white bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl px-2.5 py-2 outline-none"
+                  />
+                  <input
+                    value={sub.unit || ''}
+                    onChange={(e) => updateSubMetric(idx, 'unit', e.target.value)}
+                    placeholder="unit"
+                    className="w-14 text-xs font-bold text-[#18191E] dark:text-white bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl px-2 py-2 outline-none"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removeSubMetric(idx)}
+                    className="w-8 h-8 flex items-center justify-center rounded-xl text-stone-400 hover:text-red-500 hover:bg-red-500/10 transition-all shrink-0"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+              ))}
             </div>
           )}
-
-          {/* Sub-Metrics Section inside Quantity & Duration */}
-          <div className="space-y-3 p-4 rounded-2xl bg-black/[0.02] dark:bg-white/[0.02] border border-accent/20">
-            <div className="flex items-center justify-between">
-              <div>
-                <span className="text-xs font-extrabold text-accent uppercase tracking-wider">
-                  {type === 'DURATION' ? 'Multiple Duration Sessions / Time Blocks' : 'Multiple Sub-Metrics'}
-                </span>
-                <p className="text-[10px] text-stone-400 font-medium">
-                  {type === 'DURATION'
-                    ? 'Track specific activity time blocks (e.g. Cardio 20m, Lifting 30m, Yoga 15m)'
-                    : 'Track specific breakdown sub-fields (e.g. Protein, Carbs, Calories for meals)'}
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={addSubMetric}
-                className="text-xs font-bold text-accent hover:underline flex items-center gap-1 shrink-0 ml-2"
-              >
-                <Plus size={14} /> {type === 'DURATION' ? 'Add Time Block' : 'Add Sub-Metric'}
-              </button>
-            </div>
-
-            {subMetrics.length > 0 && (
-              <div className="space-y-2 pt-1">
-                {subMetrics.map((sub, idx) => (
-                  <div key={sub.id || idx} className="bg-white dark:bg-[#181926] p-3 rounded-xl border border-black/5 dark:border-white/10 space-y-2">
-                    <div className="flex items-center gap-2">
-                      <input
-                        value={sub.name}
-                        onChange={(e) => updateSubMetric(idx, 'name', e.target.value)}
-                        placeholder={type === 'DURATION' ? 'e.g. Cardio, Lifting' : 'e.g. Protein, Carbs'}
-                        className="flex-1 text-xs font-bold text-[#18191E] dark:text-white bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl px-2.5 py-2 outline-none"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => removeSubMetric(idx)}
-                        className="w-8 h-8 flex items-center justify-center rounded-xl text-stone-400 hover:text-red-500 hover:bg-red-500/10 transition-all shrink-0"
-                      >
-                        <Trash2 size={14} />
-                      </button>
-                    </div>
-                    {type === 'DURATION' ? (
-                      <div className="flex items-center gap-2">
-                        <label className="text-[10px] font-extrabold text-stone-400 uppercase tracking-wider shrink-0">Time Goal:</label>
-                        <input
-                          type="time"
-                          value={sub.targetValue}
-                          onChange={(e) => updateSubMetric(idx, 'targetValue', e.target.value)}
-                          placeholder="00:20"
-                          className="flex-1 text-xs font-bold text-[#18191E] dark:text-white bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl px-2.5 py-2 outline-none"
-                        />
-                      </div>
-                    ) : (
-                      <div className="flex gap-2">
-                        <input
-                          type="number"
-                          step="any"
-                          value={sub.targetValue}
-                          onChange={(e) => updateSubMetric(idx, 'targetValue', e.target.value)}
-                          placeholder="Goal"
-                          className="flex-1 text-xs font-bold text-[#18191E] dark:text-white bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl px-2.5 py-2 outline-none"
-                        />
-                        <input
-                          value={sub.unit}
-                          onChange={(e) => updateSubMetric(idx, 'unit', e.target.value)}
-                          placeholder="g, L, kcal"
-                          className="w-16 text-xs font-bold text-[#18191E] dark:text-white bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl px-2 py-2 outline-none"
-                        />
-                        <select
-                          value={sub.comparison}
-                          onChange={(e) => updateSubMetric(idx, 'comparison', e.target.value)}
-                          className="w-20 text-[11px] font-bold text-[#18191E] dark:text-white bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl px-1.5 py-2 outline-none"
-                        >
-                          <option value="gte">≥ Min</option>
-                          <option value="lte">≤ Max</option>
-                        </select>
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </>
+        </div>
       )}
 
       {/* Action Buttons */}
@@ -398,7 +282,7 @@ function TargetForm({ initial, onSave, onCancel }) {
           type="submit"
           className="flex-1 btn-coral py-3.5 px-6 text-xs font-extrabold uppercase tracking-wider text-white shadow-md hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2"
         >
-          {initial?.id ? 'Save Changes' : 'Add Target'}
+          {initial?.id ? 'Save Changes' : 'Add Tracker'}
         </button>
         <button
           type="button"
@@ -412,7 +296,244 @@ function TargetForm({ initial, onSave, onCancel }) {
   );
 }
 
-/* ── Pillar Editor ──────────────────────────────────────────────────── */
+/* ── Goal Form ─────────────────────────────────────────────────── */
+function GoalForm({ initial, pillars, onSave, onCancel }) {
+  const [name,      setName]      = useState(initial?.name      ?? '');
+  const [value,     setValue]     = useState(initial?.value     != null ? String(initial.value) : '');
+  const [unit,      setUnit]      = useState(initial?.unit      ?? '');
+  const [direction, setDirection] = useState(initial?.direction ?? 'gte');
+  const [deadline,  setDeadline]  = useState(initial?.deadline  ?? '');
+  const [pillarTargetId, setPillarTargetId] = useState(initial?.pillarTargetId ?? '');
+  const [notes,     setNotes]     = useState(initial?.notes     ?? '');
+  const [showTemplates, setShowTemplates] = useState(false);
+
+  const fieldCls =
+    'w-full text-sm font-bold text-[#18191E] dark:text-white placeholder-stone-400 ' +
+    'bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 ' +
+    'rounded-2xl px-4 py-3 outline-none focus:border-accent transition-colors';
+
+  // Flatten all pillar targets for the link dropdown
+  const allTargets = useMemo(() => {
+    const out = [];
+    pillars.forEach(p => {
+      p.targets.forEach(t => {
+        if (t.type !== 'CHECKBOX') {
+          out.push({ id: t.id, label: `${p.english} → ${t.name}`, unit: t.unit });
+        }
+      });
+    });
+    return out;
+  }, [pillars]);
+
+  function applyTemplate(t) {
+    setName(t.name);
+    setValue(String(t.value));
+    setUnit(t.unit);
+    setDirection(t.direction);
+    setShowTemplates(false);
+  }
+
+  function handleSave(e) {
+    e.preventDefault();
+    if (!name.trim() || !value) return;
+    onSave({
+      id: initial?.id ?? `goal-${Date.now()}`,
+      name: name.trim(),
+      value: parseFloat(value) || 0,
+      unit: unit.trim(),
+      direction,
+      deadline: deadline || null,
+      pillarTargetId: pillarTargetId || null,
+      notes: notes.trim() || null,
+      createdAt: initial?.createdAt ?? Date.now(),
+    });
+  }
+
+  return (
+    <form onSubmit={handleSave} className="rounded-3xl p-5 space-y-4 bg-white dark:bg-[#181926] border border-black/8 dark:border-white/10 shadow-xl animate-[fadeIn_0.2s_ease-out]">
+      <div className="flex items-center justify-between">
+        <p className="text-xs font-extrabold text-accent uppercase tracking-wider">
+          {initial?.id ? 'Edit Goal' : 'New AI Goal'}
+        </p>
+        {!initial?.id && (
+          <button type="button" onClick={() => setShowTemplates(!showTemplates)}
+            className="text-xs text-accent font-bold hover:underline flex items-center gap-1">
+            {showTemplates ? 'Hide templates' : 'Quick templates ▾'}
+          </button>
+        )}
+      </div>
+
+      {showTemplates && (
+        <div className="flex flex-wrap gap-1.5 pb-3 border-b border-black/6 dark:border-white/6">
+          {GOAL_TEMPLATES.map((t) => (
+            <button key={t.name} type="button" onClick={() => applyTemplate(t)}
+              className="text-xs font-semibold px-3 py-1.5 rounded-full border border-black/8 dark:border-white/10 text-stone-600 dark:text-stone-300 hover:border-accent hover:text-accent transition-all bg-black/5 dark:bg-white/5 flex items-center gap-1">
+              <span>{t.emoji}</span> {t.name}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Goal Name */}
+      <div>
+        <label className="block text-[11px] font-extrabold uppercase tracking-wider text-stone-500 dark:text-stone-400 mb-1.5">
+          Goal Name
+        </label>
+        <input
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="e.g. Daily Protein, Water Intake, Weight Goal"
+          autoFocus
+          className={fieldCls}
+        />
+      </div>
+
+      {/* Value + Unit + Direction */}
+      <div className="space-y-3 p-4 rounded-2xl bg-black/[0.02] dark:bg-white/[0.02] border border-black/5 dark:border-white/5">
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="block text-[10px] font-extrabold uppercase tracking-wider text-stone-400 mb-1">
+              Target Value
+            </label>
+            <input
+              type="number"
+              step="any"
+              value={value}
+              onChange={(e) => setValue(e.target.value)}
+              placeholder="e.g. 90"
+              className={fieldCls}
+            />
+          </div>
+          <div>
+            <label className="block text-[10px] font-extrabold uppercase tracking-wider text-stone-400 mb-1">
+              Unit
+            </label>
+            <input
+              value={unit}
+              onChange={(e) => setUnit(e.target.value)}
+              placeholder="g, L, kg, hrs..."
+              className={fieldCls}
+            />
+          </div>
+        </div>
+
+        {/* Quick unit chips */}
+        <div className="flex flex-wrap gap-1.5">
+          {GOAL_QUICK_UNITS.map((u) => (
+            <button
+              key={u}
+              type="button"
+              onClick={() => setUnit(u)}
+              className={`text-[11px] font-bold px-2.5 py-1 rounded-full transition-all border ${
+                unit === u
+                  ? 'bg-accent text-white border-accent'
+                  : 'bg-black/5 dark:bg-white/5 border-black/5 dark:border-white/10 text-stone-500 hover:text-accent'
+              }`}
+            >
+              {u}
+            </button>
+          ))}
+        </div>
+
+        {/* Direction */}
+        <div>
+          <label className="block text-[10px] font-extrabold uppercase tracking-wider text-stone-400 mb-2">
+            Direction
+          </label>
+          <div className="grid grid-cols-3 gap-2">
+            {GOAL_DIRECTIONS.map((d) => {
+              const DIcon = d.icon;
+              return (
+                <button
+                  key={d.id}
+                  type="button"
+                  onClick={() => setDirection(d.id)}
+                  className={`p-2.5 rounded-2xl text-center transition-all border ${
+                    direction === d.id
+                      ? 'bg-accent text-white border-accent shadow-sm'
+                      : 'bg-black/5 dark:bg-white/5 border-black/10 dark:border-white/10 text-stone-600 dark:text-stone-300 hover:border-accent/50'
+                  }`}
+                >
+                  <DIcon size={14} className="mx-auto mb-1" />
+                  <div className="text-[11px] font-extrabold">{d.label}</div>
+                  <div className={`text-[9px] mt-0.5 font-medium ${direction === d.id ? 'text-white/70' : 'text-stone-400'}`}>
+                    {d.desc}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* Link to pillar tracker (optional) */}
+      {allTargets.length > 0 && (
+        <div>
+          <label className="block text-[11px] font-extrabold uppercase tracking-wider text-stone-500 dark:text-stone-400 mb-1.5">
+            Link to Pillar Tracker <span className="font-normal text-stone-400 normal-case">(optional — AI uses this for progress)</span>
+          </label>
+          <select
+            value={pillarTargetId}
+            onChange={(e) => setPillarTargetId(e.target.value)}
+            className={`${fieldCls} cursor-pointer`}
+          >
+            <option value="">Not linked</option>
+            {allTargets.map(t => (
+              <option key={t.id} value={t.id}>{t.label}{t.unit ? ` (${t.unit})` : ''}</option>
+            ))}
+          </select>
+        </div>
+      )}
+
+      {/* Deadline */}
+      <div>
+        <label className="block text-[11px] font-extrabold uppercase tracking-wider text-stone-500 dark:text-stone-400 mb-1.5">
+          Deadline <span className="font-normal text-stone-400 normal-case">(optional)</span>
+        </label>
+        <input
+          type="date"
+          value={deadline}
+          onChange={(e) => setDeadline(e.target.value)}
+          className={fieldCls}
+        />
+      </div>
+
+      {/* Notes */}
+      <div>
+        <label className="block text-[11px] font-extrabold uppercase tracking-wider text-stone-500 dark:text-stone-400 mb-1.5">
+          Why this goal? <span className="font-normal text-stone-400 normal-case">(optional — AI uses this for context)</span>
+        </label>
+        <textarea
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+          placeholder="e.g. Building muscle mass for competition in August..."
+          rows={2}
+          className={`${fieldCls} resize-none`}
+        />
+      </div>
+
+      {/* Action Buttons */}
+      <div className="flex gap-2 pt-2">
+        <button
+          type="submit"
+          className="flex-1 btn-coral py-3.5 px-6 text-xs font-extrabold uppercase tracking-wider text-white shadow-md hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2"
+        >
+          <Target size={14} />
+          {initial?.id ? 'Save Goal' : 'Add Goal'}
+        </button>
+        <button
+          type="button"
+          onClick={onCancel}
+          className="btn-secondary-outline px-5 py-3.5 text-xs font-extrabold uppercase tracking-wider text-stone-400 hover:text-white rounded-full"
+        >
+          Cancel
+        </button>
+      </div>
+    </form>
+  );
+}
+
+/* ── Pillar Editor ──────────────────────────────────────────────── */
 function PillarEditor({ pillar, onSave, onCancel }) {
   const [sanskrit,    setSanskrit]    = useState(pillar.sanskrit);
   const [english,     setEnglish]     = useState(pillar.english);
@@ -482,16 +603,22 @@ function PillarEditor({ pillar, onSave, onCancel }) {
   );
 }
 
-/* ── Main ───────────────────────────────────────────────────────────── */
+/* ── Main ───────────────────────────────────────────────────────── */
 export default function Sadhana() {
   const location = useLocation();
-  const { state, setPillars } = useStorage();
+  const { state, setPillars, setGoals } = useStorage();
   const pillars = state.pillars || [];
+  const goals   = state.goals   || [];
+
+  const [activeTab,       setActiveTab]       = useState('pillars');
   const [editingId,       setEditingId]       = useState(null);
   const [addingTargetTo,  setAddingTargetTo]  = useState(null);
   const [editingTarget,   setEditingTarget]   = useState(null);
   const [addingPillar,    setAddingPillar]    = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
+  const [addingGoal,      setAddingGoal]      = useState(false);
+  const [editingGoal,     setEditingGoal]     = useState(null);
+  const [confirmDeleteGoalId, setConfirmDeleteGoalId] = useState(null);
 
   useEffect(() => {
     if (location.state?.addPillar) {
@@ -499,6 +626,9 @@ export default function Sadhana() {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } else if (location.state?.addTargetTo) {
       setAddingTargetTo(location.state.addTargetTo);
+    } else if (location.state?.addGoal) {
+      setActiveTab('goals');
+      setAddingGoal(true);
     }
   }, [location.state]);
 
@@ -541,8 +671,26 @@ export default function Sadhana() {
     setAddingPillar(false);
   }
 
+  function saveGoal(goal) {
+    if (editingGoal) {
+      setGoals(goals.map(g => g.id === goal.id ? goal : g));
+      setEditingGoal(null);
+    } else {
+      setGoals([...goals, goal]);
+      setAddingGoal(false);
+    }
+  }
+
+  function deleteGoal(id) {
+    setGoals(goals.filter(g => g.id !== id));
+    setConfirmDeleteGoalId(null);
+  }
+
   const totalTargets = useMemo(() => pillars.reduce((s, p) => s + p.targets.length, 0), [pillars]);
   const dailyTargets = useMemo(() => pillars.reduce((s, p) => s + p.targets.filter(t => t.frequency === 'daily' || !t.frequency).length, 0), [pillars]);
+
+  const directionLabel = (d) => d === 'lte' ? '≤ At most' : d === 'eq' ? '= Exactly' : '≥ At least';
+  const directionColor = (d) => d === 'lte' ? 'text-blue-500' : d === 'eq' ? 'text-purple-500' : 'text-emerald-500';
 
   return (
     <div className="page-container page-transition">
@@ -551,215 +699,383 @@ export default function Sadhana() {
       <div className="flex items-start justify-between mb-6">
         <div>
           <h1 className="text-2xl lg:text-3xl font-extrabold text-[#18191E] dark:text-white">Pillars of Practice</h1>
-          <p className="text-xs text-stone-500 dark:text-stone-400 mt-0.5 font-medium">Customize your non-negotiables & core habits</p>
+          <p className="text-xs text-stone-500 dark:text-stone-400 mt-0.5 font-medium">Track your habits · Set your goals · Let AI guide you</p>
         </div>
         <button
-          onClick={() => setAddingPillar(true)}
+          onClick={() => activeTab === 'pillars' ? setAddingPillar(true) : (setAddingGoal(true), setEditingGoal(null))}
           className="btn-coral text-xs flex items-center gap-1.5 shadow-md"
         >
-          <Plus size={14} /> Add Pillar
+          <Plus size={14} /> {activeTab === 'pillars' ? 'Add Pillar' : 'Add Goal'}
         </button>
       </div>
 
-      {/* Summary KPI Row */}
-      <div className="grid grid-cols-3 gap-3 mb-6">
-        <div className="card-bento p-4 bg-white dark:bg-[#181926] border border-black/5 dark:border-white/8 shadow-sm">
-          <div className="flex items-center gap-2 mb-1">
-            <Layers size={14} className="text-[#F05A36]" />
-            <span className="text-[10px] font-extrabold uppercase tracking-wider text-stone-400">Total Pillars</span>
-          </div>
-          <div className="text-2xl font-extrabold text-[#18191E] dark:text-white tabular-nums">{pillars.length}</div>
-        </div>
-        <div className="card-bento p-4 bg-white dark:bg-[#181926] border border-black/5 dark:border-white/8 shadow-sm">
-          <div className="flex items-center gap-2 mb-1">
-            <Target size={14} className="text-[#E6A04E]" />
-            <span className="text-[10px] font-extrabold uppercase tracking-wider text-stone-400">All Targets</span>
-          </div>
-          <div className="text-2xl font-extrabold text-[#18191E] dark:text-white tabular-nums">{totalTargets}</div>
-        </div>
-        <div className="card-bento p-4 bg-white dark:bg-[#181926] border border-black/5 dark:border-white/8 shadow-sm">
-          <div className="flex items-center gap-2 mb-1">
-            <Activity size={14} className="text-emerald-500" />
-            <span className="text-[10px] font-extrabold uppercase tracking-wider text-stone-400">Daily Targets</span>
-          </div>
-          <div className="text-2xl font-extrabold text-[#18191E] dark:text-white tabular-nums">{dailyTargets}</div>
-        </div>
+      {/* Tabs */}
+      <div className="flex gap-1 p-1 rounded-2xl bg-black/5 dark:bg-white/5 mb-6">
+        {[
+          { id: 'pillars', label: '📏 Pillars', sub: 'Track what you do' },
+          { id: 'goals',   label: '🎯 Goals',   sub: 'AI tracks your targets' },
+        ].map(tab => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className={`flex-1 py-2.5 px-4 rounded-xl text-sm font-bold transition-all ${
+              activeTab === tab.id
+                ? 'bg-white dark:bg-[#181926] text-[#18191E] dark:text-white shadow-sm'
+                : 'text-stone-500 dark:text-stone-400 hover:text-[#18191E] dark:hover:text-white'
+            }`}
+          >
+            <div>{tab.label}</div>
+            <div className="text-[10px] font-medium opacity-60">{tab.sub}</div>
+          </button>
+        ))}
       </div>
 
-      {/* New Pillar Form */}
-      {addingPillar && (
-        <div className="mb-6">
-          <PillarEditor
-            pillar={{ sanskrit: '', english: '', description: '', icon: 'star', color: '#F05A36' }}
-            onSave={addNewPillar}
-            onCancel={() => setAddingPillar(false)}
-          />
-        </div>
-      )}
-
-      {/* Empty State when no pillars exist */}
-      {pillars.length === 0 && !addingPillar && (
-        <div className="card-bento p-8 text-center space-y-4 bg-white dark:bg-[#181926] border border-black/5 dark:border-white/8 shadow-sm rounded-3xl">
-          <div className="w-14 h-14 rounded-3xl bg-accent/15 text-accent flex items-center justify-center mx-auto">
-            <Layers size={28} />
+      {/* ══════════════════ PILLARS TAB ══════════════════ */}
+      {activeTab === 'pillars' && (
+        <>
+          {/* Summary KPI Row */}
+          <div className="grid grid-cols-3 gap-3 mb-6">
+            <div className="card-bento p-4 bg-white dark:bg-[#181926] border border-black/5 dark:border-white/8 shadow-sm">
+              <div className="flex items-center gap-2 mb-1">
+                <Layers size={14} className="text-[#F05A36]" />
+                <span className="text-[10px] font-extrabold uppercase tracking-wider text-stone-400">Pillars</span>
+              </div>
+              <div className="text-2xl font-extrabold text-[#18191E] dark:text-white tabular-nums">{pillars.length}</div>
+            </div>
+            <div className="card-bento p-4 bg-white dark:bg-[#181926] border border-black/5 dark:border-white/8 shadow-sm">
+              <div className="flex items-center gap-2 mb-1">
+                <Target size={14} className="text-[#E6A04E]" />
+                <span className="text-[10px] font-extrabold uppercase tracking-wider text-stone-400">Trackers</span>
+              </div>
+              <div className="text-2xl font-extrabold text-[#18191E] dark:text-white tabular-nums">{totalTargets}</div>
+            </div>
+            <div className="card-bento p-4 bg-white dark:bg-[#181926] border border-black/5 dark:border-white/8 shadow-sm">
+              <div className="flex items-center gap-2 mb-1">
+                <Activity size={14} className="text-emerald-500" />
+                <span className="text-[10px] font-extrabold uppercase tracking-wider text-stone-400">Daily</span>
+              </div>
+              <div className="text-2xl font-extrabold text-[#18191E] dark:text-white tabular-nums">{dailyTargets}</div>
+            </div>
           </div>
-          <div>
-            <h3 className="text-lg font-extrabold text-[#18191E] dark:text-white">No Pillars Defined</h3>
-            <p className="text-xs text-stone-500 dark:text-stone-400 font-medium mt-1 max-w-sm mx-auto">
-              Your account has no pre-set pillars. Click "Add Pillar" above to create your custom daily targets.
-            </p>
-          </div>
-          <button
-            onClick={() => setAddingPillar(true)}
-            className="btn-coral inline-flex items-center gap-2 text-xs font-extrabold px-6 py-3 shadow-md"
-          >
-            <Plus size={16} /> Create Your First Pillar
-          </button>
-        </div>
-      )}
 
-      {/* Pillars List (2 columns on desktop) */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        {pillars.map((pillar) => {
-          const IconComp = ICON_MAP[pillar.icon] || Star;
-          const isEditingPillar = editingId === pillar.id;
-
-          if (isEditingPillar) {
-            return (
+          {/* New Pillar Form */}
+          {addingPillar && (
+            <div className="mb-6">
               <PillarEditor
-                key={pillar.id}
-                pillar={pillar}
-                onSave={savePillar}
-                onCancel={() => setEditingId(null)}
+                pillar={{ sanskrit: '', english: '', description: '', icon: 'star', color: '#F05A36' }}
+                onSave={addNewPillar}
+                onCancel={() => setAddingPillar(false)}
               />
-            );
-          }
+            </div>
+          )}
 
-          return (
-            <div
-              key={pillar.id}
-              className="card-bento p-5 space-y-4 bg-white dark:bg-[#181926] border border-black/5 dark:border-white/8 shadow-sm"
-            >
-              {/* Pillar Header */}
-              <div className="flex items-start justify-between">
-                <div className="flex items-center gap-3">
-                  <div
-                    className="w-11 h-11 rounded-2xl flex items-center justify-center shadow-inner"
-                    style={{ backgroundColor: `${pillar.color}20` }}
-                  >
-                    <IconComp size={20} style={{ color: pillar.color }} />
-                  </div>
-                  <div>
-                    <div className="flex items-baseline gap-2">
-                      <h3 className="text-lg font-bold text-[#18191E] dark:text-white leading-tight">
-                        {pillar.english}
-                      </h3>
-                      <span className="font-dev text-sm font-semibold" style={{ color: pillar.color }}>
-                        {pillar.sanskrit}
-                      </span>
+          {/* Empty State */}
+          {pillars.length === 0 && !addingPillar && (
+            <div className="card-bento p-8 text-center space-y-4 bg-white dark:bg-[#181926] border border-black/5 dark:border-white/8 shadow-sm rounded-3xl">
+              <div className="w-14 h-14 rounded-3xl bg-accent/15 text-accent flex items-center justify-center mx-auto">
+                <Layers size={28} />
+              </div>
+              <div>
+                <h3 className="text-lg font-extrabold text-[#18191E] dark:text-white">No Pillars Defined</h3>
+                <p className="text-xs text-stone-500 dark:text-stone-400 font-medium mt-1 max-w-sm mx-auto">
+                  Create pillars to track your daily habits and routines.
+                </p>
+              </div>
+              <button
+                onClick={() => setAddingPillar(true)}
+                className="btn-coral inline-flex items-center gap-2 text-xs font-extrabold px-6 py-3 shadow-md"
+              >
+                <Plus size={16} /> Create Your First Pillar
+              </button>
+            </div>
+          )}
+
+          {/* Pillars List */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+            {pillars.map((pillar) => {
+              const IconComp = ICON_MAP[pillar.icon] || Star;
+              const isEditingPillar = editingId === pillar.id;
+
+              if (isEditingPillar) {
+                return (
+                  <PillarEditor
+                    key={pillar.id}
+                    pillar={pillar}
+                    onSave={savePillar}
+                    onCancel={() => setEditingId(null)}
+                  />
+                );
+              }
+
+              return (
+                <div
+                  key={pillar.id}
+                  className="card-bento p-5 space-y-4 bg-white dark:bg-[#181926] border border-black/5 dark:border-white/8 shadow-sm"
+                >
+                  {/* Pillar Header */}
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center gap-3">
+                      <div
+                        className="w-11 h-11 rounded-2xl flex items-center justify-center shadow-inner"
+                        style={{ backgroundColor: `${pillar.color}20` }}
+                      >
+                        <IconComp size={20} style={{ color: pillar.color }} />
+                      </div>
+                      <div>
+                        <div className="flex items-baseline gap-2">
+                          <h3 className="text-lg font-bold text-[#18191E] dark:text-white leading-tight">
+                            {pillar.english}
+                          </h3>
+                          <span className="font-dev text-sm font-semibold" style={{ color: pillar.color }}>
+                            {pillar.sanskrit}
+                          </span>
+                        </div>
+                        {pillar.description && (
+                          <p className="text-xs text-stone-500 dark:text-stone-400 mt-0.5 leading-snug">{pillar.description}</p>
+                        )}
+                      </div>
                     </div>
-                    {pillar.description && (
-                      <p className="text-xs text-stone-500 dark:text-stone-400 mt-0.5 leading-snug">{pillar.description}</p>
-                    )}
-                  </div>
-                </div>
 
-                <div className="flex items-center gap-1">
-                  <button
-                    onClick={() => setEditingId(pillar.id)}
-                    className="w-8 h-8 rounded-xl flex items-center justify-center text-stone-400 hover:text-[#18191E] dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5 transition-all"
-                  >
-                    <Edit3 size={14} />
-                  </button>
-                  {confirmDeleteId === pillar.id ? (
                     <div className="flex items-center gap-1">
-                      <button onClick={() => deletePillar(pillar.id)} className="text-xs font-bold text-red-500 px-2 py-1 bg-red-500/10 rounded-lg">Delete</button>
-                      <button onClick={() => setConfirmDeleteId(null)} className="text-xs text-stone-400 px-1"><X size={12} /></button>
+                      <button
+                        onClick={() => setEditingId(pillar.id)}
+                        className="w-8 h-8 rounded-xl flex items-center justify-center text-stone-400 hover:text-[#18191E] dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5 transition-all"
+                      >
+                        <Edit3 size={14} />
+                      </button>
+                      {confirmDeleteId === pillar.id ? (
+                        <div className="flex items-center gap-1">
+                          <button onClick={() => deletePillar(pillar.id)} className="text-xs font-bold text-red-500 px-2 py-1 bg-red-500/10 rounded-lg">Delete</button>
+                          <button onClick={() => setConfirmDeleteId(null)} className="text-xs text-stone-400 px-1"><X size={12} /></button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => setConfirmDeleteId(pillar.id)}
+                          className="w-8 h-8 rounded-xl flex items-center justify-center text-stone-400 hover:text-red-500 hover:bg-red-500/10 transition-all"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      )}
                     </div>
+                  </div>
+
+                  {/* Trackers List */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between px-1">
+                      <span className="text-[10px] font-extrabold uppercase tracking-wider text-stone-400">Trackers ({pillar.targets.length})</span>
+                    </div>
+
+                    {pillar.targets.map((target) => {
+                      const isEditingThisTarget = editingTarget?.target?.id === target.id;
+
+                      if (isEditingThisTarget) {
+                        return (
+                          <TargetForm
+                            key={target.id}
+                            initial={target}
+                            onSave={(updated) => saveEditedTarget(pillar.id, updated)}
+                            onCancel={() => setEditingTarget(null)}
+                          />
+                        );
+                      }
+
+                      return (
+                        <div
+                          key={target.id}
+                          className="flex items-center justify-between p-3 rounded-2xl bg-black/[0.02] dark:bg-white/[0.03] border border-black/5 dark:border-white/5 hover:bg-black/[0.04] dark:hover:bg-white/[0.06] transition-all group"
+                        >
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: pillar.color }} />
+                            <div>
+                              <div className="text-xs font-bold text-[#18191E] dark:text-white truncate">{target.name}</div>
+                              <div className="text-[10px] text-stone-400 font-medium">
+                                {target.type === 'CHECKBOX' ? 'Yes / No' : target.type === 'DURATION' ? `Duration${target.unit ? ` (${target.unit})` : ''}` : target.type === 'NUMBER' ? `Quantity${target.unit ? ` (${target.unit})` : ''}` : target.type}
+                                {' · '}{target.frequency || 'daily'}
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-1">
+                            <button
+                              onClick={() => setEditingTarget({ pillarId: pillar.id, target })}
+                              className="w-7 h-7 rounded-lg flex items-center justify-center text-stone-400 hover:text-[#18191E] dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5 active:bg-black/10 transition-all"
+                            >
+                              <Edit3 size={12} />
+                            </button>
+                            <button
+                              onClick={() => deleteTarget(pillar.id, target.id)}
+                              className="w-7 h-7 rounded-lg flex items-center justify-center text-stone-400 hover:text-red-500 hover:bg-red-500/10 active:bg-red-500/20 transition-all"
+                            >
+                              <Trash2 size={12} />
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Add tracker button / form */}
+                  {addingTargetTo === pillar.id ? (
+                    <TargetForm
+                      onSave={(t) => addTarget(pillar.id, t)}
+                      onCancel={() => setAddingTargetTo(null)}
+                    />
                   ) : (
                     <button
-                      onClick={() => setConfirmDeleteId(pillar.id)}
-                      className="w-8 h-8 rounded-xl flex items-center justify-center text-stone-400 hover:text-red-500 hover:bg-red-500/10 transition-all"
+                      onClick={() => setAddingTargetTo(pillar.id)}
+                      className="w-full py-2.5 rounded-2xl border border-dashed border-black/15 dark:border-white/15 text-xs font-bold text-stone-500 dark:text-stone-400 hover:text-[#F05A36] hover:border-[#F05A36]/50 transition-all flex items-center justify-center gap-1.5"
                     >
-                      <Trash2 size={14} />
+                      <Plus size={13} /> Add Tracker to {pillar.english}
                     </button>
                   )}
                 </div>
+              );
+            })}
+          </div>
+        </>
+      )}
+
+      {/* ══════════════════ GOALS TAB ══════════════════ */}
+      {activeTab === 'goals' && (
+        <>
+          {/* Info banner */}
+          <div className="flex items-start gap-3 p-4 rounded-2xl bg-gradient-to-r from-accent/10 to-amber-500/10 border border-accent/20 mb-6">
+            <div className="w-9 h-9 rounded-xl bg-accent/20 flex items-center justify-center shrink-0">
+              <Target size={16} className="text-accent" />
+            </div>
+            <div>
+              <h4 className="text-sm font-extrabold text-[#18191E] dark:text-white">AI-Powered Goals</h4>
+              <p className="text-[11px] text-stone-500 dark:text-stone-400 mt-0.5 leading-snug font-medium">
+                Set aspirational targets here. Link them to your pillar trackers and the AI will calculate your daily progress, streaks, and projected completion.
+              </p>
+            </div>
+          </div>
+
+          {/* Summary KPI */}
+          <div className="grid grid-cols-2 gap-3 mb-6">
+            <div className="card-bento p-4 bg-white dark:bg-[#181926] border border-black/5 dark:border-white/8 shadow-sm">
+              <div className="flex items-center gap-2 mb-1">
+                <Flag size={14} className="text-accent" />
+                <span className="text-[10px] font-extrabold uppercase tracking-wider text-stone-400">Total Goals</span>
               </div>
+              <div className="text-2xl font-extrabold text-[#18191E] dark:text-white tabular-nums">{goals.length}</div>
+            </div>
+            <div className="card-bento p-4 bg-white dark:bg-[#181926] border border-black/5 dark:border-white/8 shadow-sm">
+              <div className="flex items-center gap-2 mb-1">
+                <Calendar size={14} className="text-emerald-500" />
+                <span className="text-[10px] font-extrabold uppercase tracking-wider text-stone-400">With Deadline</span>
+              </div>
+              <div className="text-2xl font-extrabold text-[#18191E] dark:text-white tabular-nums">
+                {goals.filter(g => g.deadline).length}
+              </div>
+            </div>
+          </div>
 
-              {/* Targets List */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between px-1">
-                  <span className="text-[10px] font-extrabold uppercase tracking-wider text-stone-400">Targets ({pillar.targets.length})</span>
-                </div>
+          {/* Add Goal Form */}
+          {(addingGoal || editingGoal) && (
+            <div className="mb-6">
+              <GoalForm
+                initial={editingGoal || undefined}
+                pillars={pillars}
+                onSave={saveGoal}
+                onCancel={() => { setAddingGoal(false); setEditingGoal(null); }}
+              />
+            </div>
+          )}
 
-                {pillar.targets.map((target) => {
-                  const isEditingThisTarget = editingTarget?.target?.id === target.id;
+          {/* Empty State */}
+          {goals.length === 0 && !addingGoal && (
+            <div className="card-bento p-8 text-center space-y-4 bg-white dark:bg-[#181926] border border-black/5 dark:border-white/8 shadow-sm rounded-3xl">
+              <div className="w-14 h-14 rounded-3xl bg-accent/15 text-accent flex items-center justify-center mx-auto">
+                <Target size={28} />
+              </div>
+              <div>
+                <h3 className="text-lg font-extrabold text-[#18191E] dark:text-white">No Goals Yet</h3>
+                <p className="text-xs text-stone-500 dark:text-stone-400 font-medium mt-1 max-w-sm mx-auto">
+                  Add goals like "Protein 90g/day", "Drink 3L water", or "Lose 2kg" — AI will track your progress daily.
+                </p>
+              </div>
+              <button
+                onClick={() => setAddingGoal(true)}
+                className="btn-coral inline-flex items-center gap-2 text-xs font-extrabold px-6 py-3 shadow-md"
+              >
+                <Plus size={16} /> Set Your First Goal
+              </button>
+            </div>
+          )}
 
-                  if (isEditingThisTarget) {
-                    return (
-                      <TargetForm
-                        key={target.id}
-                        initial={target}
-                        onSave={(updated) => saveEditedTarget(pillar.id, updated)}
-                        onCancel={() => setEditingTarget(null)}
-                      />
-                    );
-                  }
+          {/* Goals List */}
+          <div className="space-y-3">
+            {goals.map((goal) => {
+              if (editingGoal?.id === goal.id) return null; // rendered above as form
+              const linkedTarget = pillars.flatMap(p => p.targets).find(t => t.id === goal.pillarTargetId);
+              const daysLeft = goal.deadline ? Math.ceil((new Date(goal.deadline) - new Date()) / 86400000) : null;
 
-                  return (
-                    <div
-                      key={target.id}
-                      className="flex items-center justify-between p-3 rounded-2xl bg-black/[0.02] dark:bg-white/[0.03] border border-black/5 dark:border-white/5 hover:bg-black/[0.04] dark:hover:bg-white/[0.06] transition-all group"
-                    >
-                      <div className="flex items-center gap-2.5 min-w-0">
-                        <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: pillar.color }} />
-                        <div>
-                          <div className="text-xs font-bold text-[#18191E] dark:text-white truncate">{target.name}</div>
-                          <div className="text-[10px] text-stone-400 font-medium">
-                            {target.type === 'CHECKBOX' ? 'Yes / No' : target.type === 'NUMBER' ? `Goal: ≥ ${target.targetValue} ${target.unit || ''}` : target.type === 'TIME' ? `Time: ≤ ${target.targetValue}` : target.type}
-                            {' · '}{target.frequency || 'daily'}
-                          </div>
-                        </div>
+              return (
+                <div
+                  key={goal.id}
+                  className="card-bento p-4 bg-white dark:bg-[#181926] border border-black/5 dark:border-white/8 shadow-sm rounded-2xl"
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h4 className="text-sm font-bold text-[#18191E] dark:text-white truncate">{goal.name}</h4>
+                        <span className={`text-[10px] font-extrabold shrink-0 ${directionColor(goal.direction)}`}>
+                          {directionLabel(goal.direction)}
+                        </span>
                       </div>
+                      <div className="flex items-center gap-3 flex-wrap">
+                        <span className="text-base font-extrabold text-accent tabular-nums">
+                          {goal.value} <span className="text-sm font-bold text-stone-500">{goal.unit}</span>
+                        </span>
+                        {linkedTarget && (
+                          <span className="text-[10px] font-semibold text-stone-400 flex items-center gap-1">
+                            <ChevronRight size={10} /> linked to <span className="text-accent">{linkedTarget.name}</span>
+                          </span>
+                        )}
+                        {daysLeft !== null && (
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                            daysLeft < 0 ? 'bg-red-500/10 text-red-500' :
+                            daysLeft <= 7 ? 'bg-amber-500/10 text-amber-500' :
+                            'bg-emerald-500/10 text-emerald-500'
+                          }`}>
+                            {daysLeft < 0 ? `${Math.abs(daysLeft)}d overdue` : `${daysLeft}d left`}
+                          </span>
+                        )}
+                      </div>
+                      {goal.notes && (
+                        <p className="text-[10px] text-stone-400 mt-1 italic leading-snug">{goal.notes}</p>
+                      )}
+                    </div>
 
-                      <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-1 ml-2 shrink-0">
+                      <button
+                        onClick={() => { setEditingGoal(goal); setAddingGoal(false); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                        className="w-7 h-7 rounded-lg flex items-center justify-center text-stone-400 hover:text-[#18191E] dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5 transition-all"
+                      >
+                        <Edit3 size={12} />
+                      </button>
+                      {confirmDeleteGoalId === goal.id ? (
+                        <div className="flex items-center gap-1">
+                          <button onClick={() => deleteGoal(goal.id)} className="text-xs font-bold text-red-500 px-2 py-1 bg-red-500/10 rounded-lg">Delete</button>
+                          <button onClick={() => setConfirmDeleteGoalId(null)} className="text-xs text-stone-400 px-1"><X size={12} /></button>
+                        </div>
+                      ) : (
                         <button
-                          onClick={() => setEditingTarget({ pillarId: pillar.id, target })}
-                          className="w-7 h-7 rounded-lg flex items-center justify-center text-stone-400 hover:text-[#18191E] dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5 active:bg-black/10 transition-all"
-                        >
-                          <Edit3 size={12} />
-                        </button>
-                        <button
-                          onClick={() => deleteTarget(pillar.id, target.id)}
-                          className="w-7 h-7 rounded-lg flex items-center justify-center text-stone-400 hover:text-red-500 hover:bg-red-500/10 active:bg-red-500/20 transition-all"
+                          onClick={() => setConfirmDeleteGoalId(goal.id)}
+                          className="w-7 h-7 rounded-lg flex items-center justify-center text-stone-400 hover:text-red-500 hover:bg-red-500/10 transition-all"
                         >
                           <Trash2 size={12} />
                         </button>
-                      </div>
+                      )}
                     </div>
-                  );
-                })}
-              </div>
-
-              {/* Add target button / form */}
-              {addingTargetTo === pillar.id ? (
-                <TargetForm
-                  onSave={(t) => addTarget(pillar.id, t)}
-                  onCancel={() => setAddingTargetTo(null)}
-                />
-              ) : (
-                <button
-                  onClick={() => setAddingTargetTo(pillar.id)}
-                  className="w-full py-2.5 rounded-2xl border border-dashed border-black/15 dark:border-white/15 text-xs font-bold text-stone-500 dark:text-stone-400 hover:text-[#F05A36] hover:border-[#F05A36]/50 transition-all flex items-center justify-center gap-1.5"
-                >
-                  <Plus size={13} /> Add Target to {pillar.english}
-                </button>
-              )}
-            </div>
-          );
-        })}
-      </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </>
+      )}
 
     </div>
   );

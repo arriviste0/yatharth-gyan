@@ -41,21 +41,16 @@ function TargetRow({ target, logEntry, onLog }) {
       if (isNaN(num)) return;
     }
 
-    const tv   = target.targetValue ?? 0;
-    const done = target.comparison === 'gte' ? num >= tv : num <= tv;
-    onLog(target.id, { done, value: num });
+    // Pillars are pure measurement — any logged value is "done"
+    onLog(target.id, { done: true, value: num });
     setOpen(false);
   }
 
   function handleTimeSubmit(e) {
     e.preventDefault();
     if (!inputVal) return;
-    const [h, m]   = inputVal.split(':').map(Number);
-    const [th, tm] = (target.targetValue || '23:00').split(':').map(Number);
-    const done = target.comparison === 'lte'
-      ? (h * 60 + m) <= (th * 60 + tm)
-      : (h * 60 + m) >= (th * 60 + tm);
-    onLog(target.id, { done, value: inputVal });
+    // Any logged time is "done" — no comparison against goal
+    onLog(target.id, { done: true, value: inputVal });
     setOpen(false);
   }
 
@@ -68,18 +63,6 @@ function TargetRow({ target, logEntry, onLog }) {
       setOpen(false);
     } else {
       haptic(6);
-      if (target.type === 'DURATION' && !inputVal) {
-        const tv = target.targetValue;
-        if (tv) {
-          const u = (target.unit || 'min').toLowerCase();
-          const totalMins = (u === 'hr' || u === 'hrs' || u === 'hour' || u === 'hours') ? Math.round(tv * 60) : Math.round(tv);
-          const h = String(Math.floor(totalMins / 60)).padStart(2, '0');
-          const m = String(totalMins % 60).padStart(2, '0');
-          setInputVal(`${h}:${m}`);
-        } else {
-          setInputVal('00:45');
-        }
-      }
       setOpen((v) => !v);
     }
   }
@@ -182,7 +165,7 @@ function TargetRow({ target, logEntry, onLog }) {
         )}
       </div>
 
-      {/* ── Expanded input form (full-width, below the label row) ── */}
+      {/* ── Expanded input form ── */}
       {showInput && (
         <div className="px-3 pb-3 pt-0 animate-[fadeSlideUp_0.15s_ease-out_both]">
           {(target.type === 'NUMBER' || target.type === 'DURATION') && (
@@ -192,29 +175,11 @@ function TargetRow({ target, logEntry, onLog }) {
                 step={target.type === 'NUMBER' ? 'any' : undefined}
                 value={inputVal}
                 onChange={(e) => setInputVal(e.target.value)}
-                placeholder={target.type === 'DURATION' ? '00:45' : (target.targetValue != null ? String(target.targetValue) : '0')}
+                placeholder={target.type === 'DURATION' ? '00:45' : '0'}
                 autoFocus
                 className={inputBase}
               />
               {target.unit && target.type !== 'DURATION' && (
-                <span className="text-sm text-stone-400 flex-shrink-0 font-medium">{target.unit}</span>
-              )}
-              <button
-                type="submit"
-                className="flex-shrink-0 h-10 px-5 rounded-full text-white text-xs font-extrabold uppercase tracking-wider transition-all active:scale-95 bg-accent hover:bg-accent-hover shadow-md"
-              >
-                Log
-              </button>
-              <button
-                type="button"
-                onClick={() => setOpen(false)}
-                className="flex-shrink-0 h-10 px-3 rounded-full text-stone-400 text-sm border border-stone-200 dark:border-white/10 transition-all hover:text-white"
-              >
-                ✕
-              </button>
-            </form>
-          )}
-              {target.unit && (
                 <span className="text-sm text-stone-400 flex-shrink-0 font-medium">{target.unit}</span>
               )}
               <button
@@ -343,7 +308,7 @@ export default function PillarCard({ pillar, logs, onLog, defaultExpanded = fals
           ))}
           {pillar.targets.length === 0 && (
             <p className="text-xs text-stone-400 italic py-2 text-center">
-              No targets yet — add some in Pillars
+              No trackers yet — add some in Pillars
             </p>
           )}
         </div>

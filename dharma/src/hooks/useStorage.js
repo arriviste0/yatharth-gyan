@@ -24,6 +24,7 @@ function getInitialState() {
       reminderTime: '20:00',
     },
     pillars: [],
+    goals: [],
     logs: {},
     notebook: [],
     folders: DEFAULT_FOLDERS,
@@ -49,6 +50,7 @@ function loadState() {
       ...parsed,
       settings: { ...defaults.settings, ...(parsed.settings || {}) },
       pillars: parsed.pillars ?? [],
+      goals: parsed.goals ?? [],
     };
   } catch {
     return defaults;
@@ -90,6 +92,7 @@ export function loadFromCloud(data) {
     ...data,
     settings: { ...defaults.settings, ...(data.settings || {}) },
     pillars: data.pillars ?? [],
+    goals: data.goals ?? [],
   };
   _globalState = merged;
   saveState(merged);
@@ -114,6 +117,10 @@ export function useStorage() {
 
   const setPillars = useCallback((pillars) => {
     setState((s) => ({ ...s, pillars }));
+  }, []);
+
+  const setGoals = useCallback((goals) => {
+    setState((s) => ({ ...s, goals }));
   }, []);
 
   const logTarget = useCallback((dateStr, targetId, entry) => {
@@ -271,6 +278,7 @@ export function useStorage() {
     state,
     updateSettings,
     setPillars,
+    setGoals,
     logTarget,
     addNotebookEntry,
     deleteNotebookEntry,

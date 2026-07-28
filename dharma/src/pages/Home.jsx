@@ -208,8 +208,9 @@ function LogValueModal({ target, dateStr, onLog, onClose }) {
   const unit = target.unit || (isDuration ? 'min' : '');
 
   const initialVal = useMemo(() => {
-    const raw = target.logEntry?.value != null ? target.logEntry.value : (target.targetValue != null ? target.targetValue : '');
-    if (isDuration) {
+    // Only prefill from existing log entry, not targetValue (pillars are pure measurement now)
+    const raw = target.logEntry?.value != null ? target.logEntry.value : '';
+    if (isDuration && raw !== '') {
       return valueToTimeString(raw, unit);
     }
     return String(raw);
@@ -250,13 +251,17 @@ function LogValueModal({ target, dateStr, onLog, onClose }) {
       let num = 0;
       if (isDuration) {
         num = timeStringToValue(val, unit);
+      } else if (target.type === 'TIME') {
+        // TIME type logs raw string
+        onLog(dateStr, target.id, { done: true, value: val, timestamp: Date.now() });
+        onClose();
+        return;
       } else {
         num = parseFloat(val);
       }
       if (isNaN(num)) return;
-      const tv = target.targetValue ?? 0;
-      const done = target.comparison === 'gte' ? num >= tv : num <= tv;
-      onLog(dateStr, target.id, { done, value: num, timestamp: Date.now() });
+      // Pillars are pure measurement — any value logs as done
+      onLog(dateStr, target.id, { done: true, value: num, timestamp: Date.now() });
     }
     onClose();
   }
@@ -277,9 +282,9 @@ function LogValueModal({ target, dateStr, onLog, onClose }) {
               {target.pillarName}
             </span>
             <h3 className="text-lg font-extrabold text-[#18191E] dark:text-white mt-2">{target.name}</h3>
-            {!isMulti && (
+            {unit && !isMulti && (
               <p className="text-xs text-stone-500 dark:text-stone-400 mt-0.5 font-medium">
-                Goal: {target.comparison === 'lte' ? 'at most' : 'at least'} {target.targetValue}{unit ? ` ${unit}` : ''}
+                Log your {unit ? `value in ${unit}` : 'value'}
               </p>
             )}
           </div>

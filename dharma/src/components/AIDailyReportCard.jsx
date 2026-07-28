@@ -87,6 +87,7 @@ export default function AIDailyReportCard() {
   const pillars = state.pillars || [];
   const logs = state.logs || {};
   const metrics = state.metrics || {};
+  const goals = state.goals || [];
   const today = todayKey();
   const dayLog = logs[today] || {};
   const dayMetrics = metrics[today] || {};
@@ -328,6 +329,14 @@ export default function AIDailyReportCard() {
       period: timeFilter,
       periodLabel,
       items,
+      goals: goals.map(g => ({
+        name: g.name,
+        value: g.value,
+        unit: g.unit,
+        direction: g.direction,
+        deadline: g.deadline,
+        notes: g.notes,
+      })),
       // expose raw daily series for insight engine
       _rawDailySeries: (() => {
         const series = [];
@@ -344,7 +353,7 @@ export default function AIDailyReportCard() {
         return series;
       })(),
     };
-  }, [pillars, dayLog, dayMetrics, logs, metrics, today, timeFilter, totalAllTimeDays, customDays]);
+  }, [pillars, dayLog, dayMetrics, logs, metrics, goals, today, timeFilter, totalAllTimeDays, customDays]);
 
   // ═══════════════════════════════════════════════════════════════
   // 🧬 DHARMA SCORE™ — Holistic 0-100 composite wellness score
