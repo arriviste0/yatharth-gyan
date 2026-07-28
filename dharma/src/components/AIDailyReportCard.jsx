@@ -217,9 +217,15 @@ export default function AIDailyReportCard() {
       };
     };
 
-    // 1. Water
+    // Helper: match by aiCategory first, then fall back to name/unit keywords
+    const matchCat = (t, catId, nameKeywords = [], unitKeywords = []) =>
+      (t.aiCategory && t.aiCategory === catId) ||
+      nameKeywords.some(kw => (t.name || '').toLowerCase().includes(kw)) ||
+      unitKeywords.some(kw => (t.unit || '').toLowerCase() === kw);
+
+    // 1. Water / Hydration
     const waterData = getMetricValForDays(
-      (t) => (t.name || '').toLowerCase().includes('water') || (t.name || '').toLowerCase().includes('jal') || (t.unit || '').toLowerCase() === 'l' || (t.unit || '').toLowerCase() === 'ml',
+      (t) => matchCat(t, 'water', ['water', 'jal', 'hydration', 'paani'], ['l', 'ml']),
       'water', 3.0, true
     );
     items.push({
@@ -233,7 +239,7 @@ export default function AIDailyReportCard() {
 
     // 2. Protein
     const proteinData = getMetricValForDays(
-      (t) => (t.name || '').toLowerCase().includes('protein') || (t.name || '').toLowerCase().includes('prot'),
+      (t) => matchCat(t, 'protein', ['protein', 'prot', 'प्रोटीन'], []),
       'protein', 90, false
     );
     items.push({
@@ -247,7 +253,7 @@ export default function AIDailyReportCard() {
 
     // 3. Sleep & Rest
     const sleepData = getMetricValForDays(
-      (t) => (t.unit || '').toLowerCase() === 'hr' || (t.unit || '').toLowerCase() === 'hours' || (t.name || '').toLowerCase().includes('sleep'),
+      (t) => matchCat(t, 'sleep', ['sleep', 'नींद', 'nidra', 'rest', 'सोना'], ['hr', 'hours', 'hrs']),
       'sleep', 8.0, false
     );
     items.push({
@@ -261,7 +267,7 @@ export default function AIDailyReportCard() {
 
     // 4. Workout / Exercise
     const workoutData = getMetricValForDays(
-      (t) => (t.unit || '').toLowerCase() === 'min' || (t.name || '').toLowerCase().includes('workout') || (t.name || '').toLowerCase().includes('gym') || (t.name || '').toLowerCase().includes('exercise'),
+      (t) => matchCat(t, 'workout', ['workout', 'gym', 'exercise', 'vyayama', 'व्यायाम', 'train'], ['min', 'mins', 'minutes']),
       'workout', 45, false
     );
     items.push({
@@ -754,7 +760,7 @@ export default function AIDailyReportCard() {
             Full Body & Practice AI Analysis
           </h4>
           <p className="text-xs text-stone-200 font-medium mb-3 text-center max-w-sm">
-            Select a time period to analyze your protein, hydration, sleep & practice KPIs
+            Select a time period to analyze your tracked pillars, goals & custom metrics with AI
           </p>
 
           {/* Time Filter Control in Overlay */}
@@ -794,7 +800,7 @@ export default function AIDailyReportCard() {
                 Practice & Body AI Analysis
               </h3>
               <p className="text-xs text-stone-500 dark:text-stone-400 font-medium">
-                High-level {dailyPayload.periodLabel.toLowerCase()} protein, hydration, sleep & practice KPIs
+                {dailyPayload.periodLabel} AI analysis across all your tracked pillars & goals
               </p>
             </div>
           </div>

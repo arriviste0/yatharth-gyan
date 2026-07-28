@@ -34,6 +34,21 @@ const TARGET_TYPES = [
 
 const QUICK_UNITS = ['g', 'L', 'ml', 'kg', 'kcal', 'steps', 'pages', 'sessions', 'reps'];
 
+// AI-recognisable categories for quantity trackers — stored as t.aiCategory
+const AI_CATEGORIES = [
+  { id: 'water',    label: 'Water / Hydration', emoji: '💧' },
+  { id: 'protein',  label: 'Protein',            emoji: '🥩' },
+  { id: 'carbs',    label: 'Carbs',              emoji: '🍞' },
+  { id: 'calories', label: 'Calories',           emoji: '🔥' },
+  { id: 'sleep',    label: 'Sleep / Rest',       emoji: '😴' },
+  { id: 'workout',  label: 'Workout / Exercise', emoji: '🏋️' },
+  { id: 'steps',    label: 'Steps',              emoji: '👟' },
+  { id: 'weight',   label: 'Weight',             emoji: '⚖️' },
+  { id: 'fiber',    label: 'Fiber',              emoji: '🌿' },
+  { id: 'fat',      label: 'Fat / Lipids',       emoji: '🫙' },
+];
+
+
 /* ── Goal direction icons ──────────────────────────────────────── */
 const GOAL_DIRECTIONS = [
   { id: 'gte', label: '≥ At least', icon: TrendingUp, desc: 'Minimum goal (more is better)' },
@@ -60,7 +75,8 @@ function TargetForm({ initial, onSave, onCancel }) {
   const [type, setType] = useState(
     initial?.type === 'TIME' || initial?.type === 'MULTI_METRIC' ? 'NUMBER' : (initial?.type ?? 'CHECKBOX')
   );
-  const [unit, setUnit] = useState(initial?.unit ?? '');
+  const [unit, setUnit]             = useState(initial?.unit       ?? '');
+  const [aiCategory, setAiCategory] = useState(initial?.aiCategory ?? '');
   const [subMetrics, setSubMetrics] = useState(() => {
     const existing = initial?.subMetrics || [];
     return existing.map(s => ({ ...s }));
@@ -110,6 +126,7 @@ function TargetForm({ initial, onSave, onCancel }) {
       type,
       targetValue: null,
       unit: type === 'CHECKBOX' ? '' : (unit.trim() || (type === 'DURATION' ? 'min' : '')),
+      aiCategory: type === 'NUMBER' ? (aiCategory.trim() || null) : null,
       comparison: 'gte',
       subMetrics: cleanSub,
       frequency: 'daily',
@@ -217,6 +234,43 @@ function TargetForm({ initial, onSave, onCancel }) {
                     </button>
                   ))}
                 </div>
+              </div>
+
+              {/* AI Category — helps AI correctly classify this metric */}
+              <div className="pt-2 border-t border-black/5 dark:border-white/5">
+                <label className="block text-[10px] font-extrabold uppercase tracking-wider text-stone-400 mb-1.5">
+                  🤖 AI Category <span className="font-normal normal-case text-stone-300">(tells AI what this metric is)</span>
+                </label>
+                <div className="flex flex-wrap gap-1.5 mb-2">
+                  {AI_CATEGORIES.map((cat) => (
+                    <button
+                      key={cat.id}
+                      type="button"
+                      onClick={() => setAiCategory(aiCategory === cat.id ? '' : cat.id)}
+                      className={`text-[11px] font-bold px-2.5 py-1 rounded-full transition-all border flex items-center gap-1 ${
+                        aiCategory === cat.id
+                          ? 'bg-accent text-white border-accent shadow-sm'
+                          : 'bg-black/5 dark:bg-white/5 border-black/5 dark:border-white/10 text-stone-500 dark:text-stone-400 hover:text-accent hover:border-accent/40'
+                      }`}
+                    >
+                      <span>{cat.emoji}</span>{cat.label}
+                    </button>
+                  ))}
+                </div>
+                {/* Free-text custom label when nothing matches */}
+                {!AI_CATEGORIES.find(c => c.id === aiCategory) && (
+                  <input
+                    value={aiCategory}
+                    onChange={(e) => setAiCategory(e.target.value)}
+                    placeholder="Custom label (e.g. creatine, caffeine)…"
+                    className={`${fieldCls} text-xs`}
+                  />
+                )}
+                {aiCategory && AI_CATEGORIES.find(c => c.id === aiCategory) && (
+                  <p className="text-[10px] text-emerald-500 font-semibold mt-1 flex items-center gap-1">
+                    <span>✓</span> AI will classify this as "{AI_CATEGORIES.find(c => c.id === aiCategory)?.label}"
+                  </p>
+                )}
               </div>
             </>
           )}
