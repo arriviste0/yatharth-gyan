@@ -777,7 +777,7 @@ export default function AIDailyReportCard() {
           <button
             onClick={handleUnlockAndAnalyze}
             disabled={loading}
-            className="btn-coral px-8 py-3 text-xs font-extrabold shadow-2xl hover:scale-105 active:scale-95 transition-all flex items-center gap-2"
+            className="btn-coral px-8 py-3 text-xs font-extrabold shadow-2xl hover:scale-105 active:scale-95 transition-all flex items-center gap-2 whitespace-nowrap shrink-0"
           >
             {loading ? <RefreshCw size={16} className="animate-spin" /> : <Zap size={16} />}
             <span>{loading ? 'Analyzing Your KPIs…' : `Analyze ${dailyPayload.periodLabel} with AI`}</span>
@@ -819,7 +819,7 @@ export default function AIDailyReportCard() {
               <button
                 onClick={handleUnlockAndAnalyze}
                 disabled={loading}
-                className="btn-coral flex items-center gap-2 text-xs font-extrabold px-3.5 py-2 shadow-md hover:scale-105 active:scale-95 transition-all disabled:opacity-50"
+                className="btn-coral flex items-center gap-2 text-xs font-extrabold px-3.5 py-2 shadow-md hover:scale-105 active:scale-95 transition-all disabled:opacity-50 whitespace-nowrap shrink-0"
               >
                 {loading ? <RefreshCw size={13} className="animate-spin" /> : <Zap size={13} />}
                 <span>Re-Analyze ({dailyPayload.periodLabel})</span>

@@ -331,17 +331,17 @@ function TargetForm({ initial, onSave, onCancel }) {
       )}
 
       {/* Action Buttons */}
-      <div className="flex gap-2 pt-2">
+      <div className="flex gap-2 pt-2 flex-wrap sm:flex-nowrap">
         <button
           type="submit"
-          className="flex-1 btn-coral py-3.5 px-6 text-xs font-extrabold uppercase tracking-wider text-white shadow-md hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2"
+          className="flex-1 btn-coral py-3.5 px-6 text-xs font-extrabold uppercase tracking-wider text-white shadow-md hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2 whitespace-nowrap"
         >
           {initial?.id ? 'Save Changes' : 'Add Tracker'}
         </button>
         <button
           type="button"
           onClick={onCancel}
-          className="btn-secondary-outline px-5 py-3.5 text-xs font-extrabold uppercase tracking-wider text-stone-400 hover:text-white rounded-full"
+          className="btn-secondary-outline px-5 py-3.5 text-xs font-extrabold uppercase tracking-wider text-stone-400 hover:text-white rounded-full whitespace-nowrap"
         >
           Cancel
         </button>
@@ -567,10 +567,10 @@ function GoalForm({ initial, pillars, onSave, onCancel }) {
       </div>
 
       {/* Action Buttons */}
-      <div className="flex gap-2 pt-2">
+      <div className="flex gap-2 pt-2 flex-wrap sm:flex-nowrap">
         <button
           type="submit"
-          className="flex-1 btn-coral py-3.5 px-6 text-xs font-extrabold uppercase tracking-wider text-white shadow-md hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2"
+          className="flex-1 btn-coral py-3.5 px-6 text-xs font-extrabold uppercase tracking-wider text-white shadow-md hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2 whitespace-nowrap"
         >
           <Target size={14} />
           {initial?.id ? 'Save Goal' : 'Add Goal'}
@@ -578,7 +578,7 @@ function GoalForm({ initial, pillars, onSave, onCancel }) {
         <button
           type="button"
           onClick={onCancel}
-          className="btn-secondary-outline px-5 py-3.5 text-xs font-extrabold uppercase tracking-wider text-stone-400 hover:text-white rounded-full"
+          className="btn-secondary-outline px-5 py-3.5 text-xs font-extrabold uppercase tracking-wider text-stone-400 hover:text-white rounded-full whitespace-nowrap"
         >
           Cancel
         </button>
@@ -642,14 +642,13 @@ function PillarEditor({ pillar, onSave, onCancel }) {
           ))}
         </div>
       </div>
-      <div className="flex gap-2 pt-1">
+      <div className="flex gap-2 pt-1 flex-wrap sm:flex-nowrap">
         <button onClick={() => onSave({ ...pillar, sanskrit, english, description, icon, color })}
-          className="flex-1 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider text-white shadow-md"
-          style={{ background: 'linear-gradient(135deg,#2D3561,#5B6BAF)' }}>
+          className="flex-1 btn-coral py-3 px-4 text-xs font-extrabold uppercase tracking-wider text-white shadow-md whitespace-nowrap">
           Save Pillar
         </button>
         <button onClick={onCancel}
-          className="px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider text-stone-400 border border-black/8 dark:border-white/10">
+          className="btn-secondary-outline px-4 py-3 text-xs font-extrabold uppercase tracking-wider text-stone-400 hover:text-white rounded-full whitespace-nowrap">
           Cancel
         </button>
       </div>
@@ -750,14 +749,14 @@ export default function Sadhana() {
     <div className="page-container page-transition">
 
       {/* Header */}
-      <div className="flex items-start justify-between mb-6">
+      <div className="flex items-start justify-between mb-6 flex-wrap sm:flex-nowrap gap-3">
         <div>
           <h1 className="text-2xl lg:text-3xl font-extrabold text-[#18191E] dark:text-white">Pillars of Practice</h1>
           <p className="text-xs text-stone-500 dark:text-stone-400 mt-0.5 font-medium">Track your habits · Set your goals · Let AI guide you</p>
         </div>
         <button
           onClick={() => activeTab === 'pillars' ? setAddingPillar(true) : (setAddingGoal(true), setEditingGoal(null))}
-          className="btn-coral text-xs flex items-center gap-1.5 shadow-md"
+          className="btn-coral text-xs flex items-center gap-1.5 shadow-md shrink-0 whitespace-nowrap"
         >
           <Plus size={14} /> {activeTab === 'pillars' ? 'Add Pillar' : 'Add Goal'}
         </button>
