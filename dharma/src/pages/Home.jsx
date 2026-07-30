@@ -544,49 +544,57 @@ function MobileWeeklyChart({ logs, pillars }) {
     <div className="card-bento p-4 space-y-3">
       <div className="flex items-start justify-between gap-2 flex-wrap">
         <div>
-          <h3 className="text-sm font-bold text-[#18191E] dark:text-white">Completion Analysis</h3>
-          <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
-            <div className="relative inline-block">
-              <select
-                value={timeframeMode}
-                onChange={(e) => setTimeframeMode(e.target.value)}
-                className="appearance-none bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 text-[10px] font-bold text-stone-500 dark:text-stone-300 px-2 py-0.5 pr-5 rounded-lg outline-none cursor-pointer"
+          <h3 className="text-sm font-bold text-[#18191E] dark:text-white mb-1">Completion Analysis</h3>
+          <div className="inline-flex items-center p-0.5 rounded-xl border border-black/5 dark:border-white/10 bg-black/5 dark:bg-white/5 text-[10px] font-extrabold flex-wrap gap-0.5">
+            {[
+              { id: '1', label: 'Today' },
+              { id: '7', label: '7D' },
+              { id: '14', label: '14D' },
+              { id: '30', label: '30D' },
+              { id: '90', label: '90D' },
+            ].map(tf => (
+              <button
+                key={tf.id}
+                type="button"
+                onClick={() => setTimeframeMode(tf.id)}
+                className={`px-2 py-0.5 rounded-lg transition-all ${timeframeMode === tf.id ? 'bg-accent text-white shadow-sm' : 'text-stone-500 dark:text-stone-400 hover:text-[#18191E] dark:hover:text-white'}`}
               >
-                <option value="1" className="bg-white dark:bg-[#181926] text-stone-800 dark:text-white">📅 Today</option>
-                <option value="7" className="bg-white dark:bg-[#181926] text-stone-800 dark:text-white">🗓️ Last 7 days</option>
-                <option value="14" className="bg-white dark:bg-[#181926] text-stone-800 dark:text-white">📊 Last 14 days</option>
-                <option value="30" className="bg-white dark:bg-[#181926] text-stone-800 dark:text-white">📈 Last 30 days</option>
-                <option value="90" className="bg-white dark:bg-[#181926] text-stone-800 dark:text-white">♾️ Last 90 days</option>
-                <option value="custom" className="bg-white dark:bg-[#181926] text-stone-800 dark:text-white">⚙️ Custom</option>
-              </select>
-              <ChevronDown size={10} className="absolute right-1.5 top-1/2 -translate-y-1/2 text-stone-400 pointer-events-none" />
-            </div>
+                {tf.label}
+              </button>
+            ))}
 
-            {timeframeMode === 'custom' && (
-              <div className="flex items-center gap-1 bg-accent/10 border border-accent/20 rounded-lg px-2 py-0.5 text-[10px] font-bold text-accent">
-                <span>Days:</span>
+            {timeframeMode !== 'custom' ? (
+              <button
+                type="button"
+                onClick={() => setTimeframeMode('custom')}
+                className="px-2 py-0.5 rounded-lg transition-all text-stone-500 dark:text-stone-400 hover:text-[#18191E] dark:hover:text-white"
+              >
+                Custom
+              </button>
+            ) : (
+              <div className="flex items-center gap-0 bg-accent text-white rounded-lg overflow-hidden shadow-sm">
                 <button
                   type="button"
                   onClick={() => setCustomDays(Math.max(1, customDays - 1))}
-                  className="hover:opacity-80 px-1 font-black"
+                  className="px-1 text-white/80 hover:text-white font-bold"
                 >
                   −
                 </button>
                 <input
-                  type="number"
-                  min="1"
-                  max="365"
+                  type="text"
+                  inputMode="numeric"
                   value={customDays}
                   onChange={(e) => {
                     const v = parseInt(e.target.value);
-                    if (!isNaN(v) && v >= 1) setCustomDays(v);
+                    if (!isNaN(v) && v >= 1 && v <= 365) setCustomDays(v);
                   }}
-                  className="w-7 bg-transparent text-center font-extrabold outline-none text-[10px]"
+                  className="w-5 bg-transparent text-white text-center font-extrabold outline-none text-[10px]"
                 />
+                <span className="text-white/70 text-[9px] pr-1 font-bold">d</span>
                 <button
                   type="button"
                   onClick={() => setCustomDays(Math.min(365, customDays + 1))}
-                  className="hover:opacity-80 px-1 font-black"
+                  className="px-1 text-white/80 hover:text-white font-bold"
                 >
                   +
                 </button>
@@ -596,7 +604,7 @@ function MobileWeeklyChart({ logs, pillars }) {
         </div>
         <div className="text-right shrink-0">
           <div className="text-xl font-extrabold tabular-nums text-accent">{avg}%</div>
-          <div className="text-[9px] text-stone-400 dark:text-white/30">avg rate ({daysCount}d)</div>
+          <div className="text-[9px] text-stone-400 dark:text-white/30">avg ({daysCount}d)</div>
         </div>
       </div>
 
@@ -1735,49 +1743,57 @@ function DesktopWeeklyChart({ logs, pillars }) {
       {/* Header */}
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div>
-          <h3 className="text-base font-bold text-[#18191E] dark:text-white">Completion Analysis</h3>
-          <div className="flex items-center gap-2 mt-1 flex-wrap">
-            <div className="relative inline-block">
-              <select
-                value={timeframeMode}
-                onChange={(e) => setTimeframeMode(e.target.value)}
-                className="appearance-none bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 text-xs font-bold text-stone-600 dark:text-stone-300 px-2.5 py-1 pr-7 rounded-xl outline-none cursor-pointer hover:border-accent/50 transition-colors"
+          <h3 className="text-base font-bold text-[#18191E] dark:text-white mb-1.5">Completion Analysis</h3>
+          <div className="inline-flex items-center p-1 rounded-2xl border border-black/5 dark:border-white/10 bg-black/5 dark:bg-white/5 text-[11px] font-extrabold flex-wrap gap-0.5">
+            {[
+              { id: '1', label: 'Today' },
+              { id: '7', label: '7D' },
+              { id: '14', label: '14D' },
+              { id: '30', label: '30D' },
+              { id: '90', label: '90D' },
+            ].map(tf => (
+              <button
+                key={tf.id}
+                type="button"
+                onClick={() => setTimeframeMode(tf.id)}
+                className={`px-2.5 py-1 rounded-xl transition-all ${timeframeMode === tf.id ? 'bg-accent text-white shadow-sm' : 'text-stone-500 dark:text-stone-400 hover:text-[#18191E] dark:hover:text-white'}`}
               >
-                <option value="1" className="bg-white dark:bg-[#181926] text-stone-800 dark:text-white">📅 Today</option>
-                <option value="7" className="bg-white dark:bg-[#181926] text-stone-800 dark:text-white">🗓️ Last 7 days performance</option>
-                <option value="14" className="bg-white dark:bg-[#181926] text-stone-800 dark:text-white">📊 Last 14 days performance</option>
-                <option value="30" className="bg-white dark:bg-[#181926] text-stone-800 dark:text-white">📈 Last 30 days performance</option>
-                <option value="90" className="bg-white dark:bg-[#181926] text-stone-800 dark:text-white">♾️ Last 90 days performance</option>
-                <option value="custom" className="bg-white dark:bg-[#181926] text-stone-800 dark:text-white">⚙️ Custom timeframe</option>
-              </select>
-              <ChevronDown size={12} className="absolute right-2 top-1/2 -translate-y-1/2 text-stone-400 pointer-events-none" />
-            </div>
+                {tf.label}
+              </button>
+            ))}
 
-            {timeframeMode === 'custom' && (
-              <div className="flex items-center gap-1.5 bg-accent/10 border border-accent/20 rounded-xl px-2.5 py-1 text-xs font-bold text-accent">
-                <span>Days:</span>
+            {timeframeMode !== 'custom' ? (
+              <button
+                type="button"
+                onClick={() => setTimeframeMode('custom')}
+                className="px-2.5 py-1 rounded-xl transition-all text-stone-500 dark:text-stone-400 hover:text-[#18191E] dark:hover:text-white"
+              >
+                Custom
+              </button>
+            ) : (
+              <div className="flex items-center gap-0 bg-accent text-white rounded-xl overflow-hidden shadow-sm">
                 <button
                   type="button"
                   onClick={() => setCustomDays(Math.max(1, customDays - 1))}
-                  className="hover:opacity-80 px-1 font-black text-sm"
+                  className="px-1.5 py-1 text-white/80 hover:text-white font-bold"
                 >
                   −
                 </button>
                 <input
-                  type="number"
-                  min="1"
-                  max="365"
+                  type="text"
+                  inputMode="numeric"
                   value={customDays}
                   onChange={(e) => {
                     const v = parseInt(e.target.value);
-                    if (!isNaN(v) && v >= 1) setCustomDays(v);
+                    if (!isNaN(v) && v >= 1 && v <= 365) setCustomDays(v);
                   }}
-                  className="w-8 bg-transparent text-center font-extrabold outline-none text-xs"
+                  className="w-7 bg-transparent text-white text-center font-extrabold outline-none text-[11px] py-1"
                 />
+                <span className="text-white/60 text-[9px] pr-1 font-bold">d</span>
                 <button
                   type="button"
                   onClick={() => setCustomDays(Math.min(365, customDays + 1))}
-                  className="hover:opacity-80 px-1 font-black text-sm"
+                  className="px-1.5 py-1 text-white/80 hover:text-white font-bold"
                 >
                   +
                 </button>
