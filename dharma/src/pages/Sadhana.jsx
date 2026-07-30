@@ -3,7 +3,7 @@ import { useLocation } from 'react-router-dom';
 import {
   Plus, Trash2, Edit3, X, Check,
   Moon, Soup, Dumbbell, Star, Heart, Flame, Zap, Wind, Sun,
-  Layers, Target, Activity, ChevronRight, Flag, Calendar,
+  Layers, Target, Activity, ChevronRight, ChevronDown, Flag, Calendar,
   TrendingUp, TrendingDown, Minus,
 } from 'lucide-react';
 import { useStorage } from '../hooks/useStorage';
