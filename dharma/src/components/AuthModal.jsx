@@ -46,7 +46,10 @@ export default function AuthModal({ onClose, onSuccess }) {
         setBusy(false);
       }
     },
-    onError: () => setError('Google sign-in failed'),
+    onError: (err) => {
+      console.error('Google Sign-In Error:', err);
+      setError('Google Sign-In failed (origin_mismatch). Please ensure this URL is added to Authorized JavaScript Origins in Google Cloud Console.');
+    },
   });
 
   const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '259886949867-a3v5f3t4cklfv34j28plug0m6p2nsmhl.apps.googleusercontent.com';
