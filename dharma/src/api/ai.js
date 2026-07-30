@@ -150,10 +150,13 @@ export async function getDailyReportAI(dailyData) {
 }
 
 const PLAN_GENERATOR_SYSTEM_PROMPT = `You are a holistic wellness & Sadhana planning AI coach for the Dharma tracking app.
-Analyze the user's current pillars, daily targets, logged performance, and goals.
+Analyze the user's current pillars, daily targets, logged performance, and existing goals.
 Generate a structured JSON object containing a customized plan with recommended Pillars, Sub-tasks, and Goals to add to their Sadhana.
 
-CRITICAL: Return ONLY valid JSON in this exact structure without markdown code fences or conversational text:
+CRITICAL RULES:
+1. DO NOT suggest duplicate goals if a goal for the same metric (e.g. Protein, Water, Sleep, Workout, Meditation) already exists in the user's account!
+2. If the user already has a Protein goal (e.g. "Hit 90g Protein Daily"), DO NOT generate another protein goal. Instead, only recommend new goals for missing areas.
+3. Return ONLY valid JSON in this exact structure without markdown code fences or conversational text:
 {
   "title": "Short title of the Sadhana Plan (e.g. 'Peak Energy & Recovery Sadhana Plan')",
   "summary": "1-2 sentence executive summary of why this plan was designed based on their data.",
@@ -190,6 +193,39 @@ CRITICAL: Return ONLY valid JSON in this exact structure without markdown code f
 }`;
 
 /**
+ * Smart deduplication safeguard: filters out redundant goals if user already tracks that category
+ */
+function deduplicatePlanGoalsAndPillars(plan, existingPillars = [], existingGoals = []) {
+  if (!plan) return plan;
+  const cleanPlan = { ...plan };
+
+  if (cleanPlan.recommendedGoals && existingGoals && existingGoals.length > 0) {
+    const existingGoalNamesLower = existingGoals.map(g => (g.name || '').toLowerCase());
+
+    cleanPlan.recommendedGoals = cleanPlan.recommendedGoals.filter(recGoal => {
+      const recNameLower = (recGoal.name || '').toLowerCase();
+
+      // Check exact title match
+      if (existingGoalNamesLower.includes(recNameLower)) return false;
+
+      // Check category match (e.g. if user already has a protein goal, don't add another protein goal)
+      const categories = ['protein', 'water', 'sleep', 'workout', 'meditation', 'steps', 'reading', 'study'];
+      for (const cat of categories) {
+        if (recNameLower.includes(cat)) {
+          const hasExistingCatGoal = existingGoalNamesLower.some(eg => eg.includes(cat));
+          if (hasExistingCatGoal) {
+            return false; // Filter out duplicate category goal
+          }
+        }
+      }
+      return true;
+    });
+  }
+
+  return cleanPlan;
+}
+
+/**
  * Create AI Plan with Recommended Pillars & Goals
  */
 export async function createAIPlan(dailyData, pillars = [], goals = []) {
@@ -198,7 +234,9 @@ export async function createAIPlan(dailyData, pillars = [], goals = []) {
 
   try {
     const res = await client.post('/ai/create-plan', { dailyData, pillars, goals }, { headers });
-    if (res.data && res.data.plan) return res.data.plan;
+    if (res.data && res.data.plan) {
+      return deduplicatePlanGoalsAndPillars(res.data.plan, pillars, goals);
+    }
   } catch (err) {
     if (customKey) {
       try {
@@ -208,14 +246,15 @@ export async function createAIPlan(dailyData, pillars = [], goals = []) {
         ]);
         const jsonMatch = reply.match(/\{[\s\S]*\}/);
         if (jsonMatch) {
-          return JSON.parse(jsonMatch[0]);
+          const parsed = JSON.parse(jsonMatch[0]);
+          return deduplicatePlanGoalsAndPillars(parsed, pillars, goals);
         }
       } catch (e) {}
     }
   }
 
   const timestamp = Date.now();
-  return {
+  const rawFallbackPlan = {
     title: "14-Day Optimized Sadhana & Wellness Protocol",
     summary: "A personalized Sadhana plan created by AI to close metric gaps in hydration, protein, sleep, and mental focus.",
     recommendedPillars: [
@@ -273,4 +312,6 @@ export async function createAIPlan(dailyData, pillars = [], goals = []) {
       "3. Track meals with at least 30g protein at lunch and dinner."
     ]
   };
+
+  return deduplicatePlanGoalsAndPillars(rawFallbackPlan, pillars, goals);
 }
