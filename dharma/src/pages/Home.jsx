@@ -451,7 +451,13 @@ function MobileWeeklyChart({ logs, pillars }) {
   const [selectedPillar, setSelectedPillar] = useState('all');
   const [activeGraph, setActiveGraph] = useState('completion');
   const [selectedNumericId, setSelectedNumericId] = useState('all');
-  const [daysCount, setDaysCount] = useState(7);
+  const [timeframeMode, setTimeframeMode] = useState('7'); // '1' | '7' | '14' | '30' | '90' | 'custom'
+  const [customDays, setCustomDays] = useState(14);
+
+  const daysCount = useMemo(() => {
+    if (timeframeMode === 'custom') return customDays;
+    return parseInt(timeframeMode, 10) || 7;
+  }, [timeframeMode, customDays]);
 
   const activePillar = selectedPillar === 'all' ? null : pillars.find(p => p.id === selectedPillar);
   const METRIC_COLORS = ['#F05A36', '#14B8A6', '#E6A04E', '#8B5CF6', '#3B82F6', '#10B981'];
@@ -504,7 +510,7 @@ function MobileWeeklyChart({ logs, pillars }) {
 
       days.push({
         key,
-        label: WEEKDAY_SHORT[d.getDay()],
+        label: daysCount === 1 ? 'Today' : WEEKDAY_SHORT[d.getDay()],
         rate: Math.round(rate * 100),
         duration: durationDisplay,
         durationUnit,
@@ -536,21 +542,56 @@ function MobileWeeklyChart({ logs, pillars }) {
 
   return (
     <div className="card-bento p-4 space-y-3">
-      <div className="flex items-start justify-between gap-2">
+      <div className="flex items-start justify-between gap-2 flex-wrap">
         <div>
           <h3 className="text-sm font-bold text-[#18191E] dark:text-white">Completion Analysis</h3>
-          <div className="relative mt-0.5 inline-block">
-            <select
-              value={daysCount}
-              onChange={(e) => setDaysCount(Number(e.target.value))}
-              className="appearance-none bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 text-[10px] font-bold text-stone-500 dark:text-stone-300 px-2 py-0.5 pr-5 rounded-lg outline-none cursor-pointer"
-            >
-              <option value={7} className="bg-white dark:bg-[#181926] text-stone-800 dark:text-white">Last 7 days</option>
-              <option value={14} className="bg-white dark:bg-[#181926] text-stone-800 dark:text-white">Last 14 days</option>
-              <option value={30} className="bg-white dark:bg-[#181926] text-stone-800 dark:text-white">Last 30 days</option>
-              <option value={90} className="bg-white dark:bg-[#181926] text-stone-800 dark:text-white">Last 90 days</option>
-            </select>
-            <ChevronDown size={10} className="absolute right-1.5 top-1/2 -translate-y-1/2 text-stone-400 pointer-events-none" />
+          <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+            <div className="relative inline-block">
+              <select
+                value={timeframeMode}
+                onChange={(e) => setTimeframeMode(e.target.value)}
+                className="appearance-none bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 text-[10px] font-bold text-stone-500 dark:text-stone-300 px-2 py-0.5 pr-5 rounded-lg outline-none cursor-pointer"
+              >
+                <option value="1" className="bg-white dark:bg-[#181926] text-stone-800 dark:text-white">📅 Today</option>
+                <option value="7" className="bg-white dark:bg-[#181926] text-stone-800 dark:text-white">🗓️ Last 7 days</option>
+                <option value="14" className="bg-white dark:bg-[#181926] text-stone-800 dark:text-white">📊 Last 14 days</option>
+                <option value="30" className="bg-white dark:bg-[#181926] text-stone-800 dark:text-white">📈 Last 30 days</option>
+                <option value="90" className="bg-white dark:bg-[#181926] text-stone-800 dark:text-white">♾️ Last 90 days</option>
+                <option value="custom" className="bg-white dark:bg-[#181926] text-stone-800 dark:text-white">⚙️ Custom</option>
+              </select>
+              <ChevronDown size={10} className="absolute right-1.5 top-1/2 -translate-y-1/2 text-stone-400 pointer-events-none" />
+            </div>
+
+            {timeframeMode === 'custom' && (
+              <div className="flex items-center gap-1 bg-accent/10 border border-accent/20 rounded-lg px-2 py-0.5 text-[10px] font-bold text-accent">
+                <span>Days:</span>
+                <button
+                  type="button"
+                  onClick={() => setCustomDays(Math.max(1, customDays - 1))}
+                  className="hover:opacity-80 px-1 font-black"
+                >
+                  −
+                </button>
+                <input
+                  type="number"
+                  min="1"
+                  max="365"
+                  value={customDays}
+                  onChange={(e) => {
+                    const v = parseInt(e.target.value);
+                    if (!isNaN(v) && v >= 1) setCustomDays(v);
+                  }}
+                  className="w-7 bg-transparent text-center font-extrabold outline-none text-[10px]"
+                />
+                <button
+                  type="button"
+                  onClick={() => setCustomDays(Math.min(365, customDays + 1))}
+                  className="hover:opacity-80 px-1 font-black"
+                >
+                  +
+                </button>
+              </div>
+            )}
           </div>
         </div>
         <div className="text-right shrink-0">
@@ -1594,7 +1635,13 @@ function DesktopTaskManager({ pillars, logs, logTarget, dateStr, setPillars }) {
 function DesktopWeeklyChart({ logs, pillars }) {
   const [selectedPillar, setSelectedPillar] = useState('all');
   const [activeGraph, setActiveGraph] = useState('completion'); // 'completion' | 'duration' | 'numeric'
-  const [daysCount, setDaysCount] = useState(7);
+  const [timeframeMode, setTimeframeMode] = useState('7'); // '1' | '7' | '14' | '30' | '90' | 'custom'
+  const [customDays, setCustomDays] = useState(14);
+
+  const daysCount = useMemo(() => {
+    if (timeframeMode === 'custom') return customDays;
+    return parseInt(timeframeMode, 10) || 7;
+  }, [timeframeMode, customDays]);
 
   const activePillar = selectedPillar === 'all' ? null : pillars.find(p => p.id === selectedPillar);
 
@@ -1650,8 +1697,8 @@ function DesktopWeeklyChart({ logs, pillars }) {
 
       days.push({
         key,
-        label: WEEKDAY_FULL[d.getDay()],
-        short: WEEKDAY_SHORT[d.getDay()],
+        label: daysCount === 1 ? 'Today' : WEEKDAY_FULL[d.getDay()],
+        short: daysCount === 1 ? 'Today' : WEEKDAY_SHORT[d.getDay()],
         rate: Math.round(rate * 100),
         duration: durationDisplay,
         durationUnit,
@@ -1686,21 +1733,56 @@ function DesktopWeeklyChart({ logs, pillars }) {
   return (
     <div className="card-bento p-5 space-y-4">
       {/* Header */}
-      <div className="flex items-start justify-between gap-3">
+      <div className="flex items-start justify-between gap-3 flex-wrap">
         <div>
           <h3 className="text-base font-bold text-[#18191E] dark:text-white">Completion Analysis</h3>
-          <div className="relative mt-1 inline-block">
-            <select
-              value={daysCount}
-              onChange={(e) => setDaysCount(Number(e.target.value))}
-              className="appearance-none bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 text-xs font-bold text-stone-600 dark:text-stone-300 px-2.5 py-1 pr-7 rounded-xl outline-none cursor-pointer hover:border-accent/50 transition-colors"
-            >
-              <option value={7} className="bg-white dark:bg-[#181926] text-stone-800 dark:text-white">Last 7 days performance</option>
-              <option value={14} className="bg-white dark:bg-[#181926] text-stone-800 dark:text-white">Last 14 days performance</option>
-              <option value={30} className="bg-white dark:bg-[#181926] text-stone-800 dark:text-white">Last 30 days performance</option>
-              <option value={90} className="bg-white dark:bg-[#181926] text-stone-800 dark:text-white">Last 90 days performance</option>
-            </select>
-            <ChevronDown size={12} className="absolute right-2 top-1/2 -translate-y-1/2 text-stone-400 pointer-events-none" />
+          <div className="flex items-center gap-2 mt-1 flex-wrap">
+            <div className="relative inline-block">
+              <select
+                value={timeframeMode}
+                onChange={(e) => setTimeframeMode(e.target.value)}
+                className="appearance-none bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 text-xs font-bold text-stone-600 dark:text-stone-300 px-2.5 py-1 pr-7 rounded-xl outline-none cursor-pointer hover:border-accent/50 transition-colors"
+              >
+                <option value="1" className="bg-white dark:bg-[#181926] text-stone-800 dark:text-white">📅 Today</option>
+                <option value="7" className="bg-white dark:bg-[#181926] text-stone-800 dark:text-white">🗓️ Last 7 days performance</option>
+                <option value="14" className="bg-white dark:bg-[#181926] text-stone-800 dark:text-white">📊 Last 14 days performance</option>
+                <option value="30" className="bg-white dark:bg-[#181926] text-stone-800 dark:text-white">📈 Last 30 days performance</option>
+                <option value="90" className="bg-white dark:bg-[#181926] text-stone-800 dark:text-white">♾️ Last 90 days performance</option>
+                <option value="custom" className="bg-white dark:bg-[#181926] text-stone-800 dark:text-white">⚙️ Custom timeframe</option>
+              </select>
+              <ChevronDown size={12} className="absolute right-2 top-1/2 -translate-y-1/2 text-stone-400 pointer-events-none" />
+            </div>
+
+            {timeframeMode === 'custom' && (
+              <div className="flex items-center gap-1.5 bg-accent/10 border border-accent/20 rounded-xl px-2.5 py-1 text-xs font-bold text-accent">
+                <span>Days:</span>
+                <button
+                  type="button"
+                  onClick={() => setCustomDays(Math.max(1, customDays - 1))}
+                  className="hover:opacity-80 px-1 font-black text-sm"
+                >
+                  −
+                </button>
+                <input
+                  type="number"
+                  min="1"
+                  max="365"
+                  value={customDays}
+                  onChange={(e) => {
+                    const v = parseInt(e.target.value);
+                    if (!isNaN(v) && v >= 1) setCustomDays(v);
+                  }}
+                  className="w-8 bg-transparent text-center font-extrabold outline-none text-xs"
+                />
+                <button
+                  type="button"
+                  onClick={() => setCustomDays(Math.min(365, customDays + 1))}
+                  className="hover:opacity-80 px-1 font-black text-sm"
+                >
+                  +
+                </button>
+              </div>
+            )}
           </div>
         </div>
         <div className="text-right shrink-0">
