@@ -1,10 +1,10 @@
 import { useState, useMemo } from 'react';
-import { Sparkles, CheckCircle2, Zap, RefreshCw, Trophy, AlertCircle, ArrowRight, BarChart2, PieChart as PieIcon, ChevronDown } from 'lucide-react';
+import { Sparkles, CheckCircle2, Zap, RefreshCw, Trophy, AlertCircle, ArrowRight, BarChart2, PieChart as PieIcon, ChevronDown, Wand2, Plus, RotateCcw, Check, X } from 'lucide-react';
 import { ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip } from 'recharts';
 import { useStorage } from '../hooks/useStorage';
 import { DEFAULT_PILLARS } from '../data/defaultPillars';
 import { todayKey, formatDateDisplay, dateKey } from '../utils/dateUtils';
-import { getDailyReportAI } from '../api/ai';
+import { getDailyReportAI, createAIPlan } from '../api/ai';
 
 const CHART_COLORS = ['#F05A36', '#14B8A6', '#E6A04E', '#8B5CF6', '#3B82F6', '#EC4899', '#10B981'];
 
@@ -83,7 +83,7 @@ function TimeFilterControl({ timeFilter, setTimeFilter, customDays, setCustomDay
 }
 
 export default function AIDailyReportCard() {
-  const { state } = useStorage();
+  const { state, setPillars, setGoals } = useStorage();
   const pillars = state.pillars || [];
   const logs = state.logs || {};
   const metrics = state.metrics || {};
@@ -97,6 +97,13 @@ export default function AIDailyReportCard() {
   const [reportText, setReportText] = useState(null);
   const [timeFilter, setTimeFilter] = useState('today'); // 'today' | '7day' | '30day' | '90day' | 'allTime' | 'custom'
   const [customDays, setCustomDays] = useState(14);
+
+  const [aiPlan, setAiPlan] = useState(null);
+  const [planLoading, setPlanLoading] = useState(false);
+  const [selectedPillars, setSelectedPillars] = useState({});
+  const [selectedGoals, setSelectedGoals] = useState({});
+  const [undoState, setUndoState] = useState(null);
+  const [toastMessage, setToastMessage] = useState(null);
 
   const allLogKeys = useMemo(() => {
     const keys = new Set([...Object.keys(logs), ...Object.keys(metrics)]);
@@ -745,6 +752,104 @@ export default function AIDailyReportCard() {
     }
   }
 
+  async function handleMakeAIPlan() {
+    setIsUnlocked(true);
+    setPlanLoading(true);
+    try {
+      const plan = await createAIPlan(dailyPayload, pillars, goals);
+      setAiPlan(plan);
+      const initPillars = {};
+      (plan.recommendedPillars || []).forEach((p, idx) => { initPillars[idx] = true; });
+      const initGoals = {};
+      (plan.recommendedGoals || []).forEach((g, idx) => { initGoals[idx] = true; });
+      setSelectedPillars(initPillars);
+      setSelectedGoals(initGoals);
+    } catch (e) {
+      console.error('Failed to generate AI plan:', e);
+    } finally {
+      setPlanLoading(false);
+    }
+  }
+
+  function handleAddPlanToSadhana() {
+    if (!aiPlan) return;
+
+    const prevPillars = JSON.parse(JSON.stringify(pillars));
+    const prevGoals = JSON.parse(JSON.stringify(goals));
+
+    let newPillars = [...pillars];
+    let newGoals = [...goals];
+
+    let addedPillarsCount = 0;
+    let addedGoalsCount = 0;
+
+    (aiPlan.recommendedPillars || []).forEach((p, idx) => {
+      if (selectedPillars[idx]) {
+        addedPillarsCount++;
+        const existingIdx = newPillars.findIndex(ep => (ep.english || '').toLowerCase() === (p.english || '').toLowerCase());
+        if (existingIdx >= 0) {
+          const existingPillar = newPillars[existingIdx];
+          const combinedTargets = [...(existingPillar.targets || [])];
+          (p.targets || []).forEach(t => {
+            if (!combinedTargets.some(ct => (ct.name || '').toLowerCase() === (t.name || '').toLowerCase())) {
+              combinedTargets.push({
+                ...t,
+                id: t.id || `target-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`
+              });
+            }
+          });
+          newPillars[existingIdx] = { ...existingPillar, targets: combinedTargets };
+        } else {
+          newPillars.push({
+            id: p.id || `pillar-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+            english: p.english,
+            sanskrit: p.sanskrit || 'सधना',
+            color: p.color || '#E8843C',
+            icon: p.icon || 'dumbbell',
+            targets: (p.targets || []).map(t => ({
+              ...t,
+              id: t.id || `target-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`
+            }))
+          });
+        }
+      }
+    });
+
+    (aiPlan.recommendedGoals || []).forEach((g, idx) => {
+      if (selectedGoals[idx]) {
+        if (!newGoals.some(eg => (eg.name || '').toLowerCase() === (g.name || '').toLowerCase())) {
+          addedGoalsCount++;
+          newGoals.push({
+            id: g.id || `goal-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+            name: g.name,
+            value: g.value,
+            unit: g.unit,
+            direction: g.direction || 'gte',
+            deadline: g.deadline || null,
+            notes: g.notes || 'Added from AI Sadhana Plan',
+            createdAt: Date.now(),
+          });
+        }
+      }
+    });
+
+    setPillars(newPillars);
+    setGoals(newGoals);
+
+    setUndoState({ prevPillars, prevGoals });
+    setToastMessage(`✨ Added ${addedPillarsCount} Pillars & ${addedGoalsCount} Goals to your Sadhana!`);
+    setTimeout(() => setToastMessage(null), 8000);
+  }
+
+  function handleUndo() {
+    if (!undoState) return;
+    setPillars(undoState.prevPillars);
+    setGoals(undoState.prevGoals);
+    setUndoState(null);
+    setToastMessage('🔄 Undone! Restored previous Pillars and Goals.');
+    setTimeout(() => setToastMessage(null), 4000);
+  }
+
   const dateDisplay = formatDateDisplay(new Date());
 
   return (
@@ -774,14 +879,26 @@ export default function AIDailyReportCard() {
             />
           </div>
 
-          <button
-            onClick={handleUnlockAndAnalyze}
-            disabled={loading}
-            className="btn-coral px-8 py-3 text-xs font-extrabold shadow-2xl hover:scale-105 active:scale-95 transition-all flex items-center gap-2 whitespace-nowrap shrink-0"
-          >
-            {loading ? <RefreshCw size={16} className="animate-spin" /> : <Zap size={16} />}
-            <span>{loading ? 'Analyzing Your KPIs…' : `Analyze ${dailyPayload.periodLabel} with AI`}</span>
-          </button>
+          {/* Action Buttons in Overlay */}
+          <div className="flex items-center gap-2 flex-wrap justify-center">
+            <button
+              onClick={handleUnlockAndAnalyze}
+              disabled={loading || planLoading}
+              className="btn-coral px-6 py-2.5 text-xs font-extrabold shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center gap-2 whitespace-nowrap"
+            >
+              {loading ? <RefreshCw size={15} className="animate-spin" /> : <Zap size={15} />}
+              <span>{loading ? 'Analyzing KPIs…' : `Analyze ${dailyPayload.periodLabel} with AI`}</span>
+            </button>
+
+            <button
+              onClick={handleMakeAIPlan}
+              disabled={loading || planLoading}
+              className="px-6 py-2.5 text-xs font-extrabold rounded-2xl bg-gradient-to-r from-amber-500 to-accent text-white shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center gap-2 whitespace-nowrap"
+            >
+              {planLoading ? <RefreshCw size={15} className="animate-spin" /> : <Wand2 size={15} />}
+              <span>{planLoading ? 'Generating Plan…' : '🪄 Make Plan with AI'}</span>
+            </button>
+          </div>
         </div>
       )}
 
@@ -816,17 +933,168 @@ export default function AIDailyReportCard() {
             />
 
             {isUnlocked && (
-              <button
-                onClick={handleUnlockAndAnalyze}
-                disabled={loading}
-                className="btn-coral flex items-center gap-2 text-xs font-extrabold px-3.5 py-2 shadow-md hover:scale-105 active:scale-95 transition-all disabled:opacity-50 whitespace-nowrap shrink-0"
-              >
-                {loading ? <RefreshCw size={13} className="animate-spin" /> : <Zap size={13} />}
-                <span>Re-Analyze ({dailyPayload.periodLabel})</span>
-              </button>
+              <div className="flex items-center gap-2 flex-wrap">
+                <button
+                  onClick={handleUnlockAndAnalyze}
+                  disabled={loading || planLoading}
+                  className="btn-coral flex items-center gap-1.5 text-xs font-extrabold px-3.5 py-2 shadow-md hover:scale-105 active:scale-95 transition-all disabled:opacity-50 whitespace-nowrap shrink-0"
+                >
+                  {loading ? <RefreshCw size={13} className="animate-spin" /> : <Zap size={13} />}
+                  <span>Re-Analyze ({dailyPayload.periodLabel})</span>
+                </button>
+
+                <button
+                  onClick={handleMakeAIPlan}
+                  disabled={loading || planLoading}
+                  className="px-3.5 py-2 text-xs font-extrabold rounded-2xl bg-gradient-to-r from-amber-500 to-accent text-white shadow-md hover:scale-105 active:scale-95 transition-all disabled:opacity-50 flex items-center gap-1.5 whitespace-nowrap shrink-0"
+                >
+                  {planLoading ? <RefreshCw size={13} className="animate-spin" /> : <Wand2 size={13} />}
+                  <span>{planLoading ? 'Creating Plan…' : '🪄 Make Plan with AI'}</span>
+                </button>
+              </div>
             )}
           </div>
         </div>
+
+        {/* Floating Toast Notification with UNDO option */}
+        {toastMessage && (
+          <div className="p-3.5 rounded-2xl bg-[#181926] text-white border border-white/20 shadow-2xl flex items-center justify-between gap-3 animate-in fade-in slide-in-from-top duration-300">
+            <span className="text-xs font-bold flex items-center gap-2">
+              <Sparkles size={16} className="text-amber-400 shrink-0" />
+              {toastMessage}
+            </span>
+            {undoState && (
+              <button
+                onClick={handleUndo}
+                className="px-3 py-1 text-xs font-extrabold rounded-xl bg-accent text-white hover:bg-accent/90 transition-all flex items-center gap-1.5 shrink-0 shadow-sm"
+              >
+                <RotateCcw size={13} />
+                <span>Undo</span>
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* AI Recommended Sadhana Plan Card */}
+        {aiPlan && (
+          <div className="p-5 rounded-3xl bg-gradient-to-br from-amber-500/10 via-accent/10 to-teal-500/10 border-2 border-accent/30 shadow-lg space-y-4">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="px-2.5 py-0.5 rounded-full bg-accent text-white text-[10px] font-black uppercase tracking-wider">
+                    🪄 AI Recommended Plan
+                  </span>
+                  <h4 className="text-sm font-extrabold text-[#18191E] dark:text-white">{aiPlan.title}</h4>
+                </div>
+                <p className="text-xs text-stone-600 dark:text-stone-300 font-medium mt-1">
+                  {aiPlan.summary}
+                </p>
+              </div>
+              <button
+                onClick={() => setAiPlan(null)}
+                className="p-1 rounded-full text-stone-400 hover:text-stone-600 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            {/* Action Steps */}
+            {aiPlan.actionSteps?.length > 0 && (
+              <div className="p-3.5 rounded-2xl bg-white/70 dark:bg-white/5 border border-black/5 dark:border-white/10 space-y-1.5">
+                <h5 className="text-[11px] font-extrabold text-stone-500 dark:text-stone-400 uppercase tracking-wider">
+                  Action Steps & Protocol
+                </h5>
+                <ul className="space-y-1">
+                  {aiPlan.actionSteps.map((step, idx) => (
+                    <li key={idx} className="text-xs font-semibold text-[#18191E] dark:text-stone-200">
+                      {step}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Recommended Pillars & Goals Selection */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Pillars */}
+              {aiPlan.recommendedPillars?.length > 0 && (
+                <div className="p-3.5 rounded-2xl bg-white/70 dark:bg-white/5 border border-black/5 dark:border-white/10 space-y-2">
+                  <span className="text-[11px] font-extrabold text-accent uppercase tracking-wider block">
+                    Recommended Pillars & Trackers
+                  </span>
+                  <div className="space-y-2">
+                    {aiPlan.recommendedPillars.map((p, idx) => (
+                      <label key={idx} className="flex items-start gap-2.5 cursor-pointer p-2 rounded-xl hover:bg-black/5 dark:hover:bg-white/5 transition-colors">
+                        <input
+                          type="checkbox"
+                          checked={!!selectedPillars[idx]}
+                          onChange={(e) => setSelectedPillars(prev => ({ ...prev, [idx]: e.target.checked }))}
+                          className="mt-1 accent-accent w-4 h-4 rounded cursor-pointer"
+                        />
+                        <div className="space-y-0.5">
+                          <span className="text-xs font-bold text-[#18191E] dark:text-white block">
+                            {p.english} {p.sanskrit ? `(${p.sanskrit})` : ''}
+                          </span>
+                          {(p.targets || []).map((t, tidx) => (
+                            <span key={tidx} className="text-[10px] text-stone-500 dark:text-stone-400 block">
+                              + {t.name}: {t.targetValue} {t.unit}
+                            </span>
+                          ))}
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Goals */}
+              {aiPlan.recommendedGoals?.length > 0 && (
+                <div className="p-3.5 rounded-2xl bg-white/70 dark:bg-white/5 border border-black/5 dark:border-white/10 space-y-2">
+                  <span className="text-[11px] font-extrabold text-amber-500 uppercase tracking-wider block">
+                    Recommended Goals
+                  </span>
+                  <div className="space-y-2">
+                    {aiPlan.recommendedGoals.map((g, idx) => (
+                      <label key={idx} className="flex items-start gap-2.5 cursor-pointer p-2 rounded-xl hover:bg-black/5 dark:hover:bg-white/5 transition-colors">
+                        <input
+                          type="checkbox"
+                          checked={!!selectedGoals[idx]}
+                          onChange={(e) => setSelectedGoals(prev => ({ ...prev, [idx]: e.target.checked }))}
+                          className="mt-1 accent-accent w-4 h-4 rounded cursor-pointer"
+                        />
+                        <div className="space-y-0.5">
+                          <span className="text-xs font-bold text-[#18191E] dark:text-white block">
+                            {g.name} (≥ {g.value} {g.unit})
+                          </span>
+                          <span className="text-[10px] text-stone-500 dark:text-stone-400 block">
+                            {g.notes}
+                          </span>
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Action Button */}
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <button
+                onClick={() => setAiPlan(null)}
+                className="px-4 py-2 text-xs font-bold text-stone-500 hover:text-stone-800 dark:text-stone-400 dark:hover:text-white transition-colors"
+              >
+                Dismiss
+              </button>
+              <button
+                onClick={handleAddPlanToSadhana}
+                className="px-5 py-2.5 text-xs font-extrabold rounded-2xl bg-accent text-white shadow-md hover:scale-105 active:scale-95 transition-all flex items-center gap-2"
+              >
+                <Plus size={14} />
+                <span>Add Selected Pillars & Goals to My Sadhana</span>
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Core KPI Snapshot Cards with progress bars */}
         <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2.5">
