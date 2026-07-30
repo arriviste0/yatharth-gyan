@@ -14,6 +14,52 @@ const QUICK_PROMPTS = [
   { label: '📚 Deep Work & Study', prompt: 'Structure a daily 3-hour deep work, reading and skill-building Sadhana' },
 ];
 
+/**
+ * Formats AI output text cleanly without raw markdown characters (*, **, #, `)
+ */
+function FormattedMessageText({ text }) {
+  if (!text) return null;
+
+  const lines = text
+    .replace(/\\n/g, '\n')
+    .split('\n')
+    .map(line => line.trim())
+    .filter(Boolean);
+
+  return (
+    <div className="space-y-2">
+      {lines.map((line, idx) => {
+        const isBullet = line.startsWith('- ') || line.startsWith('* ') || /^\d+\.\s/.test(line);
+        const cleanedText = line
+          .replace(/^[-*\d\.\s]+/, '')
+          .replace(/\*\*/g, '')
+          .replace(/\*/g, '')
+          .replace(/#/g, '')
+          .replace(/`/g, '')
+          .replace(/_/g, '')
+          .trim();
+
+        if (!cleanedText) return null;
+
+        if (isBullet) {
+          return (
+            <div key={idx} className="flex items-start gap-2 text-xs sm:text-sm leading-relaxed">
+              <span className="w-1.5 h-1.5 rounded-full bg-accent mt-2 shrink-0" />
+              <span>{cleanedText}</span>
+            </div>
+          );
+        }
+
+        return (
+          <p key={idx} className="text-xs sm:text-sm leading-relaxed">
+            {cleanedText}
+          </p>
+        );
+      })}
+    </div>
+  );
+}
+
 function isPlanRequest(text = '') {
   const lower = text.toLowerCase().trim();
   const greetings = ['hi', 'hello', 'hey', 'namaste', 'good morning', 'good evening', 'who are you', 'how are you', 'what can you do', 'help', 'thanks', 'thank you'];
@@ -37,13 +83,7 @@ export default function AIArchitect() {
     {
       id: 'welcome-1',
       role: 'assistant',
-      text: `Namaste! 🙏 Welcome to **Sadhana AI Architect**.
-
-💬 **Chat & Ask Anything**: Ask any question about habits, Bhagavad Gita wisdom, wellness, or daily discipline.
-
-🪄 **Create Pillars & Goals**: Whenever you ask me to *"build a 30-day workout plan"*, *"suggest protein targets"*, or *"create a morning routine"*, I will generate an interactive protocol card for you!
-
-✏️ **Edit Before Adding**: You can edit any pillar name, target value, or goal before clicking **Add to My Sadhana**, with 1-click Undo safety anytime!`,
+      text: 'Namaste! Welcome to Sadhana AI Architect. How can I assist your practice, habit design, or fitness goals today?',
       plan: null,
     }
   ]);
@@ -333,7 +373,11 @@ export default function AIArchitect() {
                     : 'bg-white dark:bg-[#181926] text-[#18191E] dark:text-stone-200 border border-black/5 dark:border-white/10 rounded-tl-xs'
                 }`}
               >
-                {msg.text}
+                {msg.role === 'user' ? (
+                  msg.text
+                ) : (
+                  <FormattedMessageText text={msg.text} />
+                )}
               </div>
 
               {/* Render AI Proposed Sadhana Plan Card if available */}
@@ -582,11 +626,11 @@ export default function AIArchitect() {
         <div ref={chatEndRef} />
       </div>
 
-      {/* Input Prompt Box */}
-      <div className="fixed bottom-16 lg:bottom-6 left-1/2 -translate-x-1/2 w-full max-w-2xl px-4 z-40">
+      {/* Sticky Bottom Input Prompt Box */}
+      <div className="sticky bottom-20 lg:bottom-6 z-40 max-w-2xl mx-auto pt-2 pb-2">
         <form
           onSubmit={(e) => { e.preventDefault(); handleSendMessage(); }}
-          className="flex items-center gap-2 p-2 rounded-2xl bg-white/90 dark:bg-[#181926]/90 backdrop-blur-xl border border-black/10 dark:border-white/15 shadow-2xl"
+          className="flex items-center gap-2 p-2 rounded-2xl bg-white/90 dark:bg-[#181926]/95 backdrop-blur-xl border border-black/10 dark:border-white/15 shadow-2xl"
         >
           <input
             type="text"
@@ -598,7 +642,7 @@ export default function AIArchitect() {
           <button
             type="submit"
             disabled={!inputPrompt.trim() || loading}
-            className="w-9 h-9 rounded-xl bg-accent text-white flex items-center justify-center shadow-md hover:scale-105 active:scale-95 transition-all disabled:opacity-40 shrink-0"
+            className="w-9.5 h-9.5 rounded-xl bg-accent text-white flex items-center justify-center shadow-md hover:scale-105 active:scale-95 transition-all disabled:opacity-40 shrink-0"
           >
             <Send size={16} />
           </button>
