@@ -14,6 +14,20 @@ const QUICK_PROMPTS = [
   { label: '📚 Deep Work & Study', prompt: 'Structure a daily 3-hour deep work, reading and skill-building Sadhana' },
 ];
 
+function isPlanRequest(text = '') {
+  const lower = text.toLowerCase().trim();
+  const greetings = ['hi', 'hello', 'hey', 'namaste', 'good morning', 'good evening', 'who are you', 'how are you', 'what can you do', 'help', 'thanks', 'thank you'];
+  if (greetings.includes(lower) || lower.length <= 3) {
+    return false;
+  }
+  const planKeywords = [
+    'plan', 'routine', 'schedule', 'build', 'create', 'suggest', 'design',
+    'pillar', 'target', 'goal', 'habit', 'workout', 'protein', 'hydration',
+    'sleep', 'meditation', 'study', 'diet', 'protocol', 'track', 'set up'
+  ];
+  return planKeywords.some(kw => lower.includes(kw));
+}
+
 export default function AIArchitect() {
   const { state, setPillars, setGoals } = useStorage();
   const pillars = state.pillars || [];
@@ -23,7 +37,13 @@ export default function AIArchitect() {
     {
       id: 'welcome-1',
       role: 'assistant',
-      text: "Namaste! I am your **Sadhana AI Architect**. Tell me your goals, daily routine, or health aspirations — I will construct personalized Pillars, Sub-task Trackers, and Goals that you can edit and add directly to your Sadhana!",
+      text: `Namaste! 🙏 Welcome to **Sadhana AI Architect**.
+
+💬 **Chat & Ask Anything**: Ask any question about habits, Bhagavad Gita wisdom, wellness, or daily discipline.
+
+🪄 **Create Pillars & Goals**: Whenever you ask me to *"build a 30-day workout plan"*, *"suggest protein targets"*, or *"create a morning routine"*, I will generate an interactive protocol card for you!
+
+✏️ **Edit Before Adding**: You can edit any pillar name, target value, or goal before clicking **Add to My Sadhana**, with 1-click Undo safety anytime!`,
       plan: null,
     }
   ]);
@@ -54,19 +74,27 @@ export default function AIArchitect() {
     if (!customText) setInputPrompt('');
     setLoading(true);
 
-    try {
-      // 1. Get structured AI plan (recommended pillars & goals)
-      const generatedPlan = await createAIPlan(
-        { periodLabel: 'Custom AI Request', prompt: textToSend },
-        pillars,
-        goals
-      );
+    const wantsPlan = isPlanRequest(textToSend);
 
-      // 2. Get conversational response text
+    try {
+      let generatedPlan = null;
+
+      if (wantsPlan) {
+        generatedPlan = await createAIPlan(
+          { periodLabel: 'Custom AI Request', prompt: textToSend },
+          pillars,
+          goals
+        );
+      }
+
       const conversationalReply = await askKrishnaAI(
-        `User requested: "${textToSend}". Provide encouraging, actionable Sadhana guidance and explain why these specific Pillars and Goals were chosen for them.`,
+        wantsPlan
+          ? `User requested a Sadhana plan for: "${textToSend}". Provide encouraging guidance and introduce the proposed plan below.`
+          : textToSend,
         messages.slice(-4)
       );
+
+      const conversationalReplyText = conversationalReply.reply || (generatedPlan ? generatedPlan.summary : "Hello! How can I assist your practice, habit design, or fitness targets today?");
 
       const aiMsgId = `ai-${Date.now()}`;
       setMessages(prev => [
@@ -74,10 +102,10 @@ export default function AIArchitect() {
         {
           id: aiMsgId,
           role: 'assistant',
-          text: conversationalReply.reply || generatedPlan.summary,
+          text: conversationalReplyText,
           plan: generatedPlan,
-          selectedPillars: (generatedPlan.recommendedPillars || []).reduce((acc, _, idx) => ({ ...acc, [idx]: true }), {}),
-          selectedGoals: (generatedPlan.recommendedGoals || []).reduce((acc, _, idx) => ({ ...acc, [idx]: true }), {}),
+          selectedPillars: generatedPlan ? (generatedPlan.recommendedPillars || []).reduce((acc, _, idx) => ({ ...acc, [idx]: true }), {}) : {},
+          selectedGoals: generatedPlan ? (generatedPlan.recommendedGoals || []).reduce((acc, _, idx) => ({ ...acc, [idx]: true }), {}) : {},
         }
       ]);
     } catch (err) {
@@ -87,40 +115,8 @@ export default function AIArchitect() {
         {
           id: `ai-err-${Date.now()}`,
           role: 'assistant',
-          text: 'I have crafted a Sadhana Protocol tailored for you below. You can edit any pillar or goal target before adding it to your workspace!',
-          plan: {
-            title: 'Personalized Sadhana Protocol',
-            summary: 'Tailored by AI to optimize your physical energy, mindfulness, and target consistency.',
-            recommendedPillars: [
-              {
-                id: `pillar-ai-body-${Date.now()}`,
-                english: 'Body & Hydration',
-                sanskrit: 'शरीरम्',
-                color: '#E8843C',
-                icon: 'dumbbell',
-                targets: [
-                  { id: `t-1-${Date.now()}`, name: 'Daily Water Intake', type: 'NUMBER', unit: 'L', targetValue: 3.0, frequency: 'daily' },
-                  { id: `t-2-${Date.now()}`, name: 'Target Protein Intake', type: 'NUMBER', unit: 'g', targetValue: 90, frequency: 'daily' }
-                ]
-              }
-            ],
-            recommendedGoals: [
-              {
-                id: `g-1-${Date.now()}`,
-                name: 'Hit 90g Protein Daily',
-                value: 90,
-                unit: 'g',
-                direction: 'gte',
-                notes: 'Recommended by AI Architect'
-              }
-            ],
-            actionSteps: [
-              '1. Start your day with 500ml water.',
-              '2. Track meal protein consistently.'
-            ]
-          },
-          selectedPillars: { 0: true },
-          selectedGoals: { 0: true },
+          text: 'Namaste! How can I assist your practice or habit design today?',
+          plan: null,
         }
       ]);
     } finally {
