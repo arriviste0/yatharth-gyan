@@ -1,7 +1,7 @@
 import { NavLink, useLocation } from 'react-router-dom';
 import {
   Layers, BookOpen, BookMarked, Settings, Timer, LogIn, Cloud,
-  CheckCircle2, LayoutDashboard, Sun, Moon
+  CheckCircle2, LayoutDashboard, Sun, Moon, Wand2, Sparkles
 } from 'lucide-react';
 import { useStorage } from '../hooks/useStorage';
 import { DEFAULT_PILLARS } from '../data/defaultPillars';
@@ -10,12 +10,23 @@ import { formatDateDisplay, todayKey } from '../utils/dateUtils';
 import { useDailyVerse } from '../hooks/useDailyVerse';
 import { useAuth } from '../context/AuthContext';
 
-const NAV_ITEMS = [
+const NAV_ITEMS_LEFT = [
   { path: '/home',    label: 'Dashboard', Icon: LayoutDashboard },
   { path: '/sadhana', label: 'Pillars',   Icon: Layers },
+];
+
+const NAV_ITEMS_RIGHT = [
   { path: '/manan',   label: 'Journal',   Icon: BookOpen },
   { path: '/gyaan',   label: 'Wisdom',    Icon: BookMarked },
-  { path: '/settings', label: 'Settings',  Icon: Settings },
+];
+
+const SIDE_NAV_ITEMS = [
+  { path: '/home',         label: 'Dashboard',    Icon: LayoutDashboard },
+  { path: '/sadhana',      label: 'Pillars',      Icon: Layers },
+  { path: '/ai-architect', label: 'AI Architect', Icon: Wand2 },
+  { path: '/manan',        label: 'Journal',      Icon: BookOpen },
+  { path: '/gyaan',        label: 'Wisdom',       Icon: BookMarked },
+  { path: '/settings',     label: 'Settings',     Icon: Settings },
 ];
 
 /* ── Mobile bottom bar ──────────────────────────────────────────────────────── */
@@ -25,8 +36,44 @@ export default function BottomNav({ onOpenProfile }) {
 
   return (
     <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md glass-nav safe-bottom z-50 lg:hidden">
-      <div className="flex items-stretch px-2 py-1.5">
-        {NAV_ITEMS.map(({ path, label, Icon }) => {
+      <div className="flex items-center justify-around px-2 py-1.5">
+        {/* Left items */}
+        {NAV_ITEMS_LEFT.map(({ path, label, Icon }) => {
+          const isActive = location.pathname === path || (path !== '/home' && location.pathname.startsWith(path + '/'));
+          return (
+            <NavLink
+              key={path}
+              to={path}
+              className="flex-1 flex flex-col items-center justify-center gap-1 py-1.5 rounded-2xl transition-all duration-200 relative"
+              style={isActive ? { background: 'var(--color-accent-light)' } : {}}
+            >
+              <Icon
+                size={19}
+                strokeWidth={isActive ? 2.4 : 1.7}
+                style={{ color: isActive ? 'var(--color-accent)' : '#9CA3AF' }}
+              />
+              <span
+                className="text-[9px] font-bold tracking-wide"
+                style={{ color: isActive ? 'var(--color-accent)' : '#9CA3AF' }}
+              >
+                {label}
+              </span>
+            </NavLink>
+          );
+        })}
+
+        {/* Mobile Center Floating AI Architect Button (Reference Design) */}
+        <NavLink
+          to="/ai-architect"
+          className="w-12 h-12 rounded-full -mt-6 shadow-xl flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95 border-4 border-white dark:border-[#12131C] z-20 shrink-0"
+          style={{ background: 'var(--color-accent)', color: '#FFFFFF' }}
+          title="Sadhana AI Architect"
+        >
+          <Wand2 size={20} className="animate-pulse" />
+        </NavLink>
+
+        {/* Right items */}
+        {NAV_ITEMS_RIGHT.map(({ path, label, Icon }) => {
           const isActive = location.pathname === path || (path !== '/home' && location.pathname.startsWith(path + '/'));
           return (
             <NavLink
@@ -163,7 +210,7 @@ export function SideNav({ onOpenFocus, onOpenProfile }) {
 
       {/* Nav links */}
       <div className="flex flex-col gap-1.5 flex-1">
-        {NAV_ITEMS.map(({ path, label, Icon }) => {
+        {SIDE_NAV_ITEMS.map(({ path, label, Icon }) => {
           const isActive = location.pathname === path || (path !== '/home' && location.pathname.startsWith(path + '/'));
           return (
             <NavLink

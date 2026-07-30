@@ -21,9 +21,10 @@ import Manan from './pages/Manan';
 import Drishti from './pages/Drishti';
 import Gyaan from './pages/Gyaan';
 import Settings from './pages/Settings';
+import AIArchitect from './pages/AIArchitect';
 import HabitTracker from './pages/HabitTracker';
 
-const NAV_ROUTES = ['/home', '/sadhana', '/manan', '/drishti', '/gyaan'];
+const NAV_ROUTES = ['/home', '/sadhana', '/ai-architect', '/manan', '/drishti', '/gyaan'];
 
 /* ── Offline banner ─────────────────────────────────────────────── */
 function OfflineBanner() {
@@ -261,7 +262,8 @@ function AppInner() {
         <Route path="/onboarding" element={<Onboarding onComplete={() => updateSettings({ onboardingComplete: true })} />} />
         <Route path="/" element={settings.onboardingComplete ? <Navigate to="/home" replace /> : <Navigate to="/onboarding" replace />} />
         <Route path="/home"     element={<AppShell onOpenFocus={openFocus} onOpenProfile={openProfile}><Home onOpenFocus={openFocus} onOpenProfile={openProfile} /></AppShell>} />
-        <Route path="/sadhana"  element={<AppShell onOpenFocus={openFocus} onOpenProfile={openProfile}><Sadhana /></AppShell>} />
+        <Route path="/sadhana"      element={<AppShell onOpenFocus={openFocus} onOpenProfile={openProfile}><Sadhana /></AppShell>} />
+        <Route path="/ai-architect" element={<AppShell onOpenFocus={openFocus} onOpenProfile={openProfile}><AIArchitect /></AppShell>} />
         <Route path="/manan"    element={<AppShell onOpenFocus={openFocus} onOpenProfile={openProfile}><Manan /></AppShell>} />
         <Route path="/drishti"  element={<AppShell onOpenFocus={openFocus} onOpenProfile={openProfile}><Drishti /></AppShell>} />
         <Route path="/gyaan"    element={<AppShell onOpenFocus={openFocus} onOpenProfile={openProfile}><Gyaan /></AppShell>} />
