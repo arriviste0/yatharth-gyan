@@ -118,17 +118,47 @@ export function timeStringToValue(timeStr, unit = 'min') {
   return totalMins;
 }
 
-/**
- * Convert numeric value (mins/hrs) to HH:MM string for <input type="time" />
- */
+export function getDurationInMinutes(entry, unit = 'min') {
+  if (!entry) return 0;
+
+  // 1. If entry has subValues (e.g. { "cardio": 20, "lifting": 30 }), sum all sub-values
+  if (entry.subValues && typeof entry.subValues === 'object') {
+    const subSum = Object.values(entry.subValues).reduce((sum, v) => {
+      const num = parseFloat(v);
+      return sum + (isNaN(num) ? 0 : num);
+    }, 0);
+    if (subSum > 0) {
+      const u = (unit || 'min').toLowerCase();
+      return (u === 'hr' || u === 'hrs' || u === 'hour' || u === 'hours') && subSum <= 24
+        ? Math.round(subSum * 60)
+        : Math.round(subSum);
+    }
+  }
+
+  // 2. If entry has main value
+  if (entry.value != null) {
+    const num = parseFloat(entry.value);
+    if (isNaN(num)) return 0;
+    const u = (unit || 'min').toLowerCase();
+    if (u === 'hr' || u === 'hrs' || u === 'hour' || u === 'hours') {
+      return num <= 24 ? Math.round(num * 60) : Math.round(num);
+    }
+    return Math.round(num);
+  }
+
+  return 0;
+}
+
 export function valueToTimeString(val, unit = 'min') {
-  if (val === null || val === undefined || val === '') return '00:45';
+  if (val === null || val === undefined || val === '') return '';
   if (typeof val === 'string' && val.includes(':')) return val;
   const num = parseFloat(val);
-  if (isNaN(num) || num <= 0) return '00:45';
+  if (isNaN(num) || num <= 0) return '';
 
   const u = (unit || 'min').toLowerCase();
-  const totalMins = (u === 'hr' || u === 'hrs' || u === 'hour' || u === 'hours') ? Math.round(num * 60) : Math.round(num);
+  const totalMins = (u === 'hr' || u === 'hrs' || u === 'hour' || u === 'hours')
+    ? (num <= 24 ? Math.round(num * 60) : Math.round(num))
+    : Math.round(num);
 
   const h = String(Math.floor(totalMins / 60)).padStart(2, '0');
   const m = String(totalMins % 60).padStart(2, '0');

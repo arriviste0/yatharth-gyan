@@ -16,7 +16,7 @@ import { useDailyVerse } from '../hooks/useDailyVerse';
 import { DEFAULT_PILLARS } from '../data/defaultPillars';
 import {
   formatDateDisplay, todayKey, isAfterElevenPM, dateKey,
-  timeStringToValue, valueToTimeString,
+  timeStringToValue, valueToTimeString, getDurationInMinutes,
 } from '../utils/dateUtils';
 import {
   getDayCompletionRate, getTodayCompletedCount, getCurrentStreak,
@@ -430,6 +430,7 @@ function formatLoggedSummary(target) {
 function MobileWeeklyChart({ logs, pillars }) {
   const [selectedPillar, setSelectedPillar] = useState('all');
   const [activeGraph, setActiveGraph] = useState('completion');
+  const [selectedNumericId, setSelectedNumericId] = useState('all');
 
   const activePillar = selectedPillar === 'all' ? null : pillars.find(p => p.id === selectedPillar);
   const METRIC_COLORS = ['#F05A36', '#14B8A6', '#E6A04E', '#8B5CF6', '#3B82F6', '#10B981'];
@@ -456,14 +457,11 @@ function MobileWeeklyChart({ logs, pillars }) {
       let durationUnit = 'min';
       const durationTargets = (activePillar ? [activePillar] : pillars)
         .flatMap(p => p.targets.filter(t => t.type === 'DURATION' && (t.frequency === 'daily' || !t.frequency)));
+
       durationTargets.forEach(t => {
         const entry = dayLog[t.id];
-        if (entry?.value != null) {
-          const n = parseFloat(entry.value);
-          if (!isNaN(n)) {
-            const u = (t.unit || 'min').toLowerCase();
-            durationTotal += (u === 'hr' || u === 'hrs' || u === 'hour' || u === 'hours') ? n * 60 : n;
-          }
+        if (entry) {
+          durationTotal += getDurationInMinutes(entry, t.unit);
         }
       });
       const durationDisplay = durationTotal >= 60 ? +(durationTotal / 60).toFixed(1) : Math.round(durationTotal);
@@ -477,6 +475,9 @@ function MobileWeeklyChart({ logs, pillars }) {
         if (entry?.value != null) {
           const n = parseFloat(entry.value);
           if (!isNaN(n)) numericSeries[t.id] = { name: t.name, value: n, unit: t.unit || '' };
+        } else if (entry?.subValues && typeof entry.subValues === 'object') {
+          const sumSub = Object.values(entry.subValues).reduce((a, b) => a + (parseFloat(b) || 0), 0);
+          if (sumSub > 0) numericSeries[t.id] = { name: t.name, value: sumSub, unit: t.unit || '' };
         }
       });
 
@@ -503,6 +504,8 @@ function MobileWeeklyChart({ logs, pillars }) {
       .forEach(t => { if (!seen.has(t.id)) seen.set(t.id, t); });
     return Array.from(seen.values());
   }, [pillars, activePillar]);
+
+  const activeNumericTarget = numericTargetDefs.find(t => t.id === selectedNumericId);
 
   const GRAPH_TABS = [
     { id: 'completion', label: '✓ %' },
@@ -598,7 +601,7 @@ function MobileWeeklyChart({ logs, pillars }) {
             <Tooltip content={({ active, payload }) => {
               if (!active || !payload?.length) return null;
               const d = payload[0].payload;
-              return <div className="bg-[#181926] border border-white/10 rounded-xl px-2.5 py-1.5 text-xs font-bold text-white">{d.label}: {d.duration}{d.durationUnit}</div>;
+              return <div className="bg-[#181926] border border-white/10 rounded-xl px-2.5 py-1.5 text-xs font-bold text-white">{d.label}: {d.duration} {d.durationUnit}</div>;
             }} />
             <Bar dataKey="duration" radius={[5, 5, 0, 0]}>
               {data.map((entry, i) => <Cell key={i} fill={activePillar?.color || (entry.isToday ? 'var(--color-accent)' : '#5B6BAF')} opacity={entry.isToday ? 1 : 0.7} />)}
@@ -612,36 +615,91 @@ function MobileWeeklyChart({ logs, pillars }) {
         numericTargetDefs.length === 0 ? (
           <p className="text-[11px] text-stone-400 text-center py-4">No quantity trackers. Add NUMBER type in Pillars.</p>
         ) : (
-          <div className="space-y-1.5">
-            <ResponsiveContainer width="100%" height={130}>
-              <LineChart data={data} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
-                <XAxis dataKey="label" tick={{ fontSize: 10, fill: '#9CA3AF' }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fontSize: 9, fill: '#9CA3AF' }} axisLine={false} tickLine={false} />
-                <Tooltip content={({ active, payload, label }) => {
-                  if (!active || !payload?.length) return null;
-                  return (
-                    <div className="bg-[#181926] border border-white/10 rounded-xl px-2.5 py-1.5 text-xs space-y-0.5">
-                      <div className="font-bold text-white">{label}</div>
-                      {payload.map((p, i) => {
-                        const tDef = numericTargetDefs.find(t => `n_${t.id}` === p.dataKey);
-                        return <div key={i} className="text-stone-300">{tDef?.name}: <span className="text-white font-bold">{p.value} {tDef?.unit}</span></div>;
-                      })}
-                    </div>
-                  );
-                }} />
-                {numericTargetDefs.map((t, i) => (
-                  <Line key={t.id} type="monotone" dataKey={`n_${t.id}`} stroke={t.pillarColor || METRIC_COLORS[i % METRIC_COLORS.length]} strokeWidth={2} dot={{ r: 2.5, fill: t.pillarColor || METRIC_COLORS[i % METRIC_COLORS.length], stroke: '#181926', strokeWidth: 1 }} connectNulls={false} />
+          <div className="space-y-2">
+            {/* Metric Sub-selector */}
+            {numericTargetDefs.length > 1 && (
+              <div className="flex flex-wrap gap-1 mb-1">
+                <button
+                  onClick={() => setSelectedNumericId('all')}
+                  className={`text-[9px] font-extrabold px-2 py-0.5 rounded-full transition-all border ${
+                    selectedNumericId === 'all'
+                      ? 'bg-accent text-white border-accent'
+                      : 'bg-black/5 dark:bg-white/5 border-black/8 dark:border-white/10 text-stone-500 dark:text-stone-400'
+                  }`}
+                >
+                  All Intake
+                </button>
+                {numericTargetDefs.map((t) => (
+                  <button
+                    key={t.id}
+                    onClick={() => setSelectedNumericId(t.id)}
+                    className={`text-[9px] font-extrabold px-2 py-0.5 rounded-full transition-all border ${
+                      selectedNumericId === t.id
+                        ? 'text-white border-transparent'
+                        : 'bg-black/5 dark:bg-white/5 border-black/8 dark:border-white/10 text-stone-500 dark:text-stone-400'
+                    }`}
+                    style={selectedNumericId === t.id ? { backgroundColor: t.pillarColor, borderColor: t.pillarColor } : {}}
+                  >
+                    {t.name}
+                  </button>
                 ))}
-              </LineChart>
-            </ResponsiveContainer>
-            <div className="flex flex-wrap gap-1.5">
-              {numericTargetDefs.map((t, i) => (
-                <span key={t.id} className="flex items-center gap-1 text-[9px] font-semibold text-stone-500 dark:text-stone-400">
-                  <span className="w-2 h-2 rounded-full" style={{ backgroundColor: t.pillarColor || METRIC_COLORS[i % METRIC_COLORS.length] }} />
-                  {t.name}{t.unit ? ` (${t.unit})` : ''}
-                </span>
-              ))}
-            </div>
+              </div>
+            )}
+
+            {/* Single Metric Focus View */}
+            {activeNumericTarget ? (
+              <div>
+                <ResponsiveContainer width="100%" height={130}>
+                  <BarChart data={data} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
+                    <XAxis dataKey="label" tick={{ fontSize: 10, fill: '#9CA3AF' }} axisLine={false} tickLine={false} />
+                    <YAxis tick={{ fontSize: 9, fill: '#9CA3AF' }} axisLine={false} tickLine={false} />
+                    <Tooltip content={({ active, payload }) => {
+                      if (!active || !payload?.length) return null;
+                      const val = payload[0].value;
+                      return (
+                        <div className="bg-[#181926] border border-white/10 rounded-xl px-2.5 py-1.5 text-xs font-bold text-white">
+                          {payload[0].payload.label}: {val != null ? `${val} ${activeNumericTarget.unit || ''}` : 'No data'}
+                        </div>
+                      );
+                    }} />
+                    <Bar dataKey={`n_${activeNumericTarget.id}`} fill={activeNumericTarget.pillarColor || 'var(--color-accent)'} radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            ) : (
+              /* All Metrics View */
+              <div className="space-y-1.5">
+                <ResponsiveContainer width="100%" height={130}>
+                  <LineChart data={data} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
+                    <XAxis dataKey="label" tick={{ fontSize: 10, fill: '#9CA3AF' }} axisLine={false} tickLine={false} />
+                    <YAxis tick={{ fontSize: 9, fill: '#9CA3AF' }} axisLine={false} tickLine={false} />
+                    <Tooltip content={({ active, payload, label }) => {
+                      if (!active || !payload?.length) return null;
+                      return (
+                        <div className="bg-[#181926] border border-white/10 rounded-xl px-2.5 py-1.5 text-xs space-y-0.5">
+                          <div className="font-bold text-white">{label}</div>
+                          {payload.map((p, i) => {
+                            const tDef = numericTargetDefs.find(t => `n_${t.id}` === p.dataKey);
+                            return <div key={i} className="text-stone-300">{tDef?.name}: <span className="text-white font-bold">{p.value} {tDef?.unit}</span></div>;
+                          })}
+                        </div>
+                      );
+                    }} />
+                    {numericTargetDefs.map((t, i) => (
+                      <Line key={t.id} type="monotone" dataKey={`n_${t.id}`} stroke={t.pillarColor || METRIC_COLORS[i % METRIC_COLORS.length]} strokeWidth={2} dot={{ r: 2.5, fill: t.pillarColor || METRIC_COLORS[i % METRIC_COLORS.length], stroke: '#181926', strokeWidth: 1 }} connectNulls={true} />
+                    ))}
+                  </LineChart>
+                </ResponsiveContainer>
+                <div className="flex flex-wrap gap-1.5">
+                  {numericTargetDefs.map((t, i) => (
+                    <span key={t.id} className="flex items-center gap-1 text-[9px] font-semibold text-stone-500 dark:text-stone-400">
+                      <span className="w-2 h-2 rounded-full" style={{ backgroundColor: t.pillarColor || METRIC_COLORS[i % METRIC_COLORS.length] }} />
+                      {t.name}{t.unit ? ` (${t.unit})` : ''}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )
       )}
