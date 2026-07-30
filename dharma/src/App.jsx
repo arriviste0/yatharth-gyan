@@ -148,6 +148,14 @@ function AppInner() {
         shadow: 'rgba(240, 90, 54, 0.35)',
         secondary: '#C9A961',
       },
+      royal: {
+        primary: '#8B5CF6',
+        hover: '#7c3aed',
+        light: 'rgba(139, 92, 246, 0.12)',
+        border: 'rgba(139, 92, 246, 0.3)',
+        shadow: 'rgba(139, 92, 246, 0.35)',
+        secondary: '#A78BFA',
+      },
       ocean: {
         primary: '#0EA5E9',
         hover: '#0284c7',
@@ -171,6 +179,14 @@ function AppInner() {
         border: 'rgba(244, 63, 94, 0.3)',
         shadow: 'rgba(244, 63, 94, 0.35)',
         secondary: '#FB7185',
+      },
+      amber: {
+        primary: '#D97706',
+        hover: '#b45309',
+        light: 'rgba(217, 119, 6, 0.12)',
+        border: 'rgba(217, 119, 6, 0.3)',
+        shadow: 'rgba(217, 119, 6, 0.35)',
+        secondary: '#FBBF24',
       },
     };
 

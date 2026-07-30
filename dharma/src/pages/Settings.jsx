@@ -3,10 +3,12 @@ import { Moon, Sun, Download, Upload, Trash2, ChevronRight, User, Bell, FileText
 import { useStorage } from '../hooks/useStorage';
 
 const ACCENT_COLORS = [
-  { id: 'saffron', label: 'Saffron',    primary: '#F05A36', secondary: '#C9A961' },
-  { id: 'ocean',   label: 'Ocean',      primary: '#0EA5E9', secondary: '#38BDF8' },
-  { id: 'forest',  label: 'Forest',     primary: '#10B981', secondary: '#34D399' },
-  { id: 'rose',    label: 'Rose',       primary: '#F43F5E', secondary: '#FB7185' },
+  { id: 'saffron', label: 'Saffron', primary: '#F05A36', secondary: '#C9A961' },
+  { id: 'royal',   label: 'Royal',   primary: '#8B5CF6', secondary: '#A78BFA' },
+  { id: 'ocean',   label: 'Ocean',   primary: '#0EA5E9', secondary: '#38BDF8' },
+  { id: 'forest',  label: 'Forest',  primary: '#10B981', secondary: '#34D399' },
+  { id: 'rose',    label: 'Rose',    primary: '#F43F5E', secondary: '#FB7185' },
+  { id: 'amber',   label: 'Amber',   primary: '#D97706', secondary: '#FBBF24' },
 ];
 
 function ToggleRow({ label, description, enabled, onChange }) {
@@ -85,8 +87,9 @@ export default function Settings() {
           <div className="card mb-4">
             <div className="section-label mb-3">Profile</div>
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 bg-stone-100 dark:bg-white/8">
-                <User size={18} className="text-stone-400" />
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                style={{ background: 'var(--color-accent-light)', border: '1px solid var(--color-accent-border)', color: 'var(--color-accent)' }}>
+                <User size={18} />
               </div>
               <input
                 value={nameEdit}
@@ -132,7 +135,10 @@ export default function Settings() {
             
             <div className="flex items-center justify-between p-3 rounded-2xl bg-black/4 dark:bg-white/5">
               <div className="flex items-center gap-3">
-                {settings.theme === 'dark' ? <Moon size={18} className="text-amber-400" /> : <Sun size={18} className="text-accent" />}
+                <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+                  style={{ background: 'var(--color-accent-light)', border: '1px solid var(--color-accent-border)' }}>
+                  {settings.theme === 'dark' ? <Moon size={18} className="text-amber-400" /> : <Sun size={18} className="text-accent" />}
+                </div>
                 <div>
                   <div className="text-xs font-bold text-[#18191E] dark:text-white">Site Theme Mode</div>
                   <div className="text-[10px] text-stone-400">Current: {settings.theme === 'dark' ? 'Dark Midnight' : 'Light Cream'}</div>
@@ -142,7 +148,7 @@ export default function Settings() {
                 <button
                   onClick={() => { updateSettings({ theme: 'light' }); document.documentElement.classList.remove('dark'); }}
                   className={`px-3 py-1 text-xs font-bold rounded-full transition-all ${
-                    settings.theme !== 'dark' ? 'bg-accent text-white' : 'text-stone-400 hover:text-[#18191E] dark:hover:text-white'
+                    settings.theme !== 'dark' ? 'bg-accent text-white shadow-xs' : 'text-stone-400 hover:text-[#18191E] dark:hover:text-white'
                   }`}
                 >
                   Light ☀️
@@ -150,7 +156,7 @@ export default function Settings() {
                 <button
                   onClick={() => { updateSettings({ theme: 'dark' }); document.documentElement.classList.add('dark'); }}
                   className={`px-3 py-1 text-xs font-bold rounded-full transition-all ${
-                    settings.theme === 'dark' ? 'bg-accent text-white' : 'text-stone-400 hover:text-[#18191E] dark:hover:text-white'
+                    settings.theme === 'dark' ? 'bg-accent text-white shadow-xs' : 'text-stone-400 hover:text-[#18191E] dark:hover:text-white'
                   }`}
                 >
                   Dark 🌙
@@ -161,7 +167,7 @@ export default function Settings() {
             {/* Accent color */}
             <div>
               <p className="text-xs font-bold text-stone-500 dark:text-stone-300 mb-2">Accent colour</p>
-              <div className="grid grid-cols-4 gap-2">
+              <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
                 {ACCENT_COLORS.map((c) => {
                   const isActive = accentColor === c.id;
                   return (
@@ -170,7 +176,7 @@ export default function Settings() {
                       onClick={() => updateSettings({ accentColor: c.id })}
                       className={`flex flex-col items-center gap-1.5 py-2.5 px-2 rounded-2xl border transition-all duration-200 ${
                         isActive
-                          ? 'shadow-sm scale-105'
+                          ? 'shadow-sm scale-105 border-accent'
                           : 'border-black/5 dark:border-white/10 bg-black/[0.02] dark:bg-white/[0.03] hover:bg-black/[0.04] dark:hover:bg-white/[0.06]'
                       }`}
                       style={{
@@ -205,36 +211,36 @@ export default function Settings() {
           <div className="card mb-4">
             <div className="section-label mb-3">Daily Reminder</div>
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 bg-stone-100 dark:bg-white/8">
-                <Bell size={18} className="text-stone-400" />
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                style={{ background: 'var(--color-accent-light)', border: '1px solid var(--color-accent-border)', color: 'var(--color-accent)' }}>
+                <Bell size={18} />
               </div>
               <div className="flex-1">
                 <div className="text-sm font-semibold text-[#1a1a2e] dark:text-white">Evening reminder</div>
                 <div className="text-xs text-stone-400">Browser notification to log your practice</div>
               </div>
               <button onClick={() => updateSettings({ reminderEnabled: !settings.reminderEnabled })}
-                className={`w-12 h-6 rounded-full transition-all duration-300 flex-shrink-0 relative ${settings.reminderEnabled ? 'bg-[#2D3561]' : 'bg-stone-200 dark:bg-white/10'}`}>
+                className={`w-12 h-6 rounded-full transition-all duration-300 flex-shrink-0 relative ${settings.reminderEnabled ? 'bg-accent' : 'bg-stone-200 dark:bg-white/10'}`}>
                 <div className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow-sm transition-all duration-300 ${settings.reminderEnabled ? 'left-6' : 'left-0.5'}`} />
               </button>
             </div>
             {settings.reminderEnabled && (
               <div className="flex items-center gap-3">
-                <span className="text-xs text-stone-500">Remind at</span>
+                <span className="text-xs text-stone-500 dark:text-stone-400">Remind at</span>
                 <input type="time" value={settings.reminderTime || '20:00'}
                   onChange={(e) => updateSettings({ reminderTime: e.target.value })}
-                  className="text-sm text-[#1a1a2e] dark:text-white bg-white dark:bg-white/10 border border-black/10 dark:border-white/12 rounded-xl px-3 py-2 outline-none focus:border-[#E8843C] transition-colors" />
+                  className="text-sm text-[#1a1a2e] dark:text-white bg-black/5 dark:bg-white/10 border border-black/10 dark:border-white/12 rounded-xl px-3 py-2 outline-none focus:border-accent transition-colors" />
                 <button onClick={requestNotification}
-                  className="text-xs px-3 py-2 rounded-xl font-semibold text-white transition-all"
-                  style={{ background: 'linear-gradient(135deg,#2D3561,#5B6BAF)' }}>
+                  className="btn-coral text-xs px-4 py-2 font-bold shadow-sm">
                   Allow
                 </button>
               </div>
             )}
             {notifStatus && (
               <div className={`mt-2 text-xs px-3 py-2 rounded-xl text-center font-medium ${
-                notifStatus === 'granted' ? 'bg-emerald-50 text-emerald-600' :
-                notifStatus === 'denied' ? 'bg-red-50 text-red-500' :
-                'bg-stone-100 text-stone-500'
+                notifStatus === 'granted' ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' :
+                notifStatus === 'denied' ? 'bg-red-500/10 text-red-500 border border-red-500/20' :
+                'bg-stone-100 dark:bg-white/5 text-stone-500'
               }`}>
                 {notifStatus === 'granted' ? '✓ Notifications enabled'
                   : notifStatus === 'denied' ? '✗ Permission denied — enable in browser settings'
@@ -251,12 +257,12 @@ export default function Settings() {
             <div className="card mb-4">
               <div className="section-label mb-3">Focus Practice</div>
               <div className="grid grid-cols-2 gap-3">
-                <div className="rounded-xl p-3 text-center" style={{ background: 'rgba(232,132,60,0.07)' }}>
-                  <div className="text-2xl font-bold" style={{ color: '#E8843C' }}>{focusSessions}</div>
+                <div className="rounded-2xl p-3 text-center border" style={{ background: 'var(--color-accent-light)', borderColor: 'var(--color-accent-border)' }}>
+                  <div className="text-2xl font-extrabold text-accent tabular-nums">{focusSessions}</div>
                   <div className="text-xs text-stone-400 mt-0.5">sessions</div>
                 </div>
-                <div className="rounded-xl p-3 text-center" style={{ background: 'rgba(45,53,97,0.07)' }}>
-                  <div className="text-2xl font-bold" style={{ color: '#5B6BAF' }}>{totalFocusMins}m</div>
+                <div className="rounded-2xl p-3 text-center border border-black/5 dark:border-white/10 bg-black/[0.02] dark:bg-white/[0.03]">
+                  <div className="text-2xl font-extrabold text-[#18191E] dark:text-white tabular-nums">{totalFocusMins}m</div>
                   <div className="text-xs text-stone-400 mt-0.5">total focused</div>
                 </div>
               </div>
@@ -268,8 +274,10 @@ export default function Settings() {
             <div className="section-label mb-3">Data</div>
             <div className="space-y-2">
               <button onClick={exportData}
-                className="w-full flex items-center gap-3 py-2.5 px-3 rounded-xl bg-stone-50 dark:bg-white/5 hover:bg-stone-100 dark:hover:bg-white/10 transition-all">
-                <Download size={16} className="text-stone-400" />
+                className="w-full flex items-center gap-3 py-2.5 px-3 rounded-2xl bg-black/[0.02] dark:bg-white/5 hover:bg-black/[0.05] dark:hover:bg-white/10 transition-all border border-black/5 dark:border-white/5">
+                <div className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0" style={{ background: 'var(--color-accent-light)', color: 'var(--color-accent)' }}>
+                  <Download size={16} />
+                </div>
                 <div className="flex-1 text-left">
                   <div className="text-sm font-semibold text-[#1a1a2e] dark:text-white">Export Data</div>
                   <div className="text-xs text-stone-400">Download all data as JSON</div>
@@ -277,8 +285,10 @@ export default function Settings() {
               </button>
 
               <button onClick={exportJournalMarkdown}
-                className="w-full flex items-center gap-3 py-2.5 px-3 rounded-xl bg-stone-50 dark:bg-white/5 hover:bg-stone-100 dark:hover:bg-white/10 transition-all">
-                <FileText size={16} className="text-stone-400" />
+                className="w-full flex items-center gap-3 py-2.5 px-3 rounded-2xl bg-black/[0.02] dark:bg-white/5 hover:bg-black/[0.05] dark:hover:bg-white/10 transition-all border border-black/5 dark:border-white/5">
+                <div className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0" style={{ background: 'var(--color-accent-light)', color: 'var(--color-accent)' }}>
+                  <FileText size={16} />
+                </div>
                 <div className="flex-1 text-left">
                   <div className="text-sm font-semibold text-[#1a1a2e] dark:text-white">Export Journal</div>
                   <div className="text-xs text-stone-400">Download journal as readable Markdown</div>
@@ -287,8 +297,10 @@ export default function Settings() {
 
               <input ref={fileRef} type="file" accept=".json" onChange={handleImportFile} className="hidden" />
               <button onClick={() => fileRef.current?.click()}
-                className="w-full flex items-center gap-3 py-2.5 px-3 rounded-xl bg-stone-50 dark:bg-white/5 hover:bg-stone-100 dark:hover:bg-white/10 transition-all">
-                <Upload size={16} className="text-stone-400" />
+                className="w-full flex items-center gap-3 py-2.5 px-3 rounded-2xl bg-black/[0.02] dark:bg-white/5 hover:bg-black/[0.05] dark:hover:bg-white/10 transition-all border border-black/5 dark:border-white/5">
+                <div className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0" style={{ background: 'var(--color-accent-light)', color: 'var(--color-accent)' }}>
+                  <Upload size={16} />
+                </div>
                 <div className="flex-1 text-left">
                   <div className="text-sm font-semibold text-[#1a1a2e] dark:text-white">Import Data</div>
                   <div className="text-xs text-stone-400">Restore from a previously exported JSON</div>

@@ -131,16 +131,16 @@ function BreathingGuide() {
           transform: `scale(${cur.scale})`,
         }}>
         <div className="absolute inset-0 rounded-full"
-          style={{ background: 'rgba(91,107,175,0.12)', border: '2px solid rgba(91,107,175,0.3)' }} />
+          style={{ background: 'var(--color-accent-light)', border: '2px solid var(--color-accent-border)' }} />
         <div className="text-center">
           <div className="text-white text-base font-semibold">{cur.label}</div>
-          <div className="text-stone-500 text-xs">{cur.duration - second}s</div>
+          <div className="text-stone-400 text-xs">{cur.duration - second}s</div>
         </div>
       </div>
       <div className="flex gap-1">
         {BREATH_PHASES.map((p, i) => (
           <div key={i} className="w-6 h-1 rounded-full transition-all"
-            style={{ background: i === phase ? '#5B6BAF' : 'rgba(255,255,255,0.08)' }} />
+            style={{ background: i === phase ? 'var(--color-accent)' : 'rgba(255,255,255,0.08)' }} />
         ))}
       </div>
     </div>
@@ -268,8 +268,9 @@ export default function FocusTimer({ onClose, onComplete }) {
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl flex items-center justify-center bg-[#F05A36]/15">
-              <Flame size={15} className="text-[#F05A36]" />
+            <div className="w-8 h-8 rounded-xl flex items-center justify-center"
+              style={{ background: 'var(--color-accent-light)', border: '1px solid var(--color-accent-border)' }}>
+              <Flame size={15} className="text-accent" style={{ color: 'var(--color-accent)' }} />
             </div>
             <div>
               <div className="text-sm font-bold text-[#18191E] dark:text-white">Focus Timer</div>
@@ -286,7 +287,7 @@ export default function FocusTimer({ onClose, onComplete }) {
         {!startedRef.current && !finished && (
           <input value={label} onChange={(e) => setLabel(e.target.value)}
             placeholder="Session label (optional)"
-            className="w-full mb-4 text-xs text-[#18191E] dark:text-white placeholder-stone-400 bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl px-3 py-2 outline-none focus:border-[#F05A36] transition-colors" />
+            className="w-full mb-4 text-xs text-[#18191E] dark:text-white placeholder-stone-400 bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl px-3 py-2 outline-none focus:border-accent transition-colors" />
         )}
         {startedRef.current && label && (
           <div className="text-xs text-stone-400 mb-3 text-center italic">{label}</div>
@@ -298,8 +299,8 @@ export default function FocusTimer({ onClose, onComplete }) {
             <button key={m} onClick={() => selectPreset(m)} disabled={running}
               className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${running ? 'opacity-40 cursor-not-allowed' : ''} ${
                 minutes === m && !customMin
-                  ? 'bg-[#F05A36] text-white shadow-sm'
-                  : 'bg-black/5 dark:bg-white/5 text-stone-500 dark:text-stone-400'
+                  ? 'bg-accent text-white shadow-sm'
+                  : 'bg-black/5 dark:bg-white/5 text-stone-500 dark:text-stone-400 hover:text-[#18191E] dark:hover:text-white'
               }`}>
               {m}m
             </button>
@@ -313,9 +314,9 @@ export default function FocusTimer({ onClose, onComplete }) {
               onChange={(e) => setCustomMin(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && applyCustom()}
               placeholder="Custom min"
-              className="flex-1 text-xs text-[#18191E] dark:text-white placeholder-stone-400 bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl px-3 py-2 outline-none focus:border-[#F05A36] transition-colors" />
+              className="flex-1 text-xs text-[#18191E] dark:text-white placeholder-stone-400 bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl px-3 py-2 outline-none focus:border-accent transition-colors" />
             <button onClick={applyCustom}
-              className="px-3 py-2 rounded-xl text-xs font-bold text-stone-600 dark:text-white bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 transition-all">
+              className="px-3 py-2 rounded-xl text-xs font-bold text-stone-600 dark:text-white bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 hover:border-accent transition-all">
               Set
             </button>
           </div>
@@ -331,9 +332,10 @@ export default function FocusTimer({ onClose, onComplete }) {
               }}
               className={`flex-1 py-1.5 rounded-xl text-[10px] font-bold transition-all ${
                 ambient === a.id
-                  ? 'bg-[#F05A36]/15 text-[#F05A36] border border-[#F05A36]/30'
+                  ? 'border shadow-sm'
                   : 'bg-black/5 dark:bg-white/5 text-stone-400 border border-transparent'
-              }`}>
+              }`}
+              style={ambient === a.id ? { background: 'var(--color-accent-light)', color: 'var(--color-accent)', borderColor: 'var(--color-accent-border)' } : {}}>
               {a.label}
             </button>
           ))}
@@ -343,9 +345,10 @@ export default function FocusTimer({ onClose, onComplete }) {
         <button onClick={() => setBreathing(!breathing)}
           className={`w-full flex items-center justify-center gap-1.5 mb-4 py-2 rounded-xl text-xs font-bold transition-all ${
             breathing
-              ? 'bg-[#F05A36]/15 text-[#F05A36] border border-[#F05A36]/30'
+              ? 'border shadow-sm'
               : 'bg-black/5 dark:bg-white/5 text-stone-500 dark:text-stone-400 border border-transparent'
-          }`}>
+          }`}
+          style={breathing ? { background: 'var(--color-accent-light)', color: 'var(--color-accent)', borderColor: 'var(--color-accent-border)' } : {}}>
           <Wind size={12} /> {breathing ? 'Hide breathing guide' : 'Show breathing guide'}
         </button>
 
@@ -359,7 +362,7 @@ export default function FocusTimer({ onClose, onComplete }) {
               <svg width="144" height="144" className="-rotate-90">
                 <circle cx="72" cy="72" r={r} fill="none" className="stroke-black/5 dark:stroke-white/10" strokeWidth="7" />
                 <circle cx="72" cy="72" r={r} fill="none"
-                  stroke={finished ? '#10B981' : '#F05A36'}
+                  stroke={finished ? '#10B981' : 'var(--color-accent)'}
                   strokeWidth="7" strokeLinecap="round"
                   strokeDasharray={circumference}
                   strokeDashoffset={circumference * (1 - progress)}
