@@ -828,6 +828,30 @@ export default function AIDailyReportCard() {
           </div>
         </div>
 
+        {/* Core KPI Snapshot Cards with progress bars */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2.5">
+          {dailyPayload.items.map((item, i) => (
+            <div key={i} className="p-3 rounded-2xl bg-black/[0.02] dark:bg-white/5 border border-black/5 dark:border-white/8 space-y-1.5">
+              <div className="flex items-center justify-between">
+                <span className="text-[9px] font-extrabold text-stone-400 uppercase tracking-wider block truncate">
+                  {item.name}
+                </span>
+                <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: CHART_COLORS[i % CHART_COLORS.length] }} />
+              </div>
+              <div className="text-xs font-extrabold text-[#18191E] dark:text-white tabular-nums">
+                {item.value} <span className="text-[10px] text-accent font-extrabold">{item.unit}</span>
+                <span className="text-[9px] text-stone-400 font-normal block mt-0.5">Target: {item.goal}</span>
+              </div>
+              <div className="w-full h-1.5 rounded-full bg-black/5 dark:bg-white/10 overflow-hidden">
+                <div
+                  className="h-full rounded-full transition-all duration-500"
+                  style={{ width: `${item.pct}%`, backgroundColor: CHART_COLORS[i % CHART_COLORS.length] }}
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+
         {/* Unique AI Feature 1: Holistic Dharma Score™ & Tomorrow Prediction */}
         <div className="p-4 rounded-3xl bg-gradient-to-r from-accent/10 via-amber-500/10 to-teal-500/10 border border-accent/20 flex items-center justify-between flex-wrap gap-4">
           <div className="flex items-center gap-3">
