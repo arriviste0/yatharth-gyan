@@ -360,6 +360,7 @@ function GoalForm({ initial, pillars, onSave, onCancel }) {
   const [pillarTargetId, setPillarTargetId] = useState(initial?.pillarTargetId ?? '');
   const [notes,     setNotes]     = useState(initial?.notes     ?? '');
   const [showTemplates, setShowTemplates] = useState(false);
+  const [dropdownOpen,  setDropdownOpen]  = useState(false);
 
   const fieldCls =
     'w-full text-sm font-bold text-[#18191E] dark:text-white placeholder-stone-400 ' +
@@ -376,6 +377,10 @@ function GoalForm({ initial, pillars, onSave, onCancel }) {
     });
     return out;
   }, [pillars]);
+
+  const selectedTargetObj = useMemo(() => {
+    return allTargets.find(t => t.id === pillarTargetId);
+  }, [allTargets, pillarTargetId]);
 
   function applyTemplate(t) {
     setName(t.name);
@@ -524,21 +529,55 @@ function GoalForm({ initial, pillars, onSave, onCancel }) {
           Link to Pillar Tracker <span className="font-normal text-stone-400 normal-case">(optional — AI uses this for progress)</span>
         </label>
         <div className="relative">
-          <select
-            value={pillarTargetId}
-            onChange={(e) => setPillarTargetId(e.target.value)}
-            className={`${fieldCls} appearance-none pr-10 cursor-pointer`}
+          <button
+            type="button"
+            onClick={() => setDropdownOpen(!dropdownOpen)}
+            className={`${fieldCls} flex items-center justify-between gap-2 text-left cursor-pointer`}
           >
-            <option value="" className="bg-white dark:bg-[#181926] text-[#18191E] dark:text-white">
-              {allTargets.length === 0 ? 'No pillar trackers created yet (Add one in Pillars tab)' : 'Not linked (Standalone Goal)'}
-            </option>
-            {allTargets.map(t => (
-              <option key={t.id} value={t.id} className="bg-white dark:bg-[#181926] text-[#18191E] dark:text-white">
-                {t.label}{t.unit ? ` (${t.unit})` : ''}
-              </option>
-            ))}
-          </select>
-          <ChevronDown size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-stone-400 pointer-events-none" />
+            <span className={selectedTargetObj ? 'text-[#18191E] dark:text-white font-bold' : 'text-stone-400 font-medium'}>
+              {selectedTargetObj ? `${selectedTargetObj.label}${selectedTargetObj.unit ? ` (${selectedTargetObj.unit})` : ''}` : (allTargets.length === 0 ? 'No pillar trackers created yet' : 'Not linked (Standalone Goal)')}
+            </span>
+            <ChevronDown size={16} className={`text-stone-400 shrink-0 transition-transform ${dropdownOpen ? 'rotate-180 text-accent' : ''}`} />
+          </button>
+
+          {dropdownOpen && (
+            <div className="absolute left-0 right-0 top-full mt-2 z-50 rounded-2xl bg-white dark:bg-[#1f2130] border border-black/10 dark:border-white/15 shadow-2xl p-2 max-h-60 overflow-y-auto space-y-1 animate-[fadeIn_0.15s_ease-out]">
+              <button
+                type="button"
+                onClick={() => { setPillarTargetId(''); setDropdownOpen(false); }}
+                className={`w-full text-left px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-between ${
+                  !pillarTargetId
+                    ? 'bg-accent/10 text-accent font-extrabold'
+                    : 'text-stone-600 dark:text-stone-300 hover:bg-black/5 dark:hover:bg-white/5'
+                }`}
+              >
+                <span>Not linked (Standalone Goal)</span>
+                {!pillarTargetId && <Check size={14} className="text-accent" />}
+              </button>
+
+              {allTargets.map((t) => {
+                const isSelected = pillarTargetId === t.id;
+                return (
+                  <button
+                    key={t.id}
+                    type="button"
+                    onClick={() => { setPillarTargetId(t.id); setDropdownOpen(false); }}
+                    className={`w-full text-left px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-between ${
+                      isSelected
+                        ? 'bg-accent/10 text-accent font-extrabold'
+                        : 'text-[#18191E] dark:text-white hover:bg-black/5 dark:hover:bg-white/5'
+                    }`}
+                  >
+                    <div>
+                      <div>{t.label}</div>
+                      {t.unit && <div className="text-[10px] text-stone-400 font-medium">Unit: {t.unit}</div>}
+                    </div>
+                    {isSelected && <Check size={14} className="text-accent shrink-0" />}
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
 
