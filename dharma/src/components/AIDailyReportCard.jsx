@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Sparkles, CheckCircle2, Zap, RefreshCw, Trophy, AlertCircle, ArrowRight, BarChart2, PieChart as PieIcon } from 'lucide-react';
+import { Sparkles, CheckCircle2, Zap, RefreshCw, Trophy, AlertCircle, ArrowRight, BarChart2, PieChart as PieIcon, ChevronDown } from 'lucide-react';
 import { ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip } from 'recharts';
 import { useStorage } from '../hooks/useStorage';
 import { DEFAULT_PILLARS } from '../data/defaultPillars';
@@ -9,73 +9,67 @@ import { getDailyReportAI } from '../api/ai';
 const CHART_COLORS = ['#F05A36', '#14B8A6', '#E6A04E', '#8B5CF6', '#3B82F6', '#EC4899', '#10B981'];
 
 function TimeFilterControl({ timeFilter, setTimeFilter, customDays, setCustomDays, isOverlay = false }) {
-  const baseClasses = isOverlay
-    ? 'bg-white/10 border-white/20'
-    : 'bg-black/5 dark:bg-white/5 border-black/5 dark:border-white/10';
-  const activeClasses = 'bg-accent text-white shadow-sm';
-  const inactiveClasses = isOverlay
-    ? 'text-white/70 hover:text-white'
-    : 'text-stone-500 dark:text-stone-400 hover:text-[#18191E] dark:hover:text-white';
-
   const presets = [
-    { id: 'today', label: 'Today' },
-    { id: '7day', label: '7D' },
-    { id: '30day', label: '30D' },
-    { id: '90day', label: '90D' },
-    { id: 'allTime', label: 'All' },
+    { id: 'today', label: '📅 Today' },
+    { id: '7day', label: '🗓️ Last 7 Days' },
+    { id: '30day', label: '📊 Last 30 Days' },
+    { id: '90day', label: '📈 Last 90 Days' },
+    { id: 'allTime', label: '♾️ All Time' },
+    { id: 'custom', label: '⚙️ Custom Timeframe' },
   ];
 
   return (
-    <div className={`inline-flex items-center p-1 rounded-2xl border text-[11px] font-extrabold flex-wrap gap-0.5 ${baseClasses}`}>
-      {presets.map((tf) => (
-        <button
-          key={tf.id}
-          type="button"
-          onClick={(e) => { e.stopPropagation(); setTimeFilter(tf.id); }}
-          className={`px-2.5 py-1 rounded-xl transition-all ${timeFilter === tf.id ? activeClasses : inactiveClasses}`}
+    <div className="flex items-center gap-2 flex-wrap">
+      <div className="relative">
+        <select
+          value={timeFilter}
+          onChange={(e) => setTimeFilter(e.target.value)}
+          className={`appearance-none text-xs font-extrabold px-3 py-1.5 pr-8 rounded-xl border outline-none cursor-pointer ${
+            isOverlay
+              ? 'bg-white/10 text-white border-white/20'
+              : 'bg-black/5 dark:bg-white/5 text-[#18191E] dark:text-white border-black/10 dark:border-white/10'
+          }`}
         >
-          {tf.label}
-        </button>
-      ))}
+          {presets.map((p) => (
+            <option key={p.id} value={p.id} className="bg-white dark:bg-[#181926] text-[#18191E] dark:text-white">
+              {p.label}
+            </option>
+          ))}
+        </select>
+        <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-stone-400 pointer-events-none" />
+      </div>
 
-      {/* Custom toggle + inline stepper */}
-      {timeFilter !== 'custom' ? (
-        <button
-          type="button"
-          onClick={(e) => { e.stopPropagation(); setTimeFilter('custom'); }}
-          className={`px-2.5 py-1 rounded-xl transition-all ${inactiveClasses}`}
-        >
-          Custom
-        </button>
-      ) : (
-        <div className="flex items-center gap-0 bg-accent rounded-xl overflow-hidden shadow-sm">
-          <button
-            type="button"
-            onClick={(e) => { e.stopPropagation(); setCustomDays(Math.max(1, customDays - 1)); }}
-            className="px-1.5 py-1 text-white/80 hover:text-white hover:bg-white/10 transition-colors font-bold"
-          >
-            −
-          </button>
-          <input
-            type="text"
-            inputMode="numeric"
-            value={customDays}
-            onClick={(e) => e.stopPropagation()}
-            onChange={(e) => {
-              const v = parseInt(e.target.value);
-              if (!isNaN(v) && v >= 1 && v <= 365) setCustomDays(v);
-              else if (e.target.value === '') setCustomDays(1);
-            }}
-            className="w-7 bg-transparent text-white text-center outline-none font-extrabold text-[11px] py-1 appearance-none [-moz-appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-          />
-          <span className="text-white/60 text-[9px] pr-1 font-bold">d</span>
-          <button
-            type="button"
-            onClick={(e) => { e.stopPropagation(); setCustomDays(Math.min(365, customDays + 1)); }}
-            className="px-1.5 py-1 text-white/80 hover:text-white hover:bg-white/10 transition-colors font-bold"
-          >
-            +
-          </button>
+      {timeFilter === 'custom' && (
+        <div className="flex items-center gap-1.5 bg-accent/15 border border-accent/30 rounded-xl px-2.5 py-1 text-xs font-bold text-accent">
+          <span>Analyze Last:</span>
+          <div className="flex items-center gap-1 bg-accent text-white rounded-lg px-2 py-0.5">
+            <button
+              type="button"
+              onClick={() => setCustomDays(Math.max(1, customDays - 1))}
+              className="hover:opacity-75 font-black text-sm"
+            >
+              −
+            </button>
+            <input
+              type="number"
+              min="1"
+              max="365"
+              value={customDays}
+              onChange={(e) => {
+                const v = parseInt(e.target.value);
+                if (!isNaN(v) && v >= 1) setCustomDays(v);
+              }}
+              className="w-8 bg-transparent text-white text-center font-extrabold outline-none text-xs"
+            />
+            <span className="text-white/80 text-[10px]">days</span>
+            <button
+              type="button"
+              onClick={() => setCustomDays(Math.min(365, customDays + 1))}
+              className="hover:opacity-75 font-black text-sm"
+            >
+              +
+            </button>
+          </div>
         </div>
       )}
     </div>

@@ -427,6 +427,26 @@ function formatLoggedSummary(target) {
 }
 
 /* ── Mobile Weekly Chart ───────────────────────────────────────────── */
+function checkIsDurationTarget(t) {
+  if (t.type === 'DURATION') return true;
+  const u = (t.unit || '').toLowerCase();
+  if (['min', 'mins', 'minute', 'minutes', 'm', 'hr', 'hrs', 'hour', 'hours', 'h'].includes(u)) return true;
+  const cat = (t.aiCategory || '').toLowerCase();
+  if (['sleep', 'workout', 'exercise', 'meditation', 'focus', 'gym', 'cardio', 'lifting'].includes(cat)) return true;
+  const name = (t.name || '').toLowerCase();
+  if (name.includes('gym') || name.includes('workout') || name.includes('sleep') || name.includes('meditation') || name.includes('cardio') || name.includes('exercise') || name.includes('lifting')) return true;
+  return false;
+}
+
+function checkIsIntakeTarget(t) {
+  if (checkIsDurationTarget(t)) return false;
+  if (t.type === 'NUMBER') return true;
+  const cat = (t.aiCategory || '').toLowerCase();
+  if (['water', 'protein', 'carbs', 'calories', 'hydration', 'steps', 'weight', 'nutrition'].includes(cat)) return true;
+  if (t.subMetrics && t.subMetrics.length > 0 && !checkIsDurationTarget(t)) return true;
+  return false;
+}
+
 function MobileWeeklyChart({ logs, pillars }) {
   const [selectedPillar, setSelectedPillar] = useState('all');
   const [activeGraph, setActiveGraph] = useState('completion');
@@ -456,7 +476,7 @@ function MobileWeeklyChart({ logs, pillars }) {
       let durationTotal = 0;
       let durationUnit = 'min';
       const durationTargets = (activePillar ? [activePillar] : pillars)
-        .flatMap(p => p.targets.filter(t => t.type === 'DURATION' && (t.frequency === 'daily' || !t.frequency)));
+        .flatMap(p => p.targets.filter(t => checkIsDurationTarget(t) && (t.frequency === 'daily' || !t.frequency)));
 
       durationTargets.forEach(t => {
         const entry = dayLog[t.id];
@@ -469,7 +489,7 @@ function MobileWeeklyChart({ logs, pillars }) {
 
       const numericSeries = {};
       const numericTargets = (activePillar ? [activePillar] : pillars)
-        .flatMap(p => p.targets.filter(t => t.type === 'NUMBER' && (t.frequency === 'daily' || !t.frequency)));
+        .flatMap(p => p.targets.filter(t => checkIsIntakeTarget(t) && (t.frequency === 'daily' || !t.frequency)));
       numericTargets.forEach(t => {
         const entry = dayLog[t.id];
         if (entry?.value != null) {
@@ -499,7 +519,7 @@ function MobileWeeklyChart({ logs, pillars }) {
   const numericTargetDefs = useMemo(() => {
     const seen = new Map();
     (activePillar ? [activePillar] : pillars)
-      .flatMap(p => p.targets.filter(t => t.type === 'NUMBER' && (t.frequency === 'daily' || !t.frequency))
+      .flatMap(p => p.targets.filter(t => checkIsIntakeTarget(t) && (t.frequency === 'daily' || !t.frequency))
         .map(t => ({ ...t, pillarColor: p.color })))
       .forEach(t => { if (!seen.has(t.id)) seen.set(t.id, t); });
     return Array.from(seen.values());
@@ -1588,16 +1608,11 @@ function DesktopWeeklyChart({ logs, pillars }) {
       let durationTotal = 0;
       let durationUnit = 'min';
       const durationTargets = (activePillar ? [activePillar] : pillars)
-        .flatMap(p => p.targets.filter(t => t.type === 'DURATION' && (t.frequency === 'daily' || !t.frequency)));
+        .flatMap(p => p.targets.filter(t => checkIsDurationTarget(t) && (t.frequency === 'daily' || !t.frequency)));
       durationTargets.forEach(t => {
         const entry = dayLog[t.id];
-        if (entry?.value != null) {
-          const n = parseFloat(entry.value);
-          if (!isNaN(n)) {
-            // If unit is hr/hrs, convert to mins for uniform comparison
-            const u = (t.unit || 'min').toLowerCase();
-            durationTotal += (u === 'hr' || u === 'hrs' || u === 'hour' || u === 'hours') ? n * 60 : n;
-          }
+        if (entry) {
+          durationTotal += getDurationInMinutes(entry, t.unit);
         }
       });
       // Display in hours if > 60 mins
@@ -1607,7 +1622,7 @@ function DesktopWeeklyChart({ logs, pillars }) {
       // Numeric values — per-target series for selected pillar
       const numericSeries = {};
       const numericTargets = (activePillar ? [activePillar] : pillars)
-        .flatMap(p => p.targets.filter(t => t.type === 'NUMBER' && (t.frequency === 'daily' || !t.frequency)));
+        .flatMap(p => p.targets.filter(t => checkIsIntakeTarget(t) && (t.frequency === 'daily' || !t.frequency)));
       numericTargets.forEach(t => {
         const entry = dayLog[t.id];
         if (entry?.value != null) {
@@ -1640,7 +1655,7 @@ function DesktopWeeklyChart({ logs, pillars }) {
   const numericTargetDefs = useMemo(() => {
     const seen = new Map();
     const targets = (activePillar ? [activePillar] : pillars)
-      .flatMap(p => p.targets.filter(t => t.type === 'NUMBER' && (t.frequency === 'daily' || !t.frequency))
+      .flatMap(p => p.targets.filter(t => checkIsIntakeTarget(t) && (t.frequency === 'daily' || !t.frequency))
         .map(t => ({ ...t, pillarColor: p.color })));
     targets.forEach(t => { if (!seen.has(t.id)) seen.set(t.id, t); });
     return Array.from(seen.values());
