@@ -872,23 +872,23 @@ export default function AIDailyReportCard() {
           </div>
 
           {/* Action Buttons in Overlay */}
-          <div className="flex items-center gap-2 flex-wrap justify-center">
+          <div className="flex items-center gap-2 flex-wrap justify-center text-[11px] sm:text-xs">
             <button
               onClick={handleUnlockAndAnalyze}
               disabled={loading || planLoading}
-              className="btn-coral px-6 py-2.5 text-xs font-extrabold shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center gap-2 whitespace-nowrap"
+              className="btn-coral px-4 sm:px-6 py-2 sm:py-2.5 font-extrabold shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center gap-1.5 whitespace-nowrap shrink-0"
             >
-              {loading ? <RefreshCw size={15} className="animate-spin" /> : <Zap size={15} />}
-              <span>{loading ? 'Analyzing KPIs…' : `Analyze ${dailyPayload.periodLabel} with AI`}</span>
+              {loading ? <RefreshCw size={14} className="animate-spin" /> : <Zap size={14} />}
+              <span>{loading ? 'Analyzing…' : `Analyze ${dailyPayload.periodLabel}`}</span>
             </button>
 
             <button
               onClick={handleMakeAIPlan}
               disabled={loading || planLoading}
-              className="px-6 py-2.5 text-xs font-extrabold rounded-2xl bg-gradient-to-r from-amber-500 to-accent text-white shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center gap-2 whitespace-nowrap"
+              className="px-4 sm:px-6 py-2 sm:py-2.5 font-extrabold rounded-2xl bg-gradient-to-r from-amber-500 to-accent text-white shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center gap-1.5 whitespace-nowrap shrink-0"
             >
-              {planLoading ? <RefreshCw size={15} className="animate-spin" /> : <Wand2 size={15} />}
-              <span>{planLoading ? 'Generating Plan…' : '🪄 Make Plan with AI'}</span>
+              <Wand2 size={14} />
+              <span>Make Plan with AI</span>
             </button>
           </div>
         </div>

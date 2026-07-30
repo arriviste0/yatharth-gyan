@@ -897,33 +897,33 @@ Acknowledge the user's request. Check their current setup. If they already have 
                       </div>
                     )}
 
-                    {/* Action Buttons: Dismiss, Merge with Existing, Replace All */}
-                    <div className="flex items-center justify-end gap-2 pt-2 flex-wrap">
+                    {/* Action Buttons: Dismiss, Merge, Replace */}
+                    <div className="flex items-center justify-end gap-1.5 sm:gap-2 pt-2 flex-wrap text-[11px] sm:text-xs">
                       <button
                         onClick={() => {
                           setMessages(prev => prev.map(m => m.id === msg.id ? { ...m, plan: null } : m));
                         }}
-                        className="px-3.5 py-2 text-xs font-bold text-stone-500 hover:text-stone-800 dark:text-stone-400 dark:hover:text-white transition-colors"
+                        className="px-2.5 sm:px-3 py-1.5 sm:py-2 font-bold text-stone-500 hover:text-stone-800 dark:text-stone-400 dark:hover:text-white transition-colors"
                       >
                         Dismiss
                       </button>
 
                       <button
                         onClick={() => handleAddPlanToSadhana(msg, false)}
-                        className="px-4 py-2 text-xs font-extrabold rounded-2xl bg-accent text-white shadow-md hover:scale-105 active:scale-95 transition-all flex items-center gap-1.5"
+                        className="px-3 sm:px-4 py-1.5 sm:py-2 font-extrabold rounded-2xl bg-accent text-white shadow-md hover:scale-105 active:scale-95 transition-all flex items-center gap-1 shrink-0"
                         title="Add selected items while matching with existing pillars or creating new ones"
                       >
-                        <Plus size={14} />
-                        <span>Merge with Existing</span>
+                        <Plus size={13} />
+                        <span>Merge</span>
                       </button>
 
                       <button
                         onClick={() => handleAddPlanToSadhana(msg, true)}
-                        className="px-4 py-2 text-xs font-extrabold rounded-2xl bg-black/10 dark:bg-white/10 text-stone-800 dark:text-white border border-black/10 dark:border-white/15 hover:border-amber-500 hover:text-amber-500 transition-all flex items-center gap-1.5"
+                        className="px-3 sm:px-4 py-1.5 sm:py-2 font-extrabold rounded-2xl bg-black/10 dark:bg-white/10 text-stone-800 dark:text-white border border-black/10 dark:border-white/15 hover:border-amber-500 hover:text-amber-500 transition-all flex items-center gap-1 shrink-0"
                         title="Replace your current pillars and goals with these selected items"
                       >
-                        <RotateCcw size={13} />
-                        <span>Replace All</span>
+                        <RotateCcw size={12} />
+                        <span>Replace</span>
                       </button>
                     </div>
                   </div>
