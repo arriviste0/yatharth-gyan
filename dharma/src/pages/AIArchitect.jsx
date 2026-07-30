@@ -253,10 +253,22 @@ export default function AIArchitect() {
         );
       }
 
+      const activePillarsList = pillars.length > 0 ? pillars : DEFAULT_PILLARS;
+      const existingPillarNames = activePillarsList.map(p => `${p.english} (${(p.targets || []).map(t => `${t.name}: ${t.targetValue}${t.unit || ''}`).join(', ')})`).join('; ');
+      const existingGoalNames = (goals || []).map(g => `${g.name} (${g.value}${g.unit || ''})`).join('; ');
+
+      const contextPrompt = wantsPlan
+        ? `User requested: "${textToSend}".
+Current User Setup in Account:
+- Existing Pillars: ${existingPillarNames || 'None'}
+- Existing Goals: ${existingGoalNames || 'None'}
+
+Instructions for AI:
+Acknowledge the user's request. Check their current setup. If they already have relevant pillars or goals in their account, explicitly mention them to guide the user (e.g. "I see you already have Body & Energy with water tracking!"). Explain how the proposed plan below will merge new trackers or update existing target values in their account.`
+        : `User says: "${textToSend}". (User's current pillars: ${existingPillarNames || 'None'}). Respond directly, helpfully, and warmly.`;
+
       const conversationalReply = await askKrishnaAI(
-        wantsPlan
-          ? `User requested a Sadhana plan for: "${textToSend}". Provide encouraging guidance and introduce the proposed plan below.`
-          : textToSend,
+        contextPrompt,
         messages.slice(-4)
       );
 
@@ -374,7 +386,17 @@ export default function AIArchitect() {
             const existingPillar = newPillars[matchingIdx];
             const combinedTargets = [...(existingPillar.targets || [])];
             (p.targets || []).forEach(t => {
-              if (!combinedTargets.some(ct => (ct.name || '').toLowerCase() === (t.name || '').toLowerCase())) {
+              const existingTargetIdx = combinedTargets.findIndex(ct => (ct.name || '').toLowerCase() === (t.name || '').toLowerCase());
+              if (existingTargetIdx >= 0) {
+                // Target already exists: update/upgrade target value and unit
+                combinedTargets[existingTargetIdx] = {
+                  ...combinedTargets[existingTargetIdx],
+                  targetValue: t.targetValue || combinedTargets[existingTargetIdx].targetValue,
+                  unit: t.unit || combinedTargets[existingTargetIdx].unit,
+                  type: t.type || combinedTargets[existingTargetIdx].type,
+                };
+              } else {
+                // Target does not exist: add as new target
                 combinedTargets.push({
                   ...t,
                   id: t.id || `target-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`
@@ -402,7 +424,16 @@ export default function AIArchitect() {
 
     (msg.plan.recommendedGoals || []).forEach((g, idx) => {
       if (selectedGMap[idx] !== false) {
-        if (!newGoals.some(eg => (eg.name || '').toLowerCase() === (g.name || '').toLowerCase())) {
+        const existingGoalIdx = newGoals.findIndex(eg => (eg.name || '').toLowerCase() === (g.name || '').toLowerCase());
+        if (existingGoalIdx >= 0) {
+          // Goal already exists: update target value & notes
+          newGoals[existingGoalIdx] = {
+            ...newGoals[existingGoalIdx],
+            value: g.value || newGoals[existingGoalIdx].value,
+            unit: g.unit || newGoals[existingGoalIdx].unit,
+            notes: g.notes || newGoals[existingGoalIdx].notes,
+          };
+        } else {
           addedGoalsCount++;
           newGoals.push({
             id: g.id || `goal-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
