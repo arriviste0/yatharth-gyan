@@ -57,13 +57,13 @@ export default function BottomNav({ onOpenProfile }) {
         >
           {user ? (
             user.avatarPhoto ? (
-              <div className="w-5 h-5 rounded-full overflow-hidden border border-[#F05A36]/60 shadow-sm">
+              <div className="w-5 h-5 rounded-full overflow-hidden border border-accent/60 shadow-sm">
                 <img src={user.avatarPhoto} alt={user.name} className="w-full h-full object-cover" />
               </div>
             ) : (
               <div
                 className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-extrabold text-white shadow-sm"
-                style={{ background: user.avatarColor || '#F05A36' }}
+                style={{ background: user.avatarColor || 'var(--color-accent)' }}
               >
                 {user.name.split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase()}
               </div>
@@ -105,12 +105,12 @@ export function SideNav({ onOpenFocus, onOpenProfile }) {
       {/* Logo + profile */}
       <div className="mb-6">
         <div className="flex items-center gap-3 mb-4">
-          <div className="w-10 h-10 rounded-2xl bg-[#F05A36] flex items-center justify-center font-bold text-xl text-white shadow-md shadow-[#F05A36]/30">
+          <div className="w-10 h-10 rounded-2xl bg-accent flex items-center justify-center font-bold text-xl text-white shadow-md" style={{ background: 'var(--color-accent)' }}>
             ॐ
           </div>
           <div>
             <div className="font-extrabold text-sm text-[#18191E] dark:text-white">Dharma</div>
-            <div className="text-[11px] text-[#F05A36] font-bold">Private Practice</div>
+            <div className="text-[11px] font-bold text-accent">Private Practice</div>
           </div>
         </div>
 
@@ -119,13 +119,13 @@ export function SideNav({ onOpenFocus, onOpenProfile }) {
           <button onClick={onOpenProfile}
             className="w-full flex items-center gap-2.5 px-3 py-2 rounded-2xl transition-all hover:bg-black/5 dark:hover:bg-white/5 text-left border border-black/5 dark:border-white/5">
             <div className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs text-white flex-shrink-0"
-              style={{ background: user.avatarColor || '#F05A36' }}>
+              style={{ background: user.avatarColor || 'var(--color-accent)' }}>
               {user.name.split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase()}
             </div>
             <div className="flex-1 min-w-0">
               <div className="text-xs font-bold text-[#18191E] dark:text-white truncate">{user.name}</div>
               <div className="text-[10px] text-stone-400 flex items-center gap-1">
-                {syncing  ? <><Cloud size={9} className="animate-pulse text-[#F05A36]" />syncing…</>
+                {syncing  ? <><Cloud size={9} className="animate-pulse text-accent" />syncing…</>
                 : lastSync ? <><CheckCircle2 size={9} className="text-emerald-500" />synced</>
                 : 'cloud ready'}
               </div>
@@ -133,8 +133,7 @@ export function SideNav({ onOpenFocus, onOpenProfile }) {
           </button>
         ) : (
           <button onClick={onOpenProfile}
-            className="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-full text-xs font-extrabold transition-all shadow-sm"
-            style={{ background: '#F05A36', color: '#FFFFFF' }}>
+            className="btn-coral w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-full text-xs font-extrabold shadow-md">
             <LogIn size={14} /> Sign in to sync
           </button>
         )}

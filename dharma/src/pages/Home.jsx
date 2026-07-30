@@ -844,11 +844,11 @@ function MobileTodayView({ pillars, logs, metrics = {}, logTarget, dateStr, stre
             <Link
               to="/sadhana"
               state={{ addPillar: true }}
-              className="text-[10px] font-extrabold text-[#F05A36] bg-[#F05A36]/10 px-2 py-0.5 rounded-full hover:bg-[#F05A36]/20 transition-all flex items-center gap-1"
+              className="text-[10px] font-extrabold text-accent bg-accent/10 px-2 py-0.5 rounded-full hover:bg-accent/20 transition-all flex items-center gap-1"
             >
               <Plus size={11} /> Pillar
             </Link>
-            <Link to="/sadhana" className="text-[10px] font-extrabold text-[#F05A36] flex items-center gap-0.5">
+            <Link to="/sadhana" className="text-[10px] font-extrabold text-accent hover:underline flex items-center gap-0.5">
               View all <ChevronRight size={10} />
             </Link>
           </div>
@@ -984,7 +984,7 @@ function MobileTodayView({ pillars, logs, metrics = {}, logTarget, dateStr, stre
                         e.stopPropagation();
                         setLoggingTarget(target);
                       }}
-                      className="px-2.5 py-1 rounded-xl text-[10px] font-bold bg-[#F05A36]/10 text-[#F05A36] hover:bg-[#F05A36]/20 shrink-0 transition-all"
+                      className="px-2.5 py-1 rounded-xl text-[10px] font-bold bg-accent/10 text-accent hover:bg-accent/20 shrink-0 transition-all"
                     >
                       Log
                     </button>
@@ -1214,7 +1214,7 @@ function TaskRow({ target, dateStr, logTarget, onEdit, onLogModal }) {
           <button
             onClick={(e) => { e.stopPropagation(); onLogModal(target); }}
             title="Log amount"
-            className="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-[#F05A36]/10 text-[#F05A36] hover:bg-[#F05A36]/20 transition-all"
+            className="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-accent/10 text-accent hover:bg-accent/20 transition-all"
           >
             Log Value
           </button>
