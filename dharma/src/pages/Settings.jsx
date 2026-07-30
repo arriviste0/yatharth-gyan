@@ -173,7 +173,7 @@ export default function Settings() {
                   return (
                     <button
                       key={c.id}
-                      onClick={() => updateSettings({ accentColor: c.id })}
+                      onClick={() => updateSettings({ accentColor: c.id, customAccentColor: '' })}
                       className={`flex flex-col items-center gap-1.5 py-2.5 px-2 rounded-2xl border transition-all duration-200 ${
                         isActive
                           ? 'shadow-sm scale-105 border-accent'
@@ -190,8 +190,47 @@ export default function Settings() {
                   );
                 })}
               </div>
+
+              {/* Custom Accent Color Option */}
+              <div className="mt-3 pt-3 border-t border-black/5 dark:border-white/5 flex items-center justify-between gap-3">
+                <div>
+                  <div className="text-xs font-bold text-[#18191E] dark:text-white flex items-center gap-1.5">
+                    <span>🎨</span> Custom Colour
+                  </div>
+                  <div className="text-[10px] text-stone-400">Pick any custom hex theme color</div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="relative w-8 h-8 rounded-xl overflow-hidden border border-black/10 dark:border-white/10 shadow-sm cursor-pointer shrink-0"
+                    style={{ background: settings.customAccentColor || (accentColor.startsWith('#') ? accentColor : 'var(--color-accent)') }}>
+                    <input
+                      type="color"
+                      value={settings.customAccentColor || (accentColor.startsWith('#') ? accentColor : '#F05A36')}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        updateSettings({ accentColor: val, customAccentColor: val });
+                      }}
+                      className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
+                    />
+                  </div>
+                  <input
+                    type="text"
+                    value={settings.customAccentColor || (accentColor.startsWith('#') ? accentColor : '')}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (/^#[0-9A-Fa-f]{6}$/.test(val)) {
+                        updateSettings({ accentColor: val, customAccentColor: val });
+                      } else {
+                        updateSettings({ customAccentColor: val });
+                      }
+                    }}
+                    placeholder="#HEX"
+                    className="w-20 text-xs font-mono font-bold uppercase text-[#18191E] dark:text-white bg-black/5 dark:bg-white/8 border border-black/10 dark:border-white/10 rounded-xl px-2.5 py-1.5 text-center outline-none focus:border-accent"
+                  />
+                </div>
+              </div>
+
               <p className="text-[10px] text-stone-500 dark:text-stone-400 mt-2 font-medium">
-                Accent Theme: <span className="font-extrabold text-accent uppercase">{accentColor}</span> active live.
+                Accent Theme: <span className="font-extrabold text-accent uppercase">{settings.customAccentColor || accentColor}</span> active live.
               </p>
             </div>
           </div>

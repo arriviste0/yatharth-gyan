@@ -190,14 +190,34 @@ function AppInner() {
       },
     };
 
-    const preset = ACCENT_MAP[settings.accentColor] || ACCENT_MAP.saffron;
+    let preset = ACCENT_MAP[settings.accentColor];
+
+    if (!preset) {
+      const hex = settings.customAccentColor || (settings.accentColor?.startsWith('#') ? settings.accentColor : '#F05A36');
+      let cleanHex = hex.replace('#', '');
+      if (cleanHex.length === 3) cleanHex = cleanHex.split('').map((c) => c + c).join('');
+      const num = parseInt(cleanHex, 16) || 0xf05a36;
+      const r = (num >> 16) & 255;
+      const g = (num >> 8) & 255;
+      const b = num & 255;
+
+      preset = {
+        primary: `#${cleanHex}`,
+        hover: `rgba(${r}, ${g}, ${b}, 0.85)`,
+        light: `rgba(${r}, ${g}, ${b}, 0.15)`,
+        border: `rgba(${r}, ${g}, ${b}, 0.35)`,
+        shadow: `rgba(${r}, ${g}, ${b}, 0.4)`,
+        secondary: `#${cleanHex}`,
+      };
+    }
+
     document.documentElement.style.setProperty('--color-accent', preset.primary);
     document.documentElement.style.setProperty('--color-accent-hover', preset.hover);
     document.documentElement.style.setProperty('--color-accent-light', preset.light);
     document.documentElement.style.setProperty('--color-accent-border', preset.border);
     document.documentElement.style.setProperty('--color-accent-shadow', preset.shadow);
     document.documentElement.style.setProperty('--color-secondary', preset.secondary);
-  }, [settings.theme, settings.accentColor]);
+  }, [settings.theme, settings.accentColor, settings.customAccentColor]);
 
   useEffect(() => {
     const mq = window.matchMedia('(prefers-color-scheme: dark)');
