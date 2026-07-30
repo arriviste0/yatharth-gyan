@@ -207,14 +207,14 @@ export default function AIArchitect() {
   }
 
   // Add selected & edited Pillars/Goals to app storage + trigger UNDO
-  function handleAddPlanToSadhana(msg) {
+  function handleAddPlanToSadhana(msg, replaceMode = false) {
     if (!msg.plan) return;
 
     const prevPillars = JSON.parse(JSON.stringify(pillars));
     const prevGoals = JSON.parse(JSON.stringify(goals));
 
-    let newPillars = [...pillars];
-    let newGoals = [...goals];
+    let newPillars = replaceMode ? [] : [...pillars];
+    let newGoals = replaceMode ? [] : [...goals];
 
     let addedPillarsCount = 0;
     let addedGoalsCount = 0;
@@ -273,7 +273,11 @@ export default function AIArchitect() {
     setGoals(newGoals);
 
     setUndoState({ prevPillars, prevGoals });
-    setToastMessage(`✨ Added ${addedPillarsCount} Pillars & ${addedGoalsCount} Goals to your Sadhana!`);
+    setToastMessage(
+      replaceMode
+        ? `🔄 Replaced existing setup with ${addedPillarsCount} Pillars & ${addedGoalsCount} Goals!`
+        : `✨ Added ${addedPillarsCount} Pillars & ${addedGoalsCount} Goals to your Sadhana!`
+    );
     setTimeout(() => setToastMessage(null), 8000);
   }
 
@@ -602,14 +606,24 @@ export default function AIArchitect() {
                     </div>
                   )}
 
-                  {/* Add to Sadhana Action Button */}
-                  <div className="flex items-center justify-end gap-2 pt-1">
+                  {/* Add to Sadhana Action Buttons: Merge OR Replace */}
+                  <div className="flex items-center justify-end gap-2.5 pt-2 flex-wrap">
                     <button
-                      onClick={() => handleAddPlanToSadhana(msg)}
+                      onClick={() => handleAddPlanToSadhana(msg, false)}
                       className="px-4 py-2 text-xs font-extrabold rounded-2xl bg-accent text-white shadow-md hover:scale-105 active:scale-95 transition-all flex items-center gap-1.5"
+                      title="Add selected items while preserving your current pillars and goals"
                     >
                       <Plus size={14} />
-                      <span>Add Selected Pillars & Goals to My Sadhana</span>
+                      <span>➕ Merge with Existing</span>
+                    </button>
+
+                    <button
+                      onClick={() => handleAddPlanToSadhana(msg, true)}
+                      className="px-4 py-2 text-xs font-extrabold rounded-2xl bg-black/10 dark:bg-white/10 text-stone-800 dark:text-white border border-black/10 dark:border-white/15 hover:border-amber-500 hover:text-amber-500 transition-all flex items-center gap-1.5"
+                      title="Replace your current pillars and goals with these selected items"
+                    >
+                      <RotateCcw size={13} />
+                      <span>🔄 Replace All Existing</span>
                     </button>
                   </div>
                 </div>
