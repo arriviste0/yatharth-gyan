@@ -17,6 +17,7 @@ const NAV_ITEMS_LEFT = [
 
 const NAV_ITEMS_RIGHT = [
   { path: '/manan',   label: 'Journal',   Icon: BookOpen },
+  { path: '/gyaan',   label: 'Wisdom',    Icon: BookMarked },
 ];
 
 const SIDE_NAV_ITEMS = [
@@ -36,7 +37,7 @@ export default function BottomNav({ onOpenProfile }) {
   return (
     <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md glass-nav safe-bottom z-50 lg:hidden">
       <div className="grid grid-cols-5 items-center px-2 py-1">
-        {/* Col 1 & 2: Left items */}
+        {/* Col 1 & 2: Left items (Dashboard, Pillars) */}
         {NAV_ITEMS_LEFT.map(({ path, label, Icon }) => {
           const isActive = location.pathname === path || (path !== '/home' && location.pathname.startsWith(path + '/'));
           return (
@@ -61,7 +62,7 @@ export default function BottomNav({ onOpenProfile }) {
           );
         })}
 
-        {/* Col 3: EXACT CENTER Floating AI Architect Button (Reference Design) */}
+        {/* Col 3: EXACT CENTER Floating AI Architect Button */}
         <div className="flex justify-center relative">
           <NavLink
             to="/ai-architect"
@@ -73,7 +74,7 @@ export default function BottomNav({ onOpenProfile }) {
           </NavLink>
         </div>
 
-        {/* Col 4: Right item */}
+        {/* Col 4 & 5: Right items (Journal, Wisdom) */}
         {NAV_ITEMS_RIGHT.map(({ path, label, Icon }) => {
           const isActive = location.pathname === path || (path !== '/home' && location.pathname.startsWith(path + '/'));
           return (
@@ -97,32 +98,6 @@ export default function BottomNav({ onOpenProfile }) {
             </NavLink>
           );
         })}
-
-        {/* Col 5: Profile / Sign In Button */}
-        <button
-          onClick={onOpenProfile}
-          className="flex flex-col items-center justify-center gap-1 py-1.5 rounded-2xl transition-all duration-200 relative"
-        >
-          {user ? (
-            user.avatarPhoto ? (
-              <div className="w-5 h-5 rounded-full overflow-hidden border border-accent/60 shadow-sm">
-                <img src={user.avatarPhoto} alt={user.name} className="w-full h-full object-cover" />
-              </div>
-            ) : (
-              <div
-                className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-extrabold text-white shadow-sm"
-                style={{ background: user.avatarColor || 'var(--color-accent)' }}
-              >
-                {user.name.split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase()}
-              </div>
-            )
-          ) : (
-            <LogIn size={19} strokeWidth={1.7} style={{ color: '#9CA3AF' }} />
-          )}
-          <span className="text-[9px] font-bold tracking-wide text-stone-400">
-            {user ? 'Profile' : 'Sign in'}
-          </span>
-        </button>
       </div>
     </nav>
   );
