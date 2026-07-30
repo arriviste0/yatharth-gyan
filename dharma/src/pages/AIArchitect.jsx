@@ -35,6 +35,48 @@ function saveChatThreads(threads) {
 }
 
 /**
+ * Smart matching algorithm to find existing pillar by assigned ID, title, or domain keywords
+ */
+function findMatchingPillarIndex(existingPillars, p) {
+  if (!p || !existingPillars || existingPillars.length === 0) return -1;
+
+  // 1. If assignedPillarId was explicitly selected in the edit dropdown
+  if (p.assignedPillarId && p.assignedPillarId !== 'new') {
+    const idx = existingPillars.findIndex(ep => ep.id === p.assignedPillarId);
+    if (idx >= 0) return idx;
+  }
+
+  const pTitle = (p.english || '').toLowerCase();
+
+  // 2. Exact or partial title match
+  let matchedIdx = existingPillars.findIndex(ep => {
+    const epTitle = (ep.english || '').toLowerCase();
+    return epTitle === pTitle || epTitle.includes(pTitle) || pTitle.includes(epTitle);
+  });
+  if (matchedIdx >= 0) return matchedIdx;
+
+  // 3. Smart domain keyword matching
+  const categoryKeywords = {
+    body: ['body', 'workout', 'protein', 'hydration', 'fitness', 'gym', 'health', 'sleep', 'diet', 'water', 'exercise', 'muscle', 'run', 'steps'],
+    mind: ['mind', 'meditation', 'pranayama', 'mental', 'peace', 'calm', 'focus', 'spirit', 'spiritual', 'soul', 'dharma', 'wisdom', 'gita', 'journal'],
+    work: ['work', 'study', 'deep work', 'code', 'reading', 'career', 'vocation', 'task', 'project', 'skill', 'learn', 'writing']
+  };
+
+  for (const [_, keywords] of Object.entries(categoryKeywords)) {
+    const pHasKeyword = keywords.some(kw => pTitle.includes(kw));
+    if (pHasKeyword) {
+      const idx = existingPillars.findIndex(ep => {
+        const epTitle = (ep.english || '').toLowerCase();
+        return keywords.some(kw => epTitle.includes(kw));
+      });
+      if (idx >= 0) return idx;
+    }
+  }
+
+  return -1;
+}
+
+/**
  * Formats AI output text cleanly without raw markdown characters (*, **, #, `)
  */
 function FormattedMessageText({ text }) {
@@ -166,16 +208,6 @@ export default function AIArchitect() {
     }
   }
 
-  function handleClearCurrentChat() {
-    setMessages([initialWelcomeMsg]);
-    if (activeThreadId) {
-      const updated = chatThreads.filter(t => t.id !== activeThreadId);
-      setChatThreads(updated);
-      saveChatThreads(updated);
-      setActiveThreadId(null);
-    }
-  }
-
   async function handleSendMessage(customText = null) {
     const textToSend = customText || inputPrompt;
     if (!textToSend.trim() || loading) return;
@@ -186,7 +218,6 @@ export default function AIArchitect() {
     let currentThreadId = activeThreadId;
 
     if (!currentThreadId) {
-      // Create new thread
       const newThreadId = `thread-${Date.now()}`;
       const title = textToSend.length > 32 ? textToSend.slice(0, 32) + '...' : textToSend;
       const newThread = {
@@ -258,7 +289,6 @@ export default function AIArchitect() {
     }
   }
 
-  // Toggle selection checkbox for pillar/goal in message
   function togglePillarSelect(msgId, pIdx) {
     setMessages(prev => prev.map(m => {
       if (m.id !== msgId) return m;
@@ -279,7 +309,6 @@ export default function AIArchitect() {
     }));
   }
 
-  // Save inline edit to message's plan
   function handleSaveItemEdit(msgId, type, idx, updatedData) {
     setMessages(prev => prev.map(m => {
       if (m.id !== msgId || !m.plan) return m;
@@ -300,11 +329,10 @@ export default function AIArchitect() {
     setEditingItem(null);
   }
 
-  // Add selected & edited Pillars/Goals to app storage + trigger UNDO
+  // Add selected & edited Pillars/Goals to app storage + smart matching + trigger UNDO
   function handleAddPlanToSadhana(msg, replaceMode = false) {
     if (!msg.plan) return;
 
-    // Use current pillars or fallback to DEFAULT_PILLARS if empty
     const currentPillars = (pillars && pillars.length > 0) ? pillars : DEFAULT_PILLARS;
     const currentGoals = goals || [];
 
@@ -323,20 +351,9 @@ export default function AIArchitect() {
     (msg.plan.recommendedPillars || []).forEach((p, idx) => {
       if (selectedPMap[idx] !== false) {
         addedPillarsCount++;
-        const existingIdx = newPillars.findIndex(ep => (ep.english || '').toLowerCase() === (p.english || '').toLowerCase());
-        if (existingIdx >= 0) {
-          const existingPillar = newPillars[existingIdx];
-          const combinedTargets = [...(existingPillar.targets || [])];
-          (p.targets || []).forEach(t => {
-            if (!combinedTargets.some(ct => (ct.name || '').toLowerCase() === (t.name || '').toLowerCase())) {
-              combinedTargets.push({
-                ...t,
-                id: t.id || `target-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`
-              });
-            }
-          });
-          newPillars[existingIdx] = { ...existingPillar, targets: combinedTargets };
-        } else {
+
+        if (replaceMode) {
+          // In replace mode, create new pillar directly
           newPillars.push({
             id: p.id || `pillar-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
             english: p.english,
@@ -348,6 +365,37 @@ export default function AIArchitect() {
               id: t.id || `target-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`
             }))
           });
+        } else {
+          // Smart Match: Check assignedPillarId or smart domain keyword matching
+          const matchingIdx = findMatchingPillarIndex(newPillars, p);
+
+          if (matchingIdx >= 0) {
+            // Merge targets into existing matching pillar
+            const existingPillar = newPillars[matchingIdx];
+            const combinedTargets = [...(existingPillar.targets || [])];
+            (p.targets || []).forEach(t => {
+              if (!combinedTargets.some(ct => (ct.name || '').toLowerCase() === (t.name || '').toLowerCase())) {
+                combinedTargets.push({
+                  ...t,
+                  id: t.id || `target-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`
+                });
+              }
+            });
+            newPillars[matchingIdx] = { ...existingPillar, targets: combinedTargets };
+          } else {
+            // Create new pillar if no match found
+            newPillars.push({
+              id: p.id || `pillar-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+              english: p.english,
+              sanskrit: p.sanskrit || 'सधना',
+              color: p.color || '#E8843C',
+              icon: p.icon || 'dumbbell',
+              targets: (p.targets || []).map(t => ({
+                ...t,
+                id: t.id || `target-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`
+              }))
+            });
+          }
         }
       }
     });
@@ -376,8 +424,8 @@ export default function AIArchitect() {
     setUndoState({ prevPillars, prevGoals });
     setToastMessage(
       replaceMode
-        ? `🔄 Replaced existing setup with ${addedPillarsCount} Pillars & ${addedGoalsCount} Goals!`
-        : `✨ Added ${addedPillarsCount} Pillars & ${addedGoalsCount} Goals to your Sadhana!`
+        ? `Replaced existing setup with ${addedPillarsCount} Pillars & ${addedGoalsCount} Goals!`
+        : `Merged ${addedPillarsCount} Pillars & ${addedGoalsCount} Goals into your Sadhana!`
     );
     setTimeout(() => setToastMessage(null), 8000);
   }
@@ -387,11 +435,12 @@ export default function AIArchitect() {
     setPillars(undoState.prevPillars);
     setGoals(undoState.prevGoals);
     setUndoState(null);
-    setToastMessage('🔄 Undone! Restored previous Pillars and Goals.');
+    setToastMessage('Restored previous Pillars and Goals.');
     setTimeout(() => setToastMessage(null), 4000);
   }
 
   const hasUserMessages = messages.some(m => m.role === 'user');
+  const availablePillarsList = (pillars && pillars.length > 0) ? pillars : DEFAULT_PILLARS;
 
   return (
     <div className="flex flex-col h-[calc(100vh-4rem)] max-w-4xl w-full mx-auto px-3 sm:px-6 pt-2 pb-20 lg:pb-6 overflow-hidden relative">
@@ -486,7 +535,7 @@ export default function AIArchitect() {
         </div>
       )}
 
-      {/* Floating Toast Notification with UNDO option */}
+      {/* Toast Notification with UNDO option */}
       {toastMessage && (
         <div className="shrink-0 mb-2 p-3 rounded-2xl bg-[#181926] text-white border border-white/20 shadow-2xl flex items-center justify-between gap-3 animate-in fade-in slide-in-from-top duration-300">
           <span className="text-xs font-bold flex items-center gap-2">
@@ -508,10 +557,9 @@ export default function AIArchitect() {
       {/* Main Chat Area */}
       <div className="flex-1 overflow-y-auto min-h-0 space-y-4 pr-1 scroll-smooth">
         
-        {/* Fresh Chat Hero Center State (Matching Reference UI) */}
+        {/* Fresh Chat Hero Center State */}
         {!hasUserMessages ? (
           <div className="h-full flex flex-col items-center justify-center text-center p-4 space-y-5 animate-in fade-in zoom-in-95 duration-300">
-            {/* Glowing AI Buddy Icon */}
             <div className="relative">
               <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-teal-400 via-emerald-500 to-accent flex items-center justify-center text-white shadow-2xl shadow-accent/40 animate-pulse">
                 <Bot size={42} />
@@ -521,7 +569,6 @@ export default function AIArchitect() {
               </div>
             </div>
 
-            {/* Title & Subtitle */}
             <div className="space-y-1.5 max-w-md">
               <h2 className="text-2xl sm:text-3xl font-black text-[#18191E] dark:text-white tracking-tight">
                 Your smart AI buddy for all things Sadhana
@@ -531,7 +578,6 @@ export default function AIArchitect() {
               </p>
             </div>
 
-            {/* Quick Prompts Grid */}
             <div className="flex flex-wrap items-center justify-center gap-2 max-w-lg pt-2">
               {QUICK_PROMPTS.map((qp, i) => (
                 <button
@@ -552,7 +598,6 @@ export default function AIArchitect() {
               key={msg.id}
               className={`flex items-start gap-3 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}
             >
-              {/* Avatar */}
               <div
                 className={`w-8 h-8 rounded-2xl flex items-center justify-center text-white shrink-0 shadow-sm ${
                   msg.role === 'user' ? 'bg-stone-800 dark:bg-stone-700' : 'bg-accent'
@@ -561,9 +606,7 @@ export default function AIArchitect() {
                 {msg.role === 'user' ? <User size={16} /> : <Bot size={16} />}
               </div>
 
-              {/* Message Content Container */}
               <div className={`space-y-3 max-w-[88%] sm:max-w-[82%] ${msg.role === 'user' ? 'text-right' : ''}`}>
-                {/* Text Bubble */}
                 <div
                   className={`p-3.5 sm:p-4 rounded-3xl text-xs sm:text-sm font-medium leading-relaxed shadow-sm ${
                     msg.role === 'user'
@@ -596,7 +639,7 @@ export default function AIArchitect() {
                       {msg.plan.summary}
                     </p>
 
-                    {/* Recommended Pillars List with Checkbox & Inline Edit */}
+                    {/* Recommended Pillars List */}
                     {msg.plan.recommendedPillars?.length > 0 && (
                       <div className="space-y-2">
                         <span className="text-[11px] font-extrabold text-accent uppercase tracking-wider block">
@@ -608,24 +651,51 @@ export default function AIArchitect() {
                             return (
                               <div key={pIdx} className="p-3 rounded-2xl bg-white dark:bg-white/5 border border-black/5 dark:border-white/10 space-y-2 shadow-xs">
                                 {isEditingThis ? (
-                                  /* Inline Pillar Edit Form */
-                                  <div className="space-y-2 text-xs">
+                                  /* Inline Pillar Edit Form with Target Pillar Selector */
+                                  <div className="space-y-2.5 text-xs">
                                     <div className="grid grid-cols-2 gap-2">
-                                      <input
-                                        type="text"
-                                        value={editingItem.data.english}
-                                        onChange={(e) => setEditingItem(prev => ({ ...prev, data: { ...prev.data, english: e.target.value } }))}
-                                        placeholder="Pillar English Name"
-                                        className="p-1.5 rounded-xl border border-accent bg-transparent text-[#18191E] dark:text-white font-bold outline-none"
-                                      />
-                                      <input
-                                        type="text"
-                                        value={editingItem.data.sanskrit}
-                                        onChange={(e) => setEditingItem(prev => ({ ...prev, data: { ...prev.data, sanskrit: e.target.value } }))}
-                                        placeholder="Sanskrit Name"
-                                        className="p-1.5 rounded-xl border border-accent bg-transparent text-[#18191E] dark:text-white font-bold outline-none"
-                                      />
+                                      <div>
+                                        <label className="text-[10px] font-extrabold text-stone-400 uppercase tracking-wider block mb-1">Title (English):</label>
+                                        <input
+                                          type="text"
+                                          value={editingItem.data.english}
+                                          onChange={(e) => setEditingItem(prev => ({ ...prev, data: { ...prev.data, english: e.target.value } }))}
+                                          placeholder="Pillar English Name"
+                                          className="w-full p-1.5 rounded-xl border border-accent bg-transparent text-[#18191E] dark:text-white font-bold outline-none"
+                                        />
+                                      </div>
+                                      <div>
+                                        <label className="text-[10px] font-extrabold text-stone-400 uppercase tracking-wider block mb-1">Sanskrit:</label>
+                                        <input
+                                          type="text"
+                                          value={editingItem.data.sanskrit}
+                                          onChange={(e) => setEditingItem(prev => ({ ...prev, data: { ...prev.data, sanskrit: e.target.value } }))}
+                                          placeholder="Sanskrit Name"
+                                          className="w-full p-1.5 rounded-xl border border-accent bg-transparent text-[#18191E] dark:text-white font-bold outline-none"
+                                        />
+                                      </div>
                                     </div>
+
+                                    {/* Select Existing Target Pillar */}
+                                    <div className="space-y-1">
+                                      <label className="text-[10px] font-extrabold text-stone-400 uppercase tracking-wider block">
+                                        Assign Target to Existing Pillar:
+                                      </label>
+                                      <select
+                                        value={editingItem.data.assignedPillarId || 'new'}
+                                        onChange={(e) => setEditingItem(prev => ({ ...prev, data: { ...prev.data, assignedPillarId: e.target.value } }))}
+                                        className="w-full p-2 rounded-xl border border-accent bg-white dark:bg-[#181926] text-xs font-bold text-[#18191E] dark:text-white outline-none"
+                                      >
+                                        <option value="new">➕ Create New Pillar ({editingItem.data.english})</option>
+                                        {availablePillarsList.map(ep => (
+                                          <option key={ep.id} value={ep.id}>
+                                            📂 Merge into {ep.english} ({ep.sanskrit || 'Sadhana'})
+                                          </option>
+                                        ))}
+                                      </select>
+                                    </div>
+
+                                    {/* Edit Targets */}
                                     {(editingItem.data.targets || []).map((t, tidx) => (
                                       <div key={tidx} className="flex items-center gap-1.5">
                                         <input
@@ -699,7 +769,7 @@ export default function AIArchitect() {
                                     <button
                                       onClick={() => setEditingItem({ msgId: msg.id, type: 'pillar', idx: pIdx, data: JSON.parse(JSON.stringify(p)) })}
                                       className="p-1 rounded-lg text-stone-400 hover:text-accent hover:bg-black/5 dark:hover:bg-white/10 transition-colors shrink-0"
-                                      title="Edit Pillar & Targets"
+                                      title="Edit Pillar & Target Assignment"
                                     >
                                       <Edit2 size={13} />
                                     </button>
@@ -712,7 +782,7 @@ export default function AIArchitect() {
                       </div>
                     )}
 
-                    {/* Recommended Goals List with Checkbox & Inline Edit */}
+                    {/* Recommended Goals List */}
                     {msg.plan.recommendedGoals?.length > 0 && (
                       <div className="space-y-2">
                         <span className="text-[11px] font-extrabold text-amber-500 uppercase tracking-wider block">
@@ -724,7 +794,6 @@ export default function AIArchitect() {
                             return (
                               <div key={gIdx} className="p-3 rounded-2xl bg-white dark:bg-white/5 border border-black/5 dark:border-white/10 space-y-2 shadow-xs">
                                 {isEditingThisGoal ? (
-                                  /* Inline Goal Edit Form */
                                   <div className="space-y-2 text-xs">
                                     <input
                                       type="text"
@@ -764,7 +833,6 @@ export default function AIArchitect() {
                                     </div>
                                   </div>
                                 ) : (
-                                  /* Normal View with Checkbox & Edit button */
                                   <div className="flex items-start justify-between gap-2">
                                     <label className="flex items-start gap-2.5 cursor-pointer flex-1 min-w-0">
                                       <input
@@ -798,15 +866,24 @@ export default function AIArchitect() {
                       </div>
                     )}
 
-                    {/* Add to Sadhana Action Buttons: Merge OR Replace */}
-                    <div className="flex items-center justify-end gap-2.5 pt-2 flex-wrap">
+                    {/* Action Buttons: Dismiss, Merge with Existing, Replace All */}
+                    <div className="flex items-center justify-end gap-2 pt-2 flex-wrap">
+                      <button
+                        onClick={() => {
+                          setMessages(prev => prev.map(m => m.id === msg.id ? { ...m, plan: null } : m));
+                        }}
+                        className="px-3.5 py-2 text-xs font-bold text-stone-500 hover:text-stone-800 dark:text-stone-400 dark:hover:text-white transition-colors"
+                      >
+                        Dismiss
+                      </button>
+
                       <button
                         onClick={() => handleAddPlanToSadhana(msg, false)}
                         className="px-4 py-2 text-xs font-extrabold rounded-2xl bg-accent text-white shadow-md hover:scale-105 active:scale-95 transition-all flex items-center gap-1.5"
-                        title="Add selected items while preserving your current pillars and goals"
+                        title="Add selected items while matching with existing pillars or creating new ones"
                       >
                         <Plus size={14} />
-                        <span>➕ Merge with Existing</span>
+                        <span>Merge with Existing</span>
                       </button>
 
                       <button
@@ -815,7 +892,7 @@ export default function AIArchitect() {
                         title="Replace your current pillars and goals with these selected items"
                       >
                         <RotateCcw size={13} />
-                        <span>🔄 Replace All Existing</span>
+                        <span>Replace All</span>
                       </button>
                     </div>
                   </div>
