@@ -287,33 +287,52 @@ export default function AIArchitect() {
   }
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto pb-24 px-4 sm:px-6 pt-4">
+    <div className="flex flex-col h-[calc(100vh-4rem)] max-w-4xl w-full mx-auto px-3 sm:px-6 pt-3 pb-20 lg:pb-6 overflow-hidden">
       
       {/* Header Banner */}
-      <div className="card-bento p-5 sm:p-6 bg-gradient-to-r from-accent/15 via-amber-500/10 to-teal-500/15 border border-accent/25 relative overflow-hidden">
-        <div className="flex items-center gap-3.5 relative z-10">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-accent to-amber-500 text-white flex items-center justify-center shadow-lg shadow-accent/30 shrink-0">
-            <Wand2 size={24} />
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-xl sm:text-2xl font-black text-[#18191E] dark:text-white tracking-tight">
-                Sadhana AI Architect™
-              </h1>
-              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-accent text-white shadow-xs">
-                PRO AI
-              </span>
+      <div className="shrink-0 mb-3">
+        <div className="p-4 sm:p-5 rounded-3xl bg-gradient-to-r from-accent/15 via-amber-500/10 to-teal-500/15 border border-accent/25 flex items-center justify-between gap-3 shadow-xs">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-accent to-amber-500 text-white flex items-center justify-center shadow-md shadow-accent/20 shrink-0">
+              <Wand2 size={20} />
             </div>
-            <p className="text-xs sm:text-sm text-stone-600 dark:text-stone-300 font-medium mt-0.5">
-              Conversational AI studio to design personalized Pillars, Habit Trackers & Goals with 1-click addition & live editing!
-            </p>
+            <div>
+              <div className="flex items-center gap-2">
+                <h1 className="text-base sm:text-lg font-black text-[#18191E] dark:text-white tracking-tight">
+                  Sadhana AI Architect™
+                </h1>
+                <span className="px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase bg-accent text-white shadow-xs">
+                  PRO AI
+                </span>
+              </div>
+              <p className="text-xs text-stone-500 dark:text-stone-300 font-medium">
+                Conversational AI studio to design personalized Pillars, Habit Trackers & Goals with 1-click addition & live editing!
+              </p>
+            </div>
           </div>
         </div>
       </div>
 
+      {/* Quick Prompts Bar */}
+      <div className="shrink-0 flex items-center gap-2 overflow-x-auto pb-2 mb-2 no-scrollbar">
+        <span className="text-xs font-extrabold text-stone-400 shrink-0 flex items-center gap-1">
+          <Lightbulb size={13} /> Quick Prompts:
+        </span>
+        {QUICK_PROMPTS.map((qp, i) => (
+          <button
+            key={i}
+            onClick={() => handleSendMessage(qp.prompt)}
+            disabled={loading}
+            className="px-3 py-1.5 rounded-xl bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/10 text-xs font-extrabold text-stone-700 dark:text-stone-300 hover:border-accent hover:text-accent transition-all shrink-0"
+          >
+            {qp.label}
+          </button>
+        ))}
+      </div>
+
       {/* Floating Toast Notification with UNDO option */}
       {toastMessage && (
-        <div className="fixed top-16 left-1/2 -translate-x-1/2 z-50 w-full max-w-md p-4 rounded-2xl bg-[#181926] text-white border border-white/20 shadow-2xl flex items-center justify-between gap-3 animate-in fade-in slide-in-from-top duration-300">
+        <div className="shrink-0 mb-3 p-3.5 rounded-2xl bg-[#181926] text-white border border-white/20 shadow-2xl flex items-center justify-between gap-3 animate-in fade-in slide-in-from-top duration-300">
           <span className="text-xs font-bold flex items-center gap-2">
             <Sparkles size={16} className="text-amber-400 shrink-0" />
             {toastMessage}
@@ -330,25 +349,8 @@ export default function AIArchitect() {
         </div>
       )}
 
-      {/* Quick Starter Prompts */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
-        <span className="text-xs font-extrabold text-stone-400 shrink-0 flex items-center gap-1">
-          <Lightbulb size={13} /> Quick Prompts:
-        </span>
-        {QUICK_PROMPTS.map((qp, i) => (
-          <button
-            key={i}
-            onClick={() => handleSendMessage(qp.prompt)}
-            disabled={loading}
-            className="px-3 py-1.5 rounded-xl bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/10 text-xs font-extrabold text-stone-700 dark:text-stone-300 hover:border-accent hover:text-accent transition-all shrink-0"
-          >
-            {qp.label}
-          </button>
-        ))}
-      </div>
-
-      {/* Chat Messages Log */}
-      <div className="space-y-4">
+      {/* Scrollable Chat Area */}
+      <div className="flex-1 overflow-y-auto min-h-0 space-y-4 pr-1 scroll-smooth">
         {messages.map((msg) => (
           <div
             key={msg.id}
@@ -356,18 +358,18 @@ export default function AIArchitect() {
           >
             {/* Avatar */}
             <div
-              className={`w-9 h-9 rounded-2xl flex items-center justify-center text-white shrink-0 shadow-sm ${
+              className={`w-8 h-8 rounded-2xl flex items-center justify-center text-white shrink-0 shadow-sm ${
                 msg.role === 'user' ? 'bg-stone-800 dark:bg-stone-700' : 'bg-accent'
               }`}
             >
-              {msg.role === 'user' ? <User size={18} /> : <Bot size={18} />}
+              {msg.role === 'user' ? <User size={16} /> : <Bot size={16} />}
             </div>
 
             {/* Message Content Container */}
-            <div className={`space-y-3 max-w-[85%] sm:max-w-[78%] ${msg.role === 'user' ? 'text-right' : ''}`}>
+            <div className={`space-y-3 max-w-[85%] sm:max-w-[80%] ${msg.role === 'user' ? 'text-right' : ''}`}>
               {/* Text Bubble */}
               <div
-                className={`p-4 rounded-3xl text-xs sm:text-sm font-medium leading-relaxed shadow-sm ${
+                className={`p-3.5 sm:p-4 rounded-3xl text-xs sm:text-sm font-medium leading-relaxed shadow-sm ${
                   msg.role === 'user'
                     ? 'bg-accent text-white rounded-tr-xs'
                     : 'bg-white dark:bg-[#181926] text-[#18191E] dark:text-stone-200 border border-black/5 dark:border-white/10 rounded-tl-xs'
@@ -626,11 +628,11 @@ export default function AIArchitect() {
         <div ref={chatEndRef} />
       </div>
 
-      {/* Sticky Bottom Input Prompt Box */}
-      <div className="sticky bottom-20 lg:bottom-6 z-40 max-w-2xl mx-auto pt-2 pb-2">
+      {/* Bottom Input Prompt Box */}
+      <div className="shrink-0 pt-3">
         <form
           onSubmit={(e) => { e.preventDefault(); handleSendMessage(); }}
-          className="flex items-center gap-2 p-2 rounded-2xl bg-white/90 dark:bg-[#181926]/95 backdrop-blur-xl border border-black/10 dark:border-white/15 shadow-2xl"
+          className="flex items-center gap-2 p-2 rounded-2xl bg-white dark:bg-[#181926] border border-black/10 dark:border-white/15 shadow-xl"
         >
           <input
             type="text"
@@ -642,7 +644,7 @@ export default function AIArchitect() {
           <button
             type="submit"
             disabled={!inputPrompt.trim() || loading}
-            className="w-9.5 h-9.5 rounded-xl bg-accent text-white flex items-center justify-center shadow-md hover:scale-105 active:scale-95 transition-all disabled:opacity-40 shrink-0"
+            className="w-9 h-9 rounded-xl bg-accent text-white flex items-center justify-center shadow-md hover:scale-105 active:scale-95 transition-all disabled:opacity-40 shrink-0"
           >
             <Send size={16} />
           </button>
