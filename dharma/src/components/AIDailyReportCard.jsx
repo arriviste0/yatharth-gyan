@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Sparkles, CheckCircle2, Zap, RefreshCw, Trophy, AlertCircle, ArrowRight, BarChart2, PieChart as PieIcon, ChevronDown, Wand2, Plus, RotateCcw, Check, X } from 'lucide-react';
 import { ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip } from 'recharts';
 import { useStorage } from '../hooks/useStorage';
@@ -752,23 +753,10 @@ export default function AIDailyReportCard() {
     }
   }
 
-  async function handleMakeAIPlan() {
-    setIsUnlocked(true);
-    setPlanLoading(true);
-    try {
-      const plan = await createAIPlan(dailyPayload, pillars, goals);
-      setAiPlan(plan);
-      const initPillars = {};
-      (plan.recommendedPillars || []).forEach((p, idx) => { initPillars[idx] = true; });
-      const initGoals = {};
-      (plan.recommendedGoals || []).forEach((g, idx) => { initGoals[idx] = true; });
-      setSelectedPillars(initPillars);
-      setSelectedGoals(initGoals);
-    } catch (e) {
-      console.error('Failed to generate AI plan:', e);
-    } finally {
-      setPlanLoading(false);
-    }
+  const navigate = useNavigate();
+
+  function handleMakeAIPlan() {
+    navigate('/ai-architect');
   }
 
   function handleAddPlanToSadhana(replaceMode = false) {
