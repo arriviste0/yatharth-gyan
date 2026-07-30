@@ -369,11 +369,9 @@ function GoalForm({ initial, pillars, onSave, onCancel }) {
   // Flatten all pillar targets for the link dropdown
   const allTargets = useMemo(() => {
     const out = [];
-    pillars.forEach(p => {
-      p.targets.forEach(t => {
-        if (t.type !== 'CHECKBOX') {
-          out.push({ id: t.id, label: `${p.english} → ${t.name}`, unit: t.unit });
-        }
+    (pillars || []).forEach(p => {
+      (p.targets || []).forEach(t => {
+        out.push({ id: t.id, label: `${p.english} → ${t.name}`, unit: t.unit });
       });
     });
     return out;
@@ -521,23 +519,28 @@ function GoalForm({ initial, pillars, onSave, onCancel }) {
       </div>
 
       {/* Link to pillar tracker (optional) */}
-      {allTargets.length > 0 && (
-        <div>
-          <label className="block text-[11px] font-extrabold uppercase tracking-wider text-stone-500 dark:text-stone-400 mb-1.5">
-            Link to Pillar Tracker <span className="font-normal text-stone-400 normal-case">(optional — AI uses this for progress)</span>
-          </label>
+      <div>
+        <label className="block text-[11px] font-extrabold uppercase tracking-wider text-stone-500 dark:text-stone-400 mb-1.5">
+          Link to Pillar Tracker <span className="font-normal text-stone-400 normal-case">(optional — AI uses this for progress)</span>
+        </label>
+        <div className="relative">
           <select
             value={pillarTargetId}
             onChange={(e) => setPillarTargetId(e.target.value)}
-            className={`${fieldCls} cursor-pointer`}
+            className={`${fieldCls} appearance-none pr-10 cursor-pointer`}
           >
-            <option value="">Not linked</option>
+            <option value="" className="bg-white dark:bg-[#181926] text-[#18191E] dark:text-white">
+              {allTargets.length === 0 ? 'No pillar trackers created yet (Add one in Pillars tab)' : 'Not linked (Standalone Goal)'}
+            </option>
             {allTargets.map(t => (
-              <option key={t.id} value={t.id}>{t.label}{t.unit ? ` (${t.unit})` : ''}</option>
+              <option key={t.id} value={t.id} className="bg-white dark:bg-[#181926] text-[#18191E] dark:text-white">
+                {t.label}{t.unit ? ` (${t.unit})` : ''}
+              </option>
             ))}
           </select>
+          <ChevronDown size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-stone-400 pointer-events-none" />
         </div>
-      )}
+      </div>
 
       {/* Deadline */}
       <div>
