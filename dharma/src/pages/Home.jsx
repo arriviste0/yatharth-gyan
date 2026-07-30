@@ -721,6 +721,8 @@ function MobileWeeklyChart({ logs, pillars }) {
 
 /* ── Mobile Today View ─────────────────────────────────────────────── */
 function MobileTodayView({ pillars, logs, metrics = {}, logTarget, dateStr, streak, settings, onOpenFocus }) {
+  const { state } = useStorage();
+  const goals = state?.goals || [];
   const [loggingTarget, setLoggingTarget] = useState(null);
   const [tab, setTab] = useState('all');
   const [filterPillar, setFilterPillar] = useState('all');
@@ -1089,9 +1091,9 @@ function MobileTodayView({ pillars, logs, metrics = {}, logTarget, dateStr, stre
           </Link>
         </div>
 
-        {state.goals && state.goals.length > 0 ? (
+        {goals && goals.length > 0 ? (
           <div className="space-y-3">
-            {state.goals.map((goal) => {
+            {goals.map((goal) => {
               // Find linked target or pillar
               const linkedTarget = goal.pillarTargetId
                 ? pillars.flatMap(p => p.targets).find(t => t.id === goal.pillarTargetId)
