@@ -615,91 +615,103 @@ function MobileWeeklyChart({ logs, pillars }) {
         numericTargetDefs.length === 0 ? (
           <p className="text-[11px] text-stone-400 text-center py-4">No quantity trackers. Add NUMBER type in Pillars.</p>
         ) : (
-          <div className="space-y-2">
-            {/* Metric Sub-selector */}
-            {numericTargetDefs.length > 1 && (
-              <div className="flex flex-wrap gap-1 mb-1">
-                <button
-                  onClick={() => setSelectedNumericId('all')}
-                  className={`text-[9px] font-extrabold px-2 py-0.5 rounded-full transition-all border ${
-                    selectedNumericId === 'all'
-                      ? 'bg-accent text-white border-accent'
-                      : 'bg-black/5 dark:bg-white/5 border-black/8 dark:border-white/10 text-stone-500 dark:text-stone-400'
-                  }`}
-                >
-                  All Intake
-                </button>
-                {numericTargetDefs.map((t) => (
-                  <button
+          <div className="space-y-3">
+            {/* Metric KPI Cards (Selectable) */}
+            <div className="grid grid-cols-2 gap-2">
+              {numericTargetDefs.map((t, idx) => {
+                const values = data.map(d => d[`n_${t.id}`]).filter(v => v != null);
+                const avgVal = values.length > 0 ? +(values.reduce((a, b) => a + b, 0) / values.length).toFixed(1) : 0;
+                const maxVal = values.length > 0 ? Math.max(...values) : 1;
+                const isSelected = selectedNumericId === t.id || (selectedNumericId === 'all' && idx === 0);
+                const themeColor = t.pillarColor || METRIC_COLORS[idx % METRIC_COLORS.length];
+
+                return (
+                  <div
                     key={t.id}
                     onClick={() => setSelectedNumericId(t.id)}
-                    className={`text-[9px] font-extrabold px-2 py-0.5 rounded-full transition-all border ${
-                      selectedNumericId === t.id
-                        ? 'text-white border-transparent'
-                        : 'bg-black/5 dark:bg-white/5 border-black/8 dark:border-white/10 text-stone-500 dark:text-stone-400'
+                    className={`p-2.5 rounded-2xl border transition-all cursor-pointer ${
+                      isSelected
+                        ? 'bg-black/[0.04] dark:bg-white/[0.06] shadow-sm border-accent'
+                        : 'bg-black/[0.01] dark:bg-white/[0.02] border-black/5 dark:border-white/5 hover:bg-black/[0.02] dark:hover:bg-white/[0.04]'
                     }`}
-                    style={selectedNumericId === t.id ? { backgroundColor: t.pillarColor, borderColor: t.pillarColor } : {}}
+                    style={isSelected ? { borderColor: themeColor, backgroundColor: `${themeColor}10` } : {}}
                   >
-                    {t.name}
-                  </button>
-                ))}
-              </div>
-            )}
+                    <div className="flex items-center justify-between gap-1 mb-1">
+                      <div className="text-xs font-extrabold text-[#18191E] dark:text-white truncate">
+                        {t.name}
+                      </div>
+                      <span className="text-[9px] font-bold text-stone-400 shrink-0">{t.unit}</span>
+                    </div>
 
-            {/* Single Metric Focus View */}
-            {activeNumericTarget ? (
-              <div>
-                <ResponsiveContainer width="100%" height={130}>
-                  <BarChart data={data} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
-                    <XAxis dataKey="label" tick={{ fontSize: 10, fill: '#9CA3AF' }} axisLine={false} tickLine={false} />
-                    <YAxis tick={{ fontSize: 9, fill: '#9CA3AF' }} axisLine={false} tickLine={false} />
-                    <Tooltip content={({ active, payload }) => {
-                      if (!active || !payload?.length) return null;
-                      const val = payload[0].value;
-                      return (
-                        <div className="bg-[#181926] border border-white/10 rounded-xl px-2.5 py-1.5 text-xs font-bold text-white">
-                          {payload[0].payload.label}: {val != null ? `${val} ${activeNumericTarget.unit || ''}` : 'No data'}
-                        </div>
-                      );
-                    }} />
-                    <Bar dataKey={`n_${activeNumericTarget.id}`} fill={activeNumericTarget.pillarColor || 'var(--color-accent)'} radius={[4, 4, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            ) : (
-              /* All Metrics View */
-              <div className="space-y-1.5">
-                <ResponsiveContainer width="100%" height={130}>
-                  <LineChart data={data} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
-                    <XAxis dataKey="label" tick={{ fontSize: 10, fill: '#9CA3AF' }} axisLine={false} tickLine={false} />
-                    <YAxis tick={{ fontSize: 9, fill: '#9CA3AF' }} axisLine={false} tickLine={false} />
-                    <Tooltip content={({ active, payload, label }) => {
-                      if (!active || !payload?.length) return null;
-                      return (
-                        <div className="bg-[#181926] border border-white/10 rounded-xl px-2.5 py-1.5 text-xs space-y-0.5">
-                          <div className="font-bold text-white">{label}</div>
-                          {payload.map((p, i) => {
-                            const tDef = numericTargetDefs.find(t => `n_${t.id}` === p.dataKey);
-                            return <div key={i} className="text-stone-300">{tDef?.name}: <span className="text-white font-bold">{p.value} {tDef?.unit}</span></div>;
-                          })}
-                        </div>
-                      );
-                    }} />
-                    {numericTargetDefs.map((t, i) => (
-                      <Line key={t.id} type="monotone" dataKey={`n_${t.id}`} stroke={t.pillarColor || METRIC_COLORS[i % METRIC_COLORS.length]} strokeWidth={2} dot={{ r: 2.5, fill: t.pillarColor || METRIC_COLORS[i % METRIC_COLORS.length], stroke: '#181926', strokeWidth: 1 }} connectNulls={true} />
-                    ))}
-                  </LineChart>
-                </ResponsiveContainer>
-                <div className="flex flex-wrap gap-1.5">
-                  {numericTargetDefs.map((t, i) => (
-                    <span key={t.id} className="flex items-center gap-1 text-[9px] font-semibold text-stone-500 dark:text-stone-400">
-                      <span className="w-2 h-2 rounded-full" style={{ backgroundColor: t.pillarColor || METRIC_COLORS[i % METRIC_COLORS.length] }} />
-                      {t.name}{t.unit ? ` (${t.unit})` : ''}
+                    <div className="flex items-baseline justify-between mb-2">
+                      <span className="text-base font-extrabold tabular-nums" style={{ color: themeColor }}>
+                        {avgVal} <span className="text-[9px] font-semibold text-stone-400">avg/day</span>
+                      </span>
+                    </div>
+
+                    {/* Mini 7-Day Sparkline Bars */}
+                    <div className="flex items-end gap-1 h-7 pt-1">
+                      {data.map((d, di) => {
+                        const val = d[`n_${t.id}`] || 0;
+                        const pct = Math.min(100, Math.max(10, Math.round((val / (maxVal || 1)) * 100)));
+                        return (
+                          <div key={di} className="flex-1 flex flex-col items-center gap-0.5 h-full justify-end">
+                            <div
+                              className="w-full rounded-t-sm transition-all duration-300"
+                              style={{
+                                height: val > 0 ? `${pct}%` : '2px',
+                                backgroundColor: val > 0 ? themeColor : 'rgba(150,150,150,0.2)',
+                                opacity: d.isToday ? 1 : 0.7,
+                              }}
+                            />
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Selected Metric Detailed Focus Chart */}
+            {(() => {
+              const activeT = activeNumericTarget || numericTargetDefs[0];
+              if (!activeT) return null;
+              const themeColor = activeT.pillarColor || 'var(--color-accent)';
+
+              return (
+                <div className="p-3 rounded-2xl bg-black/[0.02] dark:bg-white/[0.03] border border-black/5 dark:border-white/5 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-extrabold text-[#18191E] dark:text-white flex items-center gap-1.5">
+                      <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: themeColor }} />
+                      {activeT.name} Daily Breakdown
                     </span>
-                  ))}
+                    <span className="text-[10px] font-bold text-stone-400">7-Day Trend</span>
+                  </div>
+
+                  <ResponsiveContainer width="100%" height={120}>
+                    <BarChart data={data} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
+                      <XAxis dataKey="label" tick={{ fontSize: 10, fill: '#9CA3AF' }} axisLine={false} tickLine={false} />
+                      <YAxis tick={{ fontSize: 9, fill: '#9CA3AF' }} axisLine={false} tickLine={false} />
+                      <Tooltip content={({ active, payload }) => {
+                        if (!active || !payload?.length) return null;
+                        const val = payload[0].value;
+                        return (
+                          <div className="bg-[#181926] border border-white/10 rounded-xl px-2.5 py-1.5 text-xs font-bold text-white shadow-xl">
+                            {payload[0].payload.label}: <span style={{ color: themeColor }}>{val != null ? `${val} ${activeT.unit || ''}` : '0'}</span>
+                          </div>
+                        );
+                      }} />
+                      <Bar dataKey={`n_${activeT.id}`} radius={[6, 6, 0, 0]}>
+                        {data.map((entry, i) => (
+                          <Cell key={i} fill={themeColor} opacity={entry.isToday ? 1 : 0.75} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
                 </div>
-              </div>
-            )}
+              );
+            })()}
           </div>
         )
       )}
