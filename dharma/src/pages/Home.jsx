@@ -1069,35 +1069,142 @@ function MobileTodayView({ pillars, logs, metrics = {}, logTarget, dateStr, stre
       {/* ── Mobile Weekly Trend Chart ───────────────────────────────── */}
       <MobileWeeklyChart logs={logs} pillars={pillars} />
 
-      {/* ── Mobile Pillar Breakdown ─────────────────────────────────── */}
-      <div className="card-bento p-5">
-        <div className="mb-4">
-          <h3 className="text-sm font-bold text-[#18191E] dark:text-white">Pillar Breakdown</h3>
-          <p className="text-[10px] text-stone-400 dark:text-white/40 mt-0.5">Today's completion by category</p>
+      {/* ── Goal Tracking & Target Progress Visualization ─────────────── */}
+      <div className="card-bento p-5 space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-sm font-extrabold text-[#18191E] dark:text-white flex items-center gap-1.5">
+              <Target size={16} className="text-accent" /> Goal Progress & Targets
+            </h3>
+            <p className="text-[10px] text-stone-400 dark:text-white/40 mt-0.5 font-medium">
+              Live tracking across linked pillars, trackers & independent targets
+            </p>
+          </div>
+          <Link
+            to="/sadhana"
+            state={{ addGoal: true }}
+            className="text-[10px] font-extrabold text-accent bg-accent/10 px-2.5 py-1 rounded-full hover:bg-accent/20 transition-all flex items-center gap-1 shrink-0"
+          >
+            <Plus size={11} /> Goal
+          </Link>
         </div>
-        <div className="space-y-2">
-          {pillarStats.map((p, i) => {
-            const Icon = PILLAR_ICONS[p.icon] || Zap;
-            return (
-              <div key={p.id} className="flex items-center gap-3 px-3 py-2.5 rounded-2xl bg-black/[0.02] dark:bg-white/[0.03] border border-black/5 dark:border-white/5">
-                <span className="text-[10px] font-bold text-stone-400 dark:text-white/30 w-4">{i + 1}</span>
-                <div className="w-7 h-7 rounded-xl flex items-center justify-center" style={{ background: `${p.color}18` }}>
-                  <Icon size={13} style={{ color: p.color }} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="text-xs font-bold text-[#18191E] dark:text-white truncate">{p.name}</div>
-                  <div className="mt-1 h-1 rounded-full bg-black/5 dark:bg-white/10 overflow-hidden">
-                    <div className="h-full rounded-full transition-all duration-500" style={{ width: `${p.pct}%`, background: p.color }} />
+
+        {state.goals && state.goals.length > 0 ? (
+          <div className="space-y-3">
+            {state.goals.map((goal) => {
+              // Find linked target or pillar
+              const linkedTarget = goal.pillarTargetId
+                ? pillars.flatMap(p => p.targets).find(t => t.id === goal.pillarTargetId)
+                : null;
+              const linkedPillar = goal.pillarId
+                ? pillars.find(p => p.id === goal.pillarId)
+                : (linkedTarget ? pillars.find(p => p.targets.some(t => t.id === linkedTarget.id)) : null);
+
+              const today = todayKey();
+              const dayLog = logs[today] || {};
+
+              let currentVal = 0;
+              let pct = 0;
+
+              if (linkedTarget) {
+                const entry = dayLog[linkedTarget.id];
+                if (entry) {
+                  if (linkedTarget.type === 'DURATION') {
+                    currentVal = getDurationInMinutes(entry, linkedTarget.unit);
+                    if (goal.unit && (goal.unit.toLowerCase() === 'hr' || goal.unit.toLowerCase() === 'hrs')) {
+                      currentVal = +(currentVal / 60).toFixed(1);
+                    }
+                  } else if (entry.value != null) {
+                    currentVal = parseFloat(entry.value) || 0;
+                  } else if (entry.subValues) {
+                    currentVal = Object.values(entry.subValues).reduce((a, b) => a + (parseFloat(b) || 0), 0);
+                  }
+                }
+                pct = goal.value > 0 ? Math.min(100, Math.round((currentVal / goal.value) * 100)) : 0;
+              } else if (linkedPillar) {
+                const targets = linkedPillar.targets || [];
+                const doneCount = targets.filter(t => dayLog[t.id]?.done).length;
+                pct = targets.length > 0 ? Math.round((doneCount / targets.length) * 100) : 0;
+                currentVal = doneCount;
+              } else {
+                // Independent goal
+                pct = goal.completed ? 100 : 0;
+              }
+
+              const isGte = goal.direction === 'gte';
+              const daysLeft = goal.deadline ? Math.ceil((new Date(goal.deadline) - new Date()) / 86400000) : null;
+              const themeColor = linkedPillar?.color || 'var(--color-accent)';
+
+              return (
+                <div
+                  key={goal.id}
+                  className="p-3.5 rounded-2xl bg-black/[0.02] dark:bg-white/[0.03] border border-black/5 dark:border-white/5 space-y-2"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-bold text-[#18191E] dark:text-white truncate">
+                          {goal.name}
+                        </span>
+                        <span
+                          className="text-[9px] font-extrabold px-2 py-0.2 rounded-full uppercase tracking-wider shrink-0"
+                          style={{ backgroundColor: `${themeColor}20`, color: themeColor }}
+                        >
+                          {isGte ? '≥ Target' : '≤ Target'}
+                        </span>
+                      </div>
+                      <div className="text-[10px] text-stone-400 font-medium mt-0.5 flex items-center gap-1.5 truncate">
+                        {linkedTarget ? (
+                          <span>🎯 Linked to <span className="font-bold text-stone-600 dark:text-stone-300">{linkedTarget.name}</span></span>
+                        ) : linkedPillar ? (
+                          <span>🏛️ Linked to <span className="font-bold text-stone-600 dark:text-stone-300">{linkedPillar.english}</span></span>
+                        ) : (
+                          <span>✨ Standalone Goal</span>
+                        )}
+                        {daysLeft !== null && (
+                          <span>· <span className={daysLeft < 0 ? 'text-red-500 font-bold' : 'text-stone-400'}>
+                            {daysLeft < 0 ? 'Overdue' : `${daysLeft}d left`}
+                          </span></span>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="text-right shrink-0">
+                      <div className="text-sm font-extrabold tabular-nums" style={{ color: themeColor }}>
+                        {linkedTarget ? `${currentVal} / ${goal.value} ${goal.unit || ''}` : `${pct}%`}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Progress Bar */}
+                  <div className="h-1.5 rounded-full bg-black/5 dark:bg-white/10 overflow-hidden">
+                    <div
+                      className="h-full rounded-full transition-all duration-500"
+                      style={{ width: `${pct}%`, backgroundColor: themeColor }}
+                    />
                   </div>
                 </div>
-                <div className="text-right shrink-0">
-                  <div className="text-sm font-extrabold tabular-nums" style={{ color: p.color }}>{p.pct}%</div>
-                  <div className="text-[9px] text-stone-400 dark:text-white/30">{p.doneCount}/{p.totalCount}</div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="text-center py-6 space-y-2">
+            <div className="w-10 h-10 rounded-2xl bg-accent/10 text-accent flex items-center justify-center mx-auto">
+              <Target size={20} />
+            </div>
+            <div className="text-xs font-bold text-[#18191E] dark:text-white">No Goals Set Yet</div>
+            <p className="text-[10px] text-stone-400 max-w-xs mx-auto">
+              Set goals like "Protein 90g/day" or "Water 3L" and link them to your pillars to visualize progress here.
+            </p>
+            <Link
+              to="/sadhana"
+              state={{ addGoal: true }}
+              className="btn-coral inline-flex items-center gap-1.5 text-[11px] font-extrabold px-4 py-2 shadow-sm"
+            >
+              <Plus size={13} /> Set First Goal
+            </Link>
+          </div>
+        )}
       </div>
 
       {/* ── Mobile Activity Feed ────────────────────────────────────── */}

@@ -357,30 +357,51 @@ function GoalForm({ initial, pillars, onSave, onCancel }) {
   const [unit,      setUnit]      = useState(initial?.unit      ?? '');
   const [direction, setDirection] = useState(initial?.direction ?? 'gte');
   const [deadline,  setDeadline]  = useState(initial?.deadline  ?? '');
-  const [pillarTargetId, setPillarTargetId] = useState(initial?.pillarTargetId ?? '');
   const [notes,     setNotes]     = useState(initial?.notes     ?? '');
   const [showTemplates, setShowTemplates] = useState(false);
   const [dropdownOpen,  setDropdownOpen]  = useState(false);
+
+  const [selectedLinkId, setSelectedLinkId] = useState(() => {
+    if (initial?.pillarTargetId) return `tracker:${initial.pillarTargetId}`;
+    if (initial?.pillarId) return `pillar:${initial.pillarId}`;
+    return '';
+  });
 
   const fieldCls =
     'w-full text-sm font-bold text-[#18191E] dark:text-white placeholder-stone-400 ' +
     'bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 ' +
     'rounded-2xl px-4 py-3 outline-none focus:border-accent transition-colors';
 
-  // Flatten all pillar targets for the link dropdown
-  const allTargets = useMemo(() => {
-    const out = [];
+  const linkOptions = useMemo(() => {
+    const opts = [
+      { id: '', label: 'Not linked (Independent Goal)', category: 'Independent' },
+    ];
+
     (pillars || []).forEach(p => {
+      opts.push({
+        id: `pillar:${p.id}`,
+        label: `🏛️ Pillar: ${p.english} (${p.sanskrit})`,
+        category: 'Whole Pillar',
+        color: p.color,
+      });
+
       (p.targets || []).forEach(t => {
-        out.push({ id: t.id, label: `${p.english} → ${t.name}`, unit: t.unit });
+        opts.push({
+          id: `tracker:${t.id}`,
+          label: `🎯 ${p.english} → ${t.name}`,
+          unit: t.unit,
+          category: 'Sub-task Tracker',
+          color: p.color,
+        });
       });
     });
-    return out;
+
+    return opts;
   }, [pillars]);
 
   const selectedTargetObj = useMemo(() => {
-    return allTargets.find(t => t.id === pillarTargetId);
-  }, [allTargets, pillarTargetId]);
+    return linkOptions.find(o => o.id === selectedLinkId);
+  }, [linkOptions, selectedLinkId]);
 
   function applyTemplate(t) {
     setName(t.name);
@@ -393,6 +414,16 @@ function GoalForm({ initial, pillars, onSave, onCancel }) {
   function handleSave(e) {
     e.preventDefault();
     if (!name.trim() || !value) return;
+
+    let targetPillarId = null;
+    let targetPillarTargetId = null;
+
+    if (selectedLinkId.startsWith('pillar:')) {
+      targetPillarId = selectedLinkId.replace('pillar:', '');
+    } else if (selectedLinkId.startsWith('tracker:')) {
+      targetPillarTargetId = selectedLinkId.replace('tracker:', '');
+    }
+
     onSave({
       id: initial?.id ?? `goal-${Date.now()}`,
       name: name.trim(),
@@ -400,7 +431,8 @@ function GoalForm({ initial, pillars, onSave, onCancel }) {
       unit: unit.trim(),
       direction,
       deadline: deadline || null,
-      pillarTargetId: pillarTargetId || null,
+      pillarId: targetPillarId,
+      pillarTargetId: targetPillarTargetId,
       notes: notes.trim() || null,
       createdAt: initial?.createdAt ?? Date.now(),
     });
@@ -523,10 +555,10 @@ function GoalForm({ initial, pillars, onSave, onCancel }) {
         </div>
       </div>
 
-      {/* Link to pillar tracker (optional) */}
+      {/* Link to pillar / sub-task tracker (optional) */}
       <div>
         <label className="block text-[11px] font-extrabold uppercase tracking-wider text-stone-500 dark:text-stone-400 mb-1.5">
-          Link to Pillar Tracker <span className="font-normal text-stone-400 normal-case">(optional — AI uses this for progress)</span>
+          Link Goal To <span className="font-normal text-stone-400 normal-case">(Pillar, Sub-task Tracker, or Standalone)</span>
         </label>
         <div className="relative">
           <button
@@ -534,34 +566,21 @@ function GoalForm({ initial, pillars, onSave, onCancel }) {
             onClick={() => setDropdownOpen(!dropdownOpen)}
             className={`${fieldCls} flex items-center justify-between gap-2 text-left cursor-pointer`}
           >
-            <span className={selectedTargetObj ? 'text-[#18191E] dark:text-white font-bold' : 'text-stone-400 font-medium'}>
-              {selectedTargetObj ? `${selectedTargetObj.label}${selectedTargetObj.unit ? ` (${selectedTargetObj.unit})` : ''}` : (allTargets.length === 0 ? 'No pillar trackers created yet' : 'Not linked (Standalone Goal)')}
+            <span className={selectedTargetObj && selectedTargetObj.id ? 'text-[#18191E] dark:text-white font-bold' : 'text-stone-400 font-medium'}>
+              {selectedTargetObj ? selectedTargetObj.label : 'Not linked (Independent Goal)'}
             </span>
             <ChevronDown size={16} className={`text-stone-400 shrink-0 transition-transform ${dropdownOpen ? 'rotate-180 text-accent' : ''}`} />
           </button>
 
           {dropdownOpen && (
-            <div className="absolute left-0 right-0 top-full mt-2 z-50 rounded-2xl bg-white dark:bg-[#1f2130] border border-black/10 dark:border-white/15 shadow-2xl p-2 max-h-60 overflow-y-auto space-y-1 animate-[fadeIn_0.15s_ease-out]">
-              <button
-                type="button"
-                onClick={() => { setPillarTargetId(''); setDropdownOpen(false); }}
-                className={`w-full text-left px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-between ${
-                  !pillarTargetId
-                    ? 'bg-accent/10 text-accent font-extrabold'
-                    : 'text-stone-600 dark:text-stone-300 hover:bg-black/5 dark:hover:bg-white/5'
-                }`}
-              >
-                <span>Not linked (Standalone Goal)</span>
-                {!pillarTargetId && <Check size={14} className="text-accent" />}
-              </button>
-
-              {allTargets.map((t) => {
-                const isSelected = pillarTargetId === t.id;
+            <div className="absolute left-0 right-0 top-full mt-2 z-50 rounded-2xl bg-white dark:bg-[#1f2130] border border-black/10 dark:border-white/15 shadow-2xl p-2 max-h-64 overflow-y-auto space-y-1 animate-[fadeIn_0.15s_ease-out]">
+              {linkOptions.map((opt) => {
+                const isSelected = selectedLinkId === opt.id;
                 return (
                   <button
-                    key={t.id}
+                    key={opt.id}
                     type="button"
-                    onClick={() => { setPillarTargetId(t.id); setDropdownOpen(false); }}
+                    onClick={() => { setSelectedLinkId(opt.id); setDropdownOpen(false); }}
                     className={`w-full text-left px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-between ${
                       isSelected
                         ? 'bg-accent/10 text-accent font-extrabold'
@@ -569,8 +588,8 @@ function GoalForm({ initial, pillars, onSave, onCancel }) {
                     }`}
                   >
                     <div>
-                      <div>{t.label}</div>
-                      {t.unit && <div className="text-[10px] text-stone-400 font-medium">Unit: {t.unit}</div>}
+                      <div>{opt.label}</div>
+                      <div className="text-[9px] text-stone-400 font-medium">{opt.category}{opt.unit ? ` · ${opt.unit}` : ''}</div>
                     </div>
                     {isSelected && <Check size={14} className="text-accent shrink-0" />}
                   </button>
