@@ -17,7 +17,6 @@ const NAV_ITEMS_LEFT = [
 
 const NAV_ITEMS_RIGHT = [
   { path: '/manan',   label: 'Journal',   Icon: BookOpen },
-  { path: '/gyaan',   label: 'Wisdom',    Icon: BookMarked },
 ];
 
 const SIDE_NAV_ITEMS = [
@@ -36,15 +35,15 @@ export default function BottomNav({ onOpenProfile }) {
 
   return (
     <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md glass-nav safe-bottom z-50 lg:hidden">
-      <div className="flex items-center justify-around px-2 py-1.5">
-        {/* Left items */}
+      <div className="grid grid-cols-5 items-center px-2 py-1">
+        {/* Col 1 & 2: Left items */}
         {NAV_ITEMS_LEFT.map(({ path, label, Icon }) => {
           const isActive = location.pathname === path || (path !== '/home' && location.pathname.startsWith(path + '/'));
           return (
             <NavLink
               key={path}
               to={path}
-              className="flex-1 flex flex-col items-center justify-center gap-1 py-1.5 rounded-2xl transition-all duration-200 relative"
+              className="flex flex-col items-center justify-center gap-1 py-1.5 rounded-2xl transition-all duration-200 relative"
               style={isActive ? { background: 'var(--color-accent-light)' } : {}}
             >
               <Icon
@@ -62,24 +61,26 @@ export default function BottomNav({ onOpenProfile }) {
           );
         })}
 
-        {/* Mobile Center Floating AI Architect Button (Reference Design) */}
-        <NavLink
-          to="/ai-architect"
-          className="w-12 h-12 rounded-full -mt-6 shadow-xl flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95 border-4 border-white dark:border-[#12131C] z-20 shrink-0"
-          style={{ background: 'var(--color-accent)', color: '#FFFFFF' }}
-          title="Sadhana AI Architect"
-        >
-          <Wand2 size={20} className="animate-pulse" />
-        </NavLink>
+        {/* Col 3: EXACT CENTER Floating AI Architect Button (Reference Design) */}
+        <div className="flex justify-center relative">
+          <NavLink
+            to="/ai-architect"
+            className="w-12 h-12 rounded-full -mt-6 shadow-2xl flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95 border-4 border-white dark:border-[#12131C] z-20 shrink-0"
+            style={{ background: 'var(--color-accent)', color: '#FFFFFF', boxShadow: '0 8px 20px var(--color-accent-shadow)' }}
+            title="Sadhana AI Architect"
+          >
+            <Wand2 size={20} className="animate-pulse" />
+          </NavLink>
+        </div>
 
-        {/* Right items */}
+        {/* Col 4: Right item */}
         {NAV_ITEMS_RIGHT.map(({ path, label, Icon }) => {
           const isActive = location.pathname === path || (path !== '/home' && location.pathname.startsWith(path + '/'));
           return (
             <NavLink
               key={path}
               to={path}
-              className="flex-1 flex flex-col items-center justify-center gap-1 py-1.5 rounded-2xl transition-all duration-200 relative"
+              className="flex flex-col items-center justify-center gap-1 py-1.5 rounded-2xl transition-all duration-200 relative"
               style={isActive ? { background: 'var(--color-accent-light)' } : {}}
             >
               <Icon
@@ -97,10 +98,10 @@ export default function BottomNav({ onOpenProfile }) {
           );
         })}
 
-        {/* Mobile Profile / Sign In Button */}
+        {/* Col 5: Profile / Sign In Button */}
         <button
           onClick={onOpenProfile}
-          className="flex-1 flex flex-col items-center justify-center gap-1 py-1.5 rounded-2xl transition-all duration-200 relative"
+          className="flex flex-col items-center justify-center gap-1 py-1.5 rounded-2xl transition-all duration-200 relative"
         >
           {user ? (
             user.avatarPhoto ? (
