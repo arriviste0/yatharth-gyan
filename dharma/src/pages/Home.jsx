@@ -451,6 +451,7 @@ function MobileWeeklyChart({ logs, pillars }) {
   const [selectedPillar, setSelectedPillar] = useState('all');
   const [activeGraph, setActiveGraph] = useState('completion');
   const [selectedNumericId, setSelectedNumericId] = useState('all');
+  const [daysCount, setDaysCount] = useState(7);
 
   const activePillar = selectedPillar === 'all' ? null : pillars.find(p => p.id === selectedPillar);
   const METRIC_COLORS = ['#F05A36', '#14B8A6', '#E6A04E', '#8B5CF6', '#3B82F6', '#10B981'];
@@ -458,7 +459,7 @@ function MobileWeeklyChart({ logs, pillars }) {
   const data = useMemo(() => {
     const days = [];
     const today = new Date();
-    for (let i = 6; i >= 0; i--) {
+    for (let i = daysCount - 1; i >= 0; i--) {
       const d = new Date(today);
       d.setDate(today.getDate() - i);
       const key = dateKey(d);
@@ -512,7 +513,7 @@ function MobileWeeklyChart({ logs, pillars }) {
       });
     }
     return days;
-  }, [logs, pillars, selectedPillar, activePillar]);
+  }, [logs, pillars, selectedPillar, activePillar, daysCount]);
 
   const avg = data.length > 0 ? Math.round(data.reduce((s, d) => s + d.rate, 0) / data.length) : 0;
 
@@ -535,14 +536,26 @@ function MobileWeeklyChart({ logs, pillars }) {
 
   return (
     <div className="card-bento p-4 space-y-3">
-      <div className="flex items-start justify-between">
+      <div className="flex items-start justify-between gap-2">
         <div>
-          <h3 className="text-sm font-bold text-[#18191E] dark:text-white">Weekly Completion</h3>
-          <p className="text-[10px] text-stone-400 dark:text-white/40 mt-0.5">Last 7 days</p>
+          <h3 className="text-sm font-bold text-[#18191E] dark:text-white">Completion Analysis</h3>
+          <div className="relative mt-0.5 inline-block">
+            <select
+              value={daysCount}
+              onChange={(e) => setDaysCount(Number(e.target.value))}
+              className="appearance-none bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 text-[10px] font-bold text-stone-500 dark:text-stone-300 px-2 py-0.5 pr-5 rounded-lg outline-none cursor-pointer"
+            >
+              <option value={7} className="bg-white dark:bg-[#181926] text-stone-800 dark:text-white">Last 7 days</option>
+              <option value={14} className="bg-white dark:bg-[#181926] text-stone-800 dark:text-white">Last 14 days</option>
+              <option value={30} className="bg-white dark:bg-[#181926] text-stone-800 dark:text-white">Last 30 days</option>
+              <option value={90} className="bg-white dark:bg-[#181926] text-stone-800 dark:text-white">Last 90 days</option>
+            </select>
+            <ChevronDown size={10} className="absolute right-1.5 top-1/2 -translate-y-1/2 text-stone-400 pointer-events-none" />
+          </div>
         </div>
-        <div className="text-right">
+        <div className="text-right shrink-0">
           <div className="text-xl font-extrabold tabular-nums text-accent">{avg}%</div>
-          <div className="text-[9px] text-stone-400 dark:text-white/30">avg rate</div>
+          <div className="text-[9px] text-stone-400 dark:text-white/30">avg rate ({daysCount}d)</div>
         </div>
       </div>
 
@@ -1581,14 +1594,15 @@ function DesktopTaskManager({ pillars, logs, logTarget, dateStr, setPillars }) {
 function DesktopWeeklyChart({ logs, pillars }) {
   const [selectedPillar, setSelectedPillar] = useState('all');
   const [activeGraph, setActiveGraph] = useState('completion'); // 'completion' | 'duration' | 'numeric'
+  const [daysCount, setDaysCount] = useState(7);
 
   const activePillar = selectedPillar === 'all' ? null : pillars.find(p => p.id === selectedPillar);
 
-  // Build 7-day data
+  // Build N-day data
   const data = useMemo(() => {
     const days = [];
     const today = new Date();
-    for (let i = 6; i >= 0; i--) {
+    for (let i = daysCount - 1; i >= 0; i--) {
       const d = new Date(today);
       d.setDate(today.getDate() - i);
       const key = dateKey(d);
@@ -1647,7 +1661,7 @@ function DesktopWeeklyChart({ logs, pillars }) {
       });
     }
     return days;
-  }, [logs, pillars, selectedPillar, activePillar]);
+  }, [logs, pillars, selectedPillar, activePillar, daysCount]);
 
   const avg = data.length > 0 ? Math.round(data.reduce((s, d) => s + d.rate, 0) / data.length) : 0;
 
@@ -1674,12 +1688,24 @@ function DesktopWeeklyChart({ logs, pillars }) {
       {/* Header */}
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h3 className="text-base font-bold text-[#18191E] dark:text-white">Weekly Completion</h3>
-          <p className="text-[11px] text-stone-400 dark:text-white/40 mt-0.5">Last 7 days performance</p>
+          <h3 className="text-base font-bold text-[#18191E] dark:text-white">Completion Analysis</h3>
+          <div className="relative mt-1 inline-block">
+            <select
+              value={daysCount}
+              onChange={(e) => setDaysCount(Number(e.target.value))}
+              className="appearance-none bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 text-xs font-bold text-stone-600 dark:text-stone-300 px-2.5 py-1 pr-7 rounded-xl outline-none cursor-pointer hover:border-accent/50 transition-colors"
+            >
+              <option value={7} className="bg-white dark:bg-[#181926] text-stone-800 dark:text-white">Last 7 days performance</option>
+              <option value={14} className="bg-white dark:bg-[#181926] text-stone-800 dark:text-white">Last 14 days performance</option>
+              <option value={30} className="bg-white dark:bg-[#181926] text-stone-800 dark:text-white">Last 30 days performance</option>
+              <option value={90} className="bg-white dark:bg-[#181926] text-stone-800 dark:text-white">Last 90 days performance</option>
+            </select>
+            <ChevronDown size={12} className="absolute right-2 top-1/2 -translate-y-1/2 text-stone-400 pointer-events-none" />
+          </div>
         </div>
         <div className="text-right shrink-0">
           <div className="text-2xl font-extrabold tabular-nums text-accent">{avg}%</div>
-          <div className="text-[10px] text-stone-400 dark:text-white/30">avg rate</div>
+          <div className="text-[10px] text-stone-400 dark:text-white/30">avg rate ({daysCount}d)</div>
         </div>
       </div>
 
