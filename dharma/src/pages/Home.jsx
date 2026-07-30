@@ -1862,87 +1862,148 @@ function DesktopWeeklyChart({ logs, pillars }) {
 }
 
 
-/* ── Desktop Pillar Breakdown (Donut + Table) ─────────────────────── */
-function DesktopPillarBreakdown({ pillars, logs, dateStr }) {
+/* ── Desktop Goal Visualization (Target Progress & Live Tracking) ───── */
+function DesktopGoalVisualization({ pillars, logs, dateStr }) {
+  const { state } = useStorage();
+  const goals = state?.goals || [];
   const dayLog = logs[dateStr] || {};
 
-  const pillarStats = useMemo(() =>
-    pillars.map((p) => {
-      const dailyTargets = p.targets.filter((t) => t.frequency === 'daily' || !t.frequency);
-      const doneCount = dailyTargets.filter((t) => dayLog[t.id]?.done).length;
-      const totalCount = dailyTargets.length;
-      const pct = totalCount > 0 ? Math.round((doneCount / totalCount) * 100) : 0;
-      return { id: p.id, name: p.english, sanskrit: p.sanskrit, color: p.color, icon: p.icon, doneCount, totalCount, pct };
-    }).sort((a, b) => b.pct - a.pct),
-    [pillars, dayLog]);
-
-  const donutData = pillarStats.map((p) => ({
-    name: p.name,
-    value: Math.max(p.doneCount, 0.3),
-    color: p.color,
-    actualValue: p.doneCount,
-  }));
-
-  const totalDone = pillarStats.reduce((s, p) => s + p.doneCount, 0);
-  const totalAll = pillarStats.reduce((s, p) => s + p.totalCount, 0);
-
   return (
-    <div className="card-bento p-5">
-      <div className="flex items-center justify-between mb-4">
+    <div className="card-bento p-5 space-y-4">
+      <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-base font-bold text-[#18191E] dark:text-white">Pillar Breakdown</h3>
-          <p className="text-[11px] text-stone-400 dark:text-white/40 mt-0.5">Today's completion by category</p>
+          <h3 className="text-base font-extrabold text-[#18191E] dark:text-white flex items-center gap-2">
+            <Target size={18} className="text-accent" /> Goal Progress & Targets
+          </h3>
+          <p className="text-xs text-stone-500 dark:text-stone-400 mt-0.5 font-medium">
+            Live progress across linked pillars, trackers & independent goals
+          </p>
         </div>
+        <Link
+          to="/sadhana"
+          state={{ addGoal: true }}
+          className="btn-coral text-xs px-3 py-1.5 flex items-center gap-1.5 shrink-0 shadow-sm"
+        >
+          <Plus size={13} /> Set Goal
+        </Link>
       </div>
 
-      {/* Donut Chart */}
-      <div className="flex items-center justify-center mb-5">
-        <div className="relative">
-          <PieChart width={160} height={160}>
-            <Pie
-              data={donutData}
-              cx={80}
-              cy={80}
-              innerRadius={50}
-              outerRadius={70}
-              paddingAngle={3}
-              dataKey="value"
-              stroke="none"
-            >
-              {donutData.map((entry, i) => (
-                <Cell key={i} fill={entry.color} />
-              ))}
-            </Pie>
-          </PieChart>
-          <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <span className="text-2xl font-extrabold text-[#18191E] dark:text-white tabular-nums">{totalDone}</span>
-            <span className="text-[9px] text-stone-400 dark:text-white/30 font-medium">of {totalAll}</span>
+      {goals.length > 0 ? (
+        <div className="space-y-3">
+          {goals.map((goal) => {
+            const linkedTarget = goal.pillarTargetId
+              ? pillars.flatMap(p => p.targets).find(t => t.id === goal.pillarTargetId)
+              : null;
+            const linkedPillar = goal.pillarId
+              ? pillars.find(p => p.id === goal.pillarId)
+              : (linkedTarget ? pillars.find(p => p.targets.some(t => t.id === linkedTarget.id)) : null);
+
+            let currentVal = 0;
+            let pct = 0;
+
+            if (linkedTarget) {
+              const entry = dayLog[linkedTarget.id];
+              if (entry) {
+                if (linkedTarget.type === 'DURATION') {
+                  currentVal = getDurationInMinutes(entry, linkedTarget.unit);
+                  if (goal.unit && (goal.unit.toLowerCase() === 'hr' || goal.unit.toLowerCase() === 'hrs')) {
+                    currentVal = +(currentVal / 60).toFixed(1);
+                  }
+                } else if (entry.value != null) {
+                  currentVal = parseFloat(entry.value) || 0;
+                } else if (entry.subValues) {
+                  currentVal = Object.values(entry.subValues).reduce((a, b) => a + (parseFloat(b) || 0), 0);
+                }
+              }
+              pct = goal.value > 0 ? Math.min(100, Math.round((currentVal / goal.value) * 100)) : 0;
+            } else if (linkedPillar) {
+              const targets = linkedPillar.targets || [];
+              const doneCount = targets.filter(t => dayLog[t.id]?.done).length;
+              pct = targets.length > 0 ? Math.round((doneCount / targets.length) * 100) : 0;
+              currentVal = doneCount;
+            } else {
+              pct = goal.completed ? 100 : 0;
+            }
+
+            const isGte = goal.direction === 'gte';
+            const daysLeft = goal.deadline ? Math.ceil((new Date(goal.deadline) - new Date()) / 86400000) : null;
+            const themeColor = linkedPillar?.color || 'var(--color-accent)';
+
+            return (
+              <div
+                key={goal.id}
+                className="p-4 rounded-2xl bg-black/[0.02] dark:bg-white/[0.03] border border-black/5 dark:border-white/5 space-y-2.5 hover:bg-black/[0.03] dark:hover:bg-white/[0.05] transition-all"
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-bold text-[#18191E] dark:text-white truncate">
+                        {goal.name}
+                      </span>
+                      <span
+                        className="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full uppercase tracking-wider shrink-0"
+                        style={{ backgroundColor: `${themeColor}20`, color: themeColor }}
+                      >
+                        {isGte ? '≥ Target' : '≤ Target'}
+                      </span>
+                    </div>
+                    <div className="text-xs text-stone-400 font-medium mt-1 flex items-center gap-2 truncate">
+                      {linkedTarget ? (
+                        <span>🎯 Linked to <span className="font-bold text-stone-600 dark:text-stone-300">{linkedTarget.name}</span></span>
+                      ) : linkedPillar ? (
+                        <span>🏛️ Linked to <span className="font-bold text-stone-600 dark:text-stone-300">{linkedPillar.english}</span></span>
+                      ) : (
+                        <span>✨ Standalone Goal</span>
+                      )}
+                      {daysLeft !== null && (
+                        <span>· <span className={daysLeft < 0 ? 'text-red-500 font-bold' : 'text-stone-400'}>
+                          {daysLeft < 0 ? 'Overdue' : `${daysLeft}d left`}
+                        </span></span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="text-right shrink-0">
+                    <div className="text-base font-extrabold tabular-nums" style={{ color: themeColor }}>
+                      {linkedTarget ? `${currentVal} / ${goal.value} ${goal.unit || ''}` : `${pct}%`}
+                    </div>
+                    <div className="text-[10px] font-bold text-stone-400">
+                      {pct >= 100 ? 'Goal Reached! 🎉' : `${pct}% achieved`}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Progress Bar */}
+                <div className="h-2 rounded-full bg-black/5 dark:bg-white/10 overflow-hidden">
+                  <div
+                    className="h-full rounded-full transition-all duration-500"
+                    style={{ width: `${pct}%`, backgroundColor: themeColor }}
+                  />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      ) : (
+        <div className="text-center py-8 space-y-3 bg-black/[0.01] dark:bg-white/[0.02] rounded-2xl border border-dashed border-black/10 dark:border-white/10">
+          <div className="w-12 h-12 rounded-2xl bg-accent/10 text-accent flex items-center justify-center mx-auto">
+            <Target size={24} />
           </div>
+          <div>
+            <div className="text-sm font-bold text-[#18191E] dark:text-white">No Goals Set Yet</div>
+            <p className="text-xs text-stone-400 max-w-sm mx-auto mt-1 font-medium">
+              Set goals like "Protein 90g/day" or "Water 3L" and link them to your pillars to visualize progress here.
+            </p>
+          </div>
+          <Link
+            to="/sadhana"
+            state={{ addGoal: true }}
+            className="btn-coral inline-flex items-center gap-1.5 text-xs font-extrabold px-5 py-2.5 shadow-md"
+          >
+            <Plus size={14} /> Set Your First Goal
+          </Link>
         </div>
-      </div>
-
-      {/* Stats Table */}
-      <div className="space-y-2">
-        {pillarStats.map((p, i) => {
-          const Icon = PILLAR_ICONS[p.icon] || Zap;
-          return (
-            <div key={p.id} className="flex items-center gap-3 px-3 py-2.5 rounded-2xl bg-black/[0.02] dark:bg-white/[0.03] hover:bg-black/[0.04] dark:hover:bg-white/[0.06] transition-all border border-black/5 dark:border-white/5">
-              <span className="text-[10px] font-bold text-stone-400 dark:text-white/30 w-4">{i + 1}</span>
-              <div className="w-7 h-7 rounded-xl flex items-center justify-center" style={{ background: `${p.color}18` }}>
-                <Icon size={13} style={{ color: p.color }} />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="text-xs font-bold text-[#18191E] dark:text-white truncate">{p.name}</div>
-                <div className="text-[9px] text-stone-400 dark:text-white/30 font-dev">{p.sanskrit}</div>
-              </div>
-              <div className="text-right">
-                <div className="text-sm font-extrabold tabular-nums" style={{ color: p.color }}>{p.pct}%</div>
-                <div className="text-[9px] text-stone-400 dark:text-white/30">{p.doneCount}/{p.totalCount}</div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
+      )}
     </div>
   );
 }
@@ -2180,9 +2241,9 @@ export default function Home({ onOpenFocus, onOpenProfile }) {
             <DesktopWeeklyChart logs={logs} pillars={pillars} />
           </div>
 
-          {/* Right Column — Pillar Breakdown + Activity Feed */}
+          {/* Right Column — Goal Tracking + Activity Feed */}
           <div className="col-span-2 space-y-5">
-            <DesktopPillarBreakdown pillars={pillars} logs={logs} dateStr={today} />
+            <DesktopGoalVisualization pillars={pillars} logs={logs} dateStr={today} />
             <DesktopActivityFeed logs={logs} pillars={pillars} dateStr={today} />
           </div>
         </div>
