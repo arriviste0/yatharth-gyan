@@ -7,6 +7,9 @@ const authRouter     = require('./routes/auth');
 const profileRouter  = require('./routes/profile');
 const progressRouter = require('./routes/progress');
 const aiRouter       = require('./routes/ai');
+const questsRouter   = require('./routes/quests');
+const statsRouter    = require('./routes/stats');
+const systemRouter   = require('./routes/system');
 
 const app  = express();
 const PORT = process.env.PORT || 5001;
@@ -14,11 +17,10 @@ const PORT = process.env.PORT || 5001;
 /* ── Middleware ─────────────────────────────────────────────────── */
 app.use(cors({
   origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps, curl) or localhost & vercel apps
     if (!origin || origin.includes('localhost') || origin.includes('vercel.app') || origin.includes('karma')) {
       callback(null, true);
     } else {
-      callback(null, true); // Permissive for API consumers
+      callback(null, true);
     }
   },
   credentials: true,
@@ -30,6 +32,10 @@ app.use('/api/auth',     authRouter);
 app.use('/api/profile',  profileRouter);
 app.use('/api/progress', progressRouter);
 app.use('/api/ai',       aiRouter);
+app.use('/api/quests',   questsRouter);
+app.use('/api/stats',    statsRouter);
+app.use('/api/system',   systemRouter);
+
 
 app.get('/api/health', (_req, res) => res.json({ status: 'ok' }));
 

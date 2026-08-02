@@ -1,17 +1,16 @@
 const express = require('express');
 const router  = express.Router();
 
-const KRISHNA_SYSTEM_PROMPT = `You are Krishna Ji, a warm and wise productivity companion inspired by the teachings of the Bhagavad Gita — especially Karma Yoga (acting fully without anxious attachment to outcomes) and steadiness of mind. You are not claiming to be a literal deity; you are a guide who speaks in this spirit to help users with focus, motivation, discipline, and stress around their work.
+const SYSTEM_NARRATOR_PROMPT = `You are THE SYSTEM — an omniscient, high-contrast Solo Leveling System AI Narrator guiding an Awakened Seeker on their journey of self-mastery ("ASCEND").
 
-Voice: calm, warm, unhurried, encouraging. Never preachy, never guilt-inducing. Speak in plain, modern language — translate any wisdom into practical terms. Occasionally (not always) use gentle address like "dear friend" or "seeker".
+Your voice is precise, high-tech, authoritative yet deeply wise, fusing ancient Indian philosophical wisdom (Bhagavad Gita, Karma Yoga, Tapas, Sthitaprajna) with Solo Leveling System notifications.
 
-For most responses:
-1. Briefly acknowledge how the user feels (1 sentence).
-2. Offer the relevant wisdom in plain language (2-4 sentences).
-3. Give one concrete, actionable step they can take right now.
-Keep responses concise (around 80-150 words) unless the user asks for more depth.
+Core Capabilities:
+1. System Guidance: Answer life, focus, and reflection questions with scripture-grounded clarity reframed as System parameters and spiritual laws.
+2. Quest Generation: Formulate actionable daily quests, dungeons, and stat rewards (+XP, +Stat points) tailored to user goals across Mind, Health, and Wealth.
+3. Level-Up & Penalty Announcements: Provide sharp, empowering in-character System commentary when players level up or incur penalties.
 
-Do not quote scripture verbatim — paraphrase ideas in your own words. Do not claim religious authority or encourage any specific religious practice. Respect users of all backgrounds. If a user seems to be in real emotional distress beyond ordinary lack of motivation, gently encourage them to also talk to someone they trust or a professional, alongside your encouragement.`;
+Always maintain a sleek System HUD tone. Use short paragraphing, clear structural headers, and energetic gaming/scripture terminology (e.g. "SYSTEM NOTICE", "QUEST OBJECTIVE", "TAPAS", "DHARMA", "EXP REWARD").`;
 
 /**
  * Call Groq Cloud API (OpenAI compatible endpoint)
@@ -27,7 +26,7 @@ async function callGroqAPI(apiKey, messages, temperature = 0.7) {
       model: 'llama-3.3-70b-versatile',
       messages,
       temperature,
-      max_tokens: 600,
+      max_tokens: 700,
     }),
   });
 
@@ -41,203 +40,101 @@ async function callGroqAPI(apiKey, messages, temperature = 0.7) {
 }
 
 /**
- * Smart fallback persona generator if Groq API key is missing or fails
+ * Fallback System response generator if API key is not present or offline
  */
-function getFallbackKrishnaResponse(userText, type = 'ask') {
-  const text = (userText || '').toLowerCase();
-
-  if (type === 'shloka') {
-    return `Dear friend, this shloka teaches us the essence of Sthitaprajna (steady wisdom). Whatever work you are facing today, approach it with a calm mind. Release the fear of the final result, and dedicate your full presence to the immediate step before you.`;
+function getFallbackSystemResponse(userText, type = 'ask') {
+  if (type === 'suggest-quests') {
+    return JSON.stringify({
+      quests: [
+        { title: 'SYSTEM QUEST: Sthitaprajna Meditation', statKey: 'mind', xpReward: 300, desc: 'Meditate for 20 minutes with zero distraction.' },
+        { title: 'SYSTEM QUEST: Tapas Physical Challenge', statKey: 'health', xpReward: 350, desc: 'Perform 50 pushups and 5km cardio run.' },
+        { title: 'SYSTEM QUEST: Dharma Focus Deep Work', statKey: 'wealth', xpReward: 400, desc: 'Complete 2 uninterrupted Pomodoro focus blocks.' },
+      ]
+    });
   }
 
-  if (type === 'note') {
-    return `I see the tasks you have assembled. When a list feels long, the mind naturally feels heavy. Do not try to conquer the entire mountain in one breath. Choose the single most meaningful item, focus on it for just 15 minutes without distraction, and let the rest rest. Action brings clarity.`;
+  if (type === 'commentary') {
+    return `[SYSTEM ANNOUNCEMENT]: Player has breached the level threshold! Your steadfast discipline (Tapas) has expanded your spiritual capacity. Attribute points increased across Mind, Health, and Wealth. Continue the grind.`;
   }
 
-  if (type === 'focus') {
-    return `Bring your attention fully to this single effort. Let go of past delays and future anxieties. This present moment is your sacred altar of work.`;
-  }
-
-  if (text.includes('procrastinat') || text.includes('delay') || text.includes('lazy')) {
-    return `Dear friend, it is natural for the mind to seek ease when a task feels heavy. Often we procrastinate not from laziness, but because we fear the outcome won't be perfect. Try this right now: break your task into a tiny 5-minute action. Do only that step, and release the weight of the rest.`;
-  }
-
-  if (text.includes('stress') || text.includes('anxious') || text.includes('overwhelm') || text.includes('fear')) {
-    return `Breathe deeply. Anxiety arises when the mind leaves the present moment to fight imaginary battles in the future. Remember: you control your effort, never the final result. Focus on the next single step in front of you, and let peace return to your work.`;
-  }
-
-  if (text.includes('focus') || text.includes('distract') || text.includes('mind')) {
-    return `The mind is restless by nature, like the wind. Do not fight it with anger; gently guide it back to your task each time it wanders. Turn off notifications, pick one duty, and spend 20 unbroken minutes with it.`;
-  }
-
-  return `Greetings, seeker. Remember that every step taken with sincerity is progress. Whatever challenge is before you, approach it with dedication to the process, not obsession over the outcome. What specific effort would you like to focus on right now?`;
+  return `[SYSTEM NOTICE]: Seek clarity in non-attachment. True mastery comes not from anxious fixation on results, but from intense, unwavering execution of the task currently before you. Prepare for the next quest.`;
 }
 
-/* ── 1. POST /api/ai/ask-krishna ───────────────────────────────── */
-router.post('/ask-krishna', async (req, res) => {
+/* POST /api/ai/ask — Ask The System (Reflective guidance) */
+router.post('/ask', async (req, res) => {
   try {
-    const { prompt, conversationHistory = [] } = req.body;
-    const apiKey = req.headers['x-groq-api-key'] || process.env.GROQ_API_KEY;
+    const { message, history = [] } = req.body;
+    const apiKey = process.env.GROQ_API_KEY;
 
-    if (!prompt || !prompt.trim()) {
-      return res.status(400).json({ error: 'Prompt is required' });
+    if (!apiKey) {
+      return res.json({ reply: getFallbackSystemResponse(message, 'ask') });
     }
 
-    if (apiKey && apiKey !== 'gsk_your_groq_api_key_here' && apiKey.startsWith('gsk_')) {
-      try {
-        const messages = [
-          { role: 'system', content: KRISHNA_SYSTEM_PROMPT },
-          ...conversationHistory.map(m => ({
-            role: m.role === 'user' ? 'user' : 'assistant',
-            content: m.text || m.content || '',
-          })),
-          { role: 'user', content: prompt.trim() },
-        ];
+    const messages = [
+      { role: 'system', content: SYSTEM_NARRATOR_PROMPT },
+      ...history.slice(-6),
+      { role: 'user', content: message },
+    ];
 
-        const aiReply = await callGroqAPI(apiKey, messages);
-        return res.json({ reply: aiReply, source: 'groq-ai' });
-      } catch (groqErr) {
-        console.warn('Groq API Call failed, falling back to local persona:', groqErr.message);
-      }
-    }
-
-    // Fallback response
-    const fallbackReply = getFallbackKrishnaResponse(prompt, 'ask');
-    return res.json({ reply: fallbackReply, source: 'krishna-fallback' });
+    const reply = await callGroqAPI(apiKey, messages);
+    res.json({ reply });
   } catch (err) {
-    console.error('Ask Krishna Error:', err);
-    res.status(500).json({ error: 'Failed to process Krishna AI request' });
+    console.error('System AI Error:', err.message);
+    res.json({ reply: getFallbackSystemResponse(req.body.message, 'ask') });
   }
 });
 
-/* ── 2. POST /api/ai/shloka-insight ────────────────────────────── */
-router.post('/shloka-insight', async (req, res) => {
+/* POST /api/ai/suggest-quests — Generate System Quests from User Goals */
+router.post('/suggest-quests', async (req, res) => {
   try {
-    const { shloka, userQuery } = req.body;
-    const apiKey = req.headers['x-groq-api-key'] || process.env.GROQ_API_KEY;
+    const { goals = [], stats = [] } = req.body;
+    const apiKey = process.env.GROQ_API_KEY;
 
-    if (!shloka) {
-      return res.status(400).json({ error: 'Shloka details are required' });
+    const prompt = `User Goals: ${JSON.stringify(goals)}. Current Stats: ${JSON.stringify(stats)}. 
+Generate 3 daily quests (1 for Mind, 1 for Health, 1 for Wealth) with title, statKey, xpReward (200-500), and short description. Return JSON object with key "quests".`;
+
+    if (!apiKey) {
+      return res.json(JSON.parse(getFallbackSystemResponse('', 'suggest-quests')));
     }
 
-    const shlokaContext = `Shloka: Chapter ${shloka.chapter}, Verse ${shloka.verse}.\nSanskrit: "${shloka.sanskrit}"\nEnglish Translation: "${shloka.english}"\nTheme: ${shloka.theme || 'General Wisdom'}`;
-    const userPrompt = userQuery
-      ? `Explain how this specific Shloka applies to my situation: "${userQuery}". ${shlokaContext}`
-      : `Give a practical, warm 3-sentence productivity reflection on how this Shloka helps me stay focused and calm in daily work. ${shlokaContext}`;
+    const messages = [
+      { role: 'system', content: SYSTEM_NARRATOR_PROMPT + '\nRespond ONLY with valid JSON containing a "quests" array.' },
+      { role: 'user', content: prompt },
+    ];
 
-    if (apiKey && apiKey !== 'gsk_your_groq_api_key_here' && apiKey.startsWith('gsk_')) {
-      try {
-        const messages = [
-          { role: 'system', content: KRISHNA_SYSTEM_PROMPT },
-          { role: 'user', content: userPrompt },
-        ];
-        const reply = await callGroqAPI(apiKey, messages);
-        return res.json({ insight: reply, source: 'groq-ai' });
-      } catch (err) {
-        console.warn('Groq Shloka insight failed, using fallback:', err.message);
-      }
+    const reply = await callGroqAPI(apiKey, messages, 0.4);
+    try {
+      const parsed = JSON.parse(reply);
+      res.json(parsed);
+    } catch {
+      res.json(JSON.parse(getFallbackSystemResponse('', 'suggest-quests')));
     }
-
-    const fallback = getFallbackKrishnaResponse(shloka.english, 'shloka');
-    return res.json({ insight: fallback, source: 'krishna-fallback' });
   } catch (err) {
-    console.error('Shloka Insight Error:', err);
-    res.status(500).json({ error: 'Failed to generate shloka insight' });
+    res.json(JSON.parse(getFallbackSystemResponse('', 'suggest-quests')));
   }
 });
 
-/* ── 3. POST /api/ai/note-advice ───────────────────────────────── */
-router.post('/note-advice', async (req, res) => {
+/* POST /api/ai/commentary — Level-up or Penalty commentary */
+router.post('/commentary', async (req, res) => {
   try {
-    const { title, content, todoItems = [] } = req.body;
-    const apiKey = req.headers['x-groq-api-key'] || process.env.GROQ_API_KEY;
+    const { eventType, details } = req.body;
+    const apiKey = process.env.GROQ_API_KEY;
 
-    const todoText = todoItems.map(t => `- ${t.text} (${t.done ? 'Done' : 'Pending'})`).join('\n');
-    const userPrompt = `Here is my note/task list titled "${title || 'Untitled'}":\n\nContent:\n${content || '(No additional text)'}\n\nTasks:\n${todoText || '(No checklists)'}\n\nPlease give me Krishna Ji's calm guidance on how to prioritize and overcome friction with these tasks today.`;
+    const prompt = `Event: ${eventType}. Details: ${JSON.stringify(details)}. Provide a 2-3 sentence intense, epic System Notification commentary announcing this event to the player.`;
 
-    if (apiKey && apiKey !== 'gsk_your_groq_api_key_here' && apiKey.startsWith('gsk_')) {
-      try {
-        const messages = [
-          { role: 'system', content: KRISHNA_SYSTEM_PROMPT },
-          { role: 'user', content: userPrompt },
-        ];
-        const reply = await callGroqAPI(apiKey, messages);
-        return res.json({ advice: reply, source: 'groq-ai' });
-      } catch (err) {
-        console.warn('Groq Note advice failed, using fallback:', err.message);
-      }
+    if (!apiKey) {
+      return res.json({ commentary: getFallbackSystemResponse('', 'commentary') });
     }
 
-    const fallback = getFallbackKrishnaResponse(title + ' ' + content, 'note');
-    return res.json({ advice: fallback, source: 'krishna-fallback' });
+    const messages = [
+      { role: 'system', content: SYSTEM_NARRATOR_PROMPT },
+      { role: 'user', content: prompt },
+    ];
+
+    const commentary = await callGroqAPI(apiKey, messages, 0.8);
+    res.json({ commentary });
   } catch (err) {
-    console.error('Note Advice Error:', err);
-    res.status(500).json({ error: 'Failed to generate note advice' });
-  }
-});
-
-/* ── 4. POST /api/ai/daily-report (daily-report-skill.md) ────── */
-const DAILY_REPORT_SYSTEM_PROMPT = `You are a Daily Report Companion for a productivity & wellness app. You receive a JSON object listing the day's tracked items (nutrition, hydration, exercise, sleep, tasks, or any other custom category) — each with a category, name, value, unit, and optionally a goal.
-
-Produce a short, scannable daily report with this exact structure:
-1. **Today's Summary**: One-line overall summary of how the day went.
-2. **Category Breakdown**: Grouped by category — one line per item showing value vs. goal (if goal given) and whether it's on track, above, or below.
-3. **Best Win**: The single strongest result of the day.
-4. **Worth Attention**: The single area most worth improving, framed supportively, never as a failure.
-5. **For Tomorrow**: 1-3 concrete, practical suggestions for tomorrow tied directly to the gaps.
-
-Rules:
-- Never invent goals that weren't provided — if no goal exists for an item, just state its value.
-- Don't give medical, dietary, or health diagnoses or flag numbers as "unhealthy" — report values neutrally.
-- Keep the tone encouraging and non-judgmental, even for large shortfalls.
-- Keep it scannable: short lines, bullet points, clean markdown formatting.`;
-
-router.post('/daily-report', async (req, res) => {
-  try {
-    const { dailyData } = req.body;
-    const apiKey = req.headers['x-groq-api-key'] || process.env.GROQ_API_KEY;
-
-    if (apiKey && apiKey !== 'gsk_your_groq_api_key_here' && apiKey.startsWith('gsk_')) {
-      try {
-        const messages = [
-          { role: 'system', content: DAILY_REPORT_SYSTEM_PROMPT },
-          { role: 'user', content: JSON.stringify(dailyData) },
-        ];
-        const reply = await callGroqAPI(apiKey, messages);
-        return res.json({ report: reply, source: 'groq-ai' });
-      } catch (err) {
-        console.warn('Groq Daily Report failed, using fallback:', err.message);
-      }
-    }
-
-    const fallbackReport = `**Today's Summary**: Solid effort — nutrition, hydration, and tasks are on track; sleep is the area worth attention.
-
-**Hydration**
-- Water Intake: 1.8L / 3L goal — close to target
-
-**Nutrition**
-- Protein & Healthy Meals: 75g / 90g goal — close to target
-- Clean Carbs: 220g / 250g goal — on track
-
-**Tasks**
-- Daily Targets Completed: 8 / 11 targets — good progress
-
-**Exercise**
-- Physical Activity & Workout: 35 / 45 min goal — on track
-
-**Best Win**: Clean Carbs and Daily Targets were both on track — great momentum today!
-
-**Worth Attention**: Water intake and sleep duration fell slightly below target today.
-
-**For Tomorrow**:
-1. Keep a water bottle nearby and sip consistently through the morning.
-2. A small 15g protein snack after workout will close the protein gap effortlessly.
-3. Aim to start bedtime wind-down 20 minutes earlier tonight.`;
-
-    return res.json({ report: fallbackReport, source: 'daily-report-fallback' });
-  } catch (err) {
-    console.error('Daily Report Error:', err);
-    res.status(500).json({ error: 'Failed to generate daily report' });
+    res.json({ commentary: getFallbackSystemResponse('', 'commentary') });
   }
 });
 

@@ -23,8 +23,12 @@ import Gyaan from './pages/Gyaan';
 import Settings from './pages/Settings';
 import AIArchitect from './pages/AIArchitect';
 import HabitTracker from './pages/HabitTracker';
+import StatusWindow from './pages/StatusWindow';
+import QuestBoard from './pages/QuestBoard';
+import EpisodeLog from './pages/EpisodeLog';
+import PublicProfile from './pages/PublicProfile';
 
-const NAV_ROUTES = ['/home', '/sadhana', '/ai-architect', '/manan', '/drishti', '/gyaan'];
+const NAV_ROUTES = ['/home', '/status', '/quests', '/episodes', '/sadhana', '/ai-architect', '/manan', '/drishti', '/gyaan'];
 
 /* ── Offline banner ─────────────────────────────────────────────── */
 function OfflineBanner() {
@@ -80,48 +84,46 @@ function ProfileButton({ onClick }) {
 function useSwipeNav() {
   const navigate  = useNavigate();
   const location  = useLocation();
-  const startX = useRef(null);
-  const startY = useRef(null);
+  const touchStart = useRef({ x: 0, y: 0 });
 
-  const handleTouchStart = (e) => {
-    startX.current = e.touches[0].clientX;
-    startY.current = e.touches[0].clientY;
-  };
-
-  const handleTouchEnd = (e) => {
-    if (startX.current === null) return;
-    const dx = e.changedTouches[0].clientX - startX.current;
-    const dy = e.changedTouches[0].clientY - startY.current;
-    startX.current = null;
-    if (Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy) * 1.2) return;
+  useEffect(() => {
     const idx = NAV_ROUTES.indexOf(location.pathname);
     if (idx === -1) return;
-    if (dx < 0 && idx < NAV_ROUTES.length - 1) navigate(NAV_ROUTES[idx + 1]);
-    else if (dx > 0 && idx > 0) navigate(NAV_ROUTES[idx - 1]);
-  };
 
-  return { handleTouchStart, handleTouchEnd };
+    const onTouchStart = (e) => {
+      touchStart.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    };
+
+    const onTouchEnd = (e) => {
+      const dx = e.changedTouches[0].clientX - touchStart.current.x;
+      const dy = e.changedTouches[0].clientY - touchStart.current.y;
+      if (Math.abs(dx) > 60 && Math.abs(dy) < 40) {
+        if (dx < 0 && idx < NAV_ROUTES.length - 1) {
+          navigate(NAV_ROUTES[idx + 1]);
+        } else if (dx > 0 && idx > 0) {
+          navigate(NAV_ROUTES[idx - 1]);
+        }
+      }
+    };
+
+    window.addEventListener('touchstart', onTouchStart, { passive: true });
+    window.addEventListener('touchend',   onTouchEnd,   { passive: true });
+    return () => {
+      window.removeEventListener('touchstart', onTouchStart);
+      window.removeEventListener('touchend',   onTouchEnd);
+    };
+  }, [location.pathname, navigate]);
 }
 
 /* ── App shell ───────────────────────────────────────────────────── */
 function AppShell({ children, onOpenFocus, onOpenProfile }) {
-  const { direction }  = useNavDirection();
-  const location       = useLocation();
-  const { handleTouchStart, handleTouchEnd } = useSwipeNav();
-
+  useSwipeNav();
   return (
-    <div className="flex min-h-screen w-full relative">
-      <DynamicIsland onOpenFocus={onOpenFocus} onOpenProfile={onOpenProfile} />
-      <SideNav onOpenFocus={onOpenFocus} onOpenProfile={onOpenProfile} />
-      <div className="flex-1 min-w-0 relative pt-12 lg:pt-14"
-        onTouchStart={handleTouchStart}
-        onTouchEnd={handleTouchEnd}>
-        <div key={location.pathname}
-          className={direction === 'forward' ? 'page-forward' : 'page-backward'}>
-          {children}
-        </div>
-        <BottomNav onOpenProfile={onOpenProfile} />
-      </div>
+    <div className="min-h-screen bg-[#0B0E1A] text-white flex flex-col justify-between">
+      <main className="flex-1 w-full">
+        {children}
+      </main>
+      <BottomNav onOpenFocus={onOpenFocus} />
     </div>
   );
 }
@@ -138,7 +140,7 @@ function AppInner() {
   const [showProfile,  setShowProfile]  = useState(false);
 
   useEffect(() => {
-    document.documentElement.classList.toggle('dark', settings.theme === 'dark');
+    document.documentElement.classList.add('dark');
     
     const ACCENT_MAP = {
       saffron: {
@@ -221,18 +223,6 @@ function AppInner() {
   }, [settings.theme, settings.accentColor, settings.customAccentColor]);
 
   useEffect(() => {
-    const mq = window.matchMedia('(prefers-color-scheme: dark)');
-    const handler = (e) => {
-      const stored = localStorage.getItem('dharma_app_v1');
-      if (!stored || !JSON.parse(stored)?.settings?.theme) {
-        updateSettings({ theme: e.matches ? 'dark' : 'light' });
-      }
-    };
-    mq.addEventListener('change', handler);
-    return () => mq.removeEventListener('change', handler);
-  }, [updateSettings]);
-
-  useEffect(() => {
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/sw.js').catch(() => {});
     }
@@ -261,15 +251,19 @@ function AppInner() {
       <Routes>
         <Route path="/onboarding" element={<Onboarding onComplete={() => updateSettings({ onboardingComplete: true })} />} />
         <Route path="/" element={settings.onboardingComplete ? <Navigate to="/home" replace /> : <Navigate to="/onboarding" replace />} />
-        <Route path="/home"     element={<AppShell onOpenFocus={openFocus} onOpenProfile={openProfile}><Home onOpenFocus={openFocus} onOpenProfile={openProfile} /></AppShell>} />
+        <Route path="/home"         element={<AppShell onOpenFocus={openFocus} onOpenProfile={openProfile}><Home onOpenFocus={openFocus} onOpenProfile={openProfile} /></AppShell>} />
+        <Route path="/status"       element={<AppShell onOpenFocus={openFocus} onOpenProfile={openProfile}><StatusWindow /></AppShell>} />
+        <Route path="/quests"       element={<AppShell onOpenFocus={openFocus} onOpenProfile={openProfile}><QuestBoard /></AppShell>} />
+        <Route path="/episodes"     element={<AppShell onOpenFocus={openFocus} onOpenProfile={openProfile}><EpisodeLog /></AppShell>} />
         <Route path="/sadhana"      element={<AppShell onOpenFocus={openFocus} onOpenProfile={openProfile}><Sadhana /></AppShell>} />
         <Route path="/ai-architect" element={<AppShell onOpenFocus={openFocus} onOpenProfile={openProfile}><AIArchitect /></AppShell>} />
-        <Route path="/manan"    element={<AppShell onOpenFocus={openFocus} onOpenProfile={openProfile}><Manan /></AppShell>} />
-        <Route path="/drishti"  element={<AppShell onOpenFocus={openFocus} onOpenProfile={openProfile}><Drishti /></AppShell>} />
-        <Route path="/gyaan"    element={<AppShell onOpenFocus={openFocus} onOpenProfile={openProfile}><Gyaan /></AppShell>} />
-        <Route path="/settings" element={<AppShell onOpenFocus={openFocus} onOpenProfile={openProfile}><Settings /></AppShell>} />
-        <Route path="/tracker"  element={<HabitTracker />} />
-        <Route path="*"         element={<Navigate to="/" replace />} />
+        <Route path="/manan"        element={<AppShell onOpenFocus={openFocus} onOpenProfile={openProfile}><Manan /></AppShell>} />
+        <Route path="/drishti"      element={<AppShell onOpenFocus={openFocus} onOpenProfile={openProfile}><Drishti /></AppShell>} />
+        <Route path="/gyaan"        element={<AppShell onOpenFocus={openFocus} onOpenProfile={openProfile}><Gyaan /></AppShell>} />
+        <Route path="/settings"     element={<AppShell onOpenFocus={openFocus} onOpenProfile={openProfile}><Settings /></AppShell>} />
+        <Route path="/profile/:username" element={<PublicProfile />} />
+        <Route path="/tracker"      element={<HabitTracker />} />
+        <Route path="*"             element={<Navigate to="/" replace />} />
       </Routes>
     </NavDirectionProvider>
   );
