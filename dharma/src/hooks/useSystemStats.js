@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useStorage } from './useStorage';
 
 export const RANK_TIERS = {
   E: { name: 'E-Rank', title: 'Awakened Initiate', titleDev: 'आरंभिक साधक', minLevel: 1, color: '#94A3B8', border: 'border-slate-400', glow: 'shadow-slate-500/30' },
@@ -19,10 +18,29 @@ export function getRankForLevel(level) {
   return 'E';
 }
 
+function useLocalStorageState(key, defaultValue) {
+  const [val, setVal] = useState(() => {
+    try {
+      const stored = localStorage.getItem(key);
+      return stored !== null ? JSON.parse(stored) : defaultValue;
+    } catch {
+      return defaultValue;
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(key, JSON.stringify(val));
+    } catch {}
+  }, [key, val]);
+
+  return [val, setVal];
+}
+
 export function useSystemStats() {
-  const [xp, setXp] = useStorage('ascend_system_xp', 1850);
-  const [level, setLevel] = useStorage('ascend_system_level', 4);
-  const [stats, setStats] = useStorage('ascend_system_attributes', {
+  const [xp, setXp] = useLocalStorageState('ascend_system_xp', 1850);
+  const [level, setLevel] = useLocalStorageState('ascend_system_level', 4);
+  const [stats, setStats] = useLocalStorageState('ascend_system_attributes', {
     tapas: 24,   // STR / Discipline
     gyaan: 32,   // INT / Wisdom
     dharma: 28,  // AGI / Alignment
@@ -32,11 +50,11 @@ export function useSystemStats() {
   const [levelUpData, setLevelUpData] = useState(null);
 
   const xpNeeded = level * 750;
-  const currentLevelXp = xp % xpNeeded;
-  const progressPct = Math.min(100, Math.round((currentLevelXp / xpNeeded) * 100));
+  const currentLevelXp = xp % (xpNeeded || 1);
+  const progressPct = Math.min(100, Math.round((currentLevelXp / (xpNeeded || 1)) * 100));
 
   const rankKey = getRankForLevel(level);
-  const currentRank = RANK_TIERS[rankKey];
+  const currentRank = RANK_TIERS[rankKey] || RANK_TIERS.E;
 
   const addXp = useCallback((amount, statType = null) => {
     setXp((prevXp) => {
@@ -52,23 +70,23 @@ export function useSystemStats() {
         setLevelUpData({
           oldLevel: level,
           newLevel: newLevel,
-          oldRank: RANK_TIERS[oldRank],
-          newRank: RANK_TIERS[newRank],
+          oldRank: RANK_TIERS[oldRank] || RANK_TIERS.E,
+          newRank: RANK_TIERS[newRank] || RANK_TIERS.E,
           isRankUp: oldRank !== newRank,
         });
 
         setStats((prev) => ({
-          tapas: prev.tapas + 2,
-          gyaan: prev.gyaan + 2,
-          dharma: prev.dharma + 2,
-          sadhana: prev.sadhana + 2,
+          tapas: (prev?.tapas || 20) + 2,
+          gyaan: (prev?.gyaan || 20) + 2,
+          dharma: (prev?.dharma || 20) + 2,
+          sadhana: (prev?.sadhana || 20) + 2,
         }));
       }
 
       if (statType && stats[statType] !== undefined) {
         setStats((prev) => ({
           ...prev,
-          [statType]: prev[statType] + Math.max(1, Math.floor(amount / 100)),
+          [statType]: (prev[statType] || 20) + Math.max(1, Math.floor(amount / 100)),
         }));
       }
 
