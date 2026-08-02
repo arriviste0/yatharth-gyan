@@ -31,7 +31,6 @@ const SIDE_NAV_ITEMS = [
   { path: '/settings',     label: 'Settings',     Icon: Settings },
 ];
 
-
 /* ── Mobile bottom bar ──────────────────────────────────────────────────────── */
 export default function BottomNav({ onOpenProfile }) {
   const location = useLocation();
@@ -40,7 +39,7 @@ export default function BottomNav({ onOpenProfile }) {
   return (
     <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md glass-nav safe-bottom z-50 lg:hidden">
       <div className="grid grid-cols-5 items-center px-2 py-1">
-        {/* Col 1 & 2: Left items (Dashboard, Pillars) */}
+        {/* Left items */}
         {NAV_ITEMS_LEFT.map(({ path, label, Icon }) => {
           const isActive = location.pathname === path || (path !== '/home' && location.pathname.startsWith(path + '/'));
           return (
@@ -65,19 +64,19 @@ export default function BottomNav({ onOpenProfile }) {
           );
         })}
 
-        {/* Col 3: EXACT CENTER Floating AI Architect Button */}
+        {/* Center Floating System AI Button */}
         <div className="flex justify-center relative">
           <NavLink
             to="/ai-architect"
             className="w-12 h-12 rounded-full -mt-6 shadow-2xl flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95 border-4 border-white dark:border-[#12131C] z-20 shrink-0"
             style={{ background: 'var(--color-accent)', color: '#FFFFFF', boxShadow: '0 8px 20px var(--color-accent-shadow)' }}
-            title="Sadhana AI Architect"
+            title="System AI"
           >
             <Wand2 size={20} className="animate-pulse" />
           </NavLink>
         </div>
 
-        {/* Col 4 & 5: Right items (Journal, Wisdom) */}
+        {/* Right items */}
         {NAV_ITEMS_RIGHT.map(({ path, label, Icon }) => {
           const isActive = location.pathname === path || (path !== '/home' && location.pathname.startsWith(path + '/'));
           return (
@@ -111,7 +110,13 @@ export function SideNav({ onOpenFocus, onOpenProfile }) {
   const location  = useLocation();
   const { state, updateSettings } = useStorage();
   const pillars   = state.pillars || [];
-  const { logs } = state;
+  const { logs, settings } = state;
+
+  const isDark = settings?.theme === 'dark';
+
+  function toggleTheme() {
+    updateSettings({ theme: isDark ? 'light' : 'dark' });
+  }
 
   const { done, total } = getTodayCompletedCount(logs, pillars);
   const streak          = getCurrentStreak(logs, pillars);
@@ -198,44 +203,29 @@ export function SideNav({ onOpenFocus, onOpenProfile }) {
         })}
       </div>
 
-
       {/* Bottom Controls: Theme Toggle + Focus + Settings */}
-      <div className="mt-4 border-t border-black/5 dark:border-white/5 pt-4 space-y-2">
-
-        {/* Dynamic Light/Dark Theme Switcher Button */}
+      <div className="mt-4 border-t border-[#00F0FF]/20 pt-4 space-y-2">
+        {/* Theme Switcher */}
         <button
           onClick={toggleTheme}
-          className="w-full flex items-center justify-between px-4 py-2.5 rounded-full text-xs font-bold text-[#18191E] dark:text-white bg-white dark:bg-[#181926] border border-black/5 dark:border-white/8 hover:shadow-sm transition-all"
+          className="w-full flex items-center justify-between px-3.5 py-2 rounded-xs text-xs font-bold text-white bg-[#080C18] border border-white/10 hover:border-[#00F0FF]/40 transition-all uppercase"
         >
           <div className="flex items-center gap-2">
-            {isDark ? <Moon size={15} className="text-amber-400" /> : <Sun size={15} className="text-accent" />}
-            <span>{isDark ? 'Dark Mode' : 'Light Mode'}</span>
+            {isDark ? <Moon size={14} className="text-[#A855F7]" /> : <Sun size={14} className="text-[#00F0FF]" />}
+            <span>{isDark ? 'DARK MODE' : 'LIGHT MODE'}</span>
           </div>
-          <span className="text-[10px] px-2 py-0.5 rounded-full bg-black/5 dark:bg-white/10 uppercase font-extrabold">
-            Switch
+          <span className="text-[9px] px-2 py-0.5 rounded-xs bg-white/10 text-white/70 uppercase">
+            TOGGLE
           </span>
         </button>
 
         {onOpenFocus && (
           <button onClick={onOpenFocus}
-            className="w-full flex items-center gap-3 px-4 py-2.5 rounded-full text-xs font-bold text-stone-600 dark:text-stone-300 hover:bg-black/5 dark:hover:bg-white/5 transition-all">
-            <Timer size={16} strokeWidth={1.8} />
-            Focus Timer
+            className="w-full flex items-center gap-3 px-3.5 py-2 rounded-xs text-xs font-bold text-white/70 hover:text-white hover:bg-white/5 border border-transparent transition-all uppercase">
+            <Timer size={15} className="text-[#00F0FF]" />
+            FOCUS TIMER
           </button>
         )}
-
-        <NavLink
-          to="/settings"
-          className={`flex items-center gap-3 px-4 py-2.5 rounded-full text-xs font-bold transition-all ${
-            location.pathname === '/settings'
-              ? 'text-accent'
-              : 'text-stone-600 dark:text-stone-300 hover:bg-black/5 dark:hover:bg-white/5'
-          }`}
-          style={location.pathname === '/settings' ? { background: 'var(--color-accent-light)' } : {}}
-        >
-          <Settings size={16} strokeWidth={1.8} />
-          Settings
-        </NavLink>
       </div>
     </nav>
   );
