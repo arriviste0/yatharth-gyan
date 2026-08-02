@@ -1,7 +1,9 @@
 import { useState, useRef } from 'react';
-import { LogOut, Camera, Save, Lock, Cloud, CheckCircle2, AlertCircle, X } from 'lucide-react';
+import { LogOut, Camera, Save, Lock, Cloud, CheckCircle2, AlertCircle, X, Shield, Award } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useStorage } from '../hooks/useStorage';
+import { useSystemStats } from '../hooks/useSystemStats';
+import RankBadge from '../components/RankBadge';
 
 const AVATAR_COLORS = [
   '#F05A36', '#E6A04E', '#2D3561', '#5B6BAF',
@@ -51,6 +53,7 @@ function resizeImageToBase64(file, size = 150) {
 export default function Profile({ onClose }) {
   const { user, logoutUser, updateUserProfile, changePassword, syncing, lastSync } = useAuth();
   const { state } = useStorage();
+  const systemStats = useSystemStats();
   const fileInputRef = useRef(null);
 
   const [name,     setName]     = useState(user?.name        || '');
@@ -122,36 +125,42 @@ export default function Profile({ onClose }) {
   return (
     <div className="fixed inset-0 z-[90] flex items-end sm:items-center justify-center p-4"
       onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
+      <div className="absolute inset-0 bg-black/80 backdrop-blur-md" onClick={onClose} />
 
-      <div className="relative w-full max-w-md rounded-3xl z-10 page-transition overflow-y-auto max-h-[90svh] no-scrollbar bg-white dark:bg-[#181926] border border-black/10 dark:border-white/10 shadow-2xl">
+      <div className="relative w-full max-w-md rounded-xs z-10 page-transition overflow-y-auto max-h-[90svh] no-scrollbar hud-panel hud-brackets border-2 border-[#00F0FF]/40 text-white">
 
-        {/* Header */}
-        <div className="sticky top-0 z-10 flex items-center gap-4 px-5 py-4 border-b border-black/6 dark:border-white/6 bg-white/95 dark:bg-[#181926]/95 backdrop-blur-xl">
-          <AvatarCircle name={name || user?.name} color={color} photo={photo} size={48} />
-          <div className="flex-1 min-w-0">
-            <div className="font-extrabold text-base text-[#18191E] dark:text-white truncate">{user?.name}</div>
-            <div className="flex items-center gap-1.5 text-xs text-stone-400 truncate">
-              {user?.email}
-              {isGoogleUser && (
-                <span className="text-[10px] px-1.5 py-0.5 rounded-full font-medium bg-blue-500/10 text-blue-500">
-                  Google
-                </span>
-              )}
+        {/* Character Sheet Top Banner */}
+        <div className="sticky top-0 z-10 p-5 border-b border-[#00F0FF]/25 bg-[#0D1224]/95 backdrop-blur-xl">
+          <div className="flex items-center justify-between border-b border-[#00F0FF]/20 pb-3 mb-3">
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-display font-extrabold text-[#00F0FF] tracking-widest uppercase px-2 py-0.5 bg-[#00F0FF]/10 border border-[#00F0FF]/30 rounded-xs">
+                CHARACTER SHEET
+              </span>
+              <span className="text-[11px] font-dev text-[#00F0FF]/70">पात्र विवरण</span>
+            </div>
+            <button onClick={onClose} className="text-white/60 hover:text-white text-lg">×</button>
+          </div>
+
+          <div className="flex items-center gap-4">
+            <AvatarCircle name={name || user?.name} color={color} photo={photo} size={54} />
+            <div className="flex-1 min-w-0">
+              <h2 className="font-display font-black text-lg text-white tracking-wider truncate">
+                {user?.name ? user.name.toUpperCase() : 'AWAKENED SEEKER'}
+              </h2>
+              <div className="flex items-center gap-2 text-xs mt-0.5">
+                <span className="font-display text-[#00F0FF] font-bold">LEVEL {systemStats.level}</span>
+                <span className="text-white/40">·</span>
+                <RankBadge rank={systemStats.currentRank.name[0]} size="sm" showTitle={false} />
+              </div>
+              <p className="text-[11px] text-[#A855F7] font-semibold tracking-wide truncate mt-0.5">
+                {systemStats.currentRank.title} <span className="font-dev text-purple-300/80">({systemStats.currentRank.titleDev})</span>
+              </p>
             </div>
           </div>
-          <div className="flex items-center gap-1 text-[10px] text-stone-400 font-medium">
-            {syncing ? (
-              <><Cloud size={12} className="animate-pulse" /> syncing…</>
-            ) : lastSync ? (
-              <><CheckCircle2 size={12} className="text-emerald-500" /> synced</>
-            ) : null}
-          </div>
-          <button onClick={onClose}
-            className="text-stone-400 hover:text-[#18191E] dark:hover:text-white text-xl leading-none ml-1">×</button>
         </div>
 
         <div className="px-5 py-5 space-y-5">
+
 
           {/* Practice stats */}
           <div className="grid grid-cols-4 gap-2">

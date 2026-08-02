@@ -26,6 +26,9 @@ import NightInterstitial from '../components/NightInterstitial';
 import DayCelebration from '../components/DayCelebration';
 import ShankhaSVG from '../components/svgs/ShankhaSVG';
 import AIDailyReportCard from '../components/AIDailyReportCard';
+import { useSystemStats } from '../hooks/useSystemStats';
+import RankBadge from '../components/RankBadge';
+import LevelUpModal from '../components/LevelUpModal';
 
 const WEEKDAY_SHORT = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 const WEEKDAY_FULL = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -45,6 +48,104 @@ function getGreeting(name) {
           h < 21 ? 'Good evening' :
             'Evening';
   return name ? `${base}, ${name}` : base;
+}
+
+/* ═══════════════════════════════════════════════════════════════════ *
+ *  PLAYER STATUS WINDOW (SYSTEM HUD)                                  *
+ * ═══════════════════════════════════════════════════════════════════ */
+function PlayerStatusWindow({ level, currentRank, xp, xpNeeded, currentLevelXp, progressPct, stats, name }) {
+  return (
+    <div className="hud-panel hud-brackets p-5 mb-6 text-white space-y-4">
+      {/* Top Header: Player & Rank */}
+      <div className="flex items-center justify-between border-b border-[#00F0FF]/25 pb-3">
+        <div className="space-y-0.5">
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-display font-extrabold text-[#00F0FF] tracking-widest uppercase px-2 py-0.5 bg-[#00F0FF]/10 border border-[#00F0FF]/30 rounded-xs">
+              STATUS WINDOW
+            </span>
+            <span className="text-[11px] font-dev text-[#00F0FF]/70">आत्म स्थिति</span>
+          </div>
+          <h2 className="text-xl font-display font-black tracking-wider text-white flex items-center gap-2 pt-1">
+            {name ? name.toUpperCase() : 'AWAKENED SEEKER'}
+          </h2>
+          <p className="text-xs text-white/60 font-sans tracking-wide">
+            TITLE: <span className="text-[#A855F7] font-semibold">{currentRank.title}</span> <span className="font-dev text-purple-300/80 text-[11px]">({currentRank.titleDev})</span>
+          </p>
+        </div>
+
+        <div className="text-right flex flex-col items-end gap-1">
+          <RankBadge rank={currentRank.name[0]} size="md" />
+          <div className="font-display font-black text-2xl text-glow-cyan">
+            LV. {level}
+          </div>
+        </div>
+      </div>
+
+      {/* XP Bar */}
+      <div className="space-y-1.5">
+        <div className="flex items-center justify-between text-xs font-display">
+          <span className="text-white/70 tracking-wider">EXP CAPACITY</span>
+          <span className="text-[#00F0FF] font-bold tabular-nums">
+            {currentLevelXp} / {xpNeeded} XP ({progressPct}%)
+          </span>
+        </div>
+        <div className="h-3 rounded-xs xp-bar-container">
+          <div className="xp-bar-fill rounded-xs" style={{ width: `${progressPct}%` }} />
+        </div>
+      </div>
+
+      {/* Attribute Stats Grid */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-1">
+        {/* STR / TAPAS */}
+        <div className="p-3 bg-[#080C18]/80 border border-[#00F0FF]/20 rounded-xs space-y-1 hover:border-[#00F0FF]/50 transition-all">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-display font-extrabold text-white/50 uppercase">STR / TAPAS</span>
+            <span className="text-[10px] font-dev text-cyan-400/80">तपस्</span>
+          </div>
+          <div className="text-xl font-display font-bold text-[#00F0FF] tabular-nums">
+            {stats.tapas} <span className="text-[10px] font-sans font-normal text-white/40">PTS</span>
+          </div>
+          <div className="text-[10px] text-white/50">Physical Discipline</div>
+        </div>
+
+        {/* INT / GYAAN */}
+        <div className="p-3 bg-[#080C18]/80 border border-purple-500/20 rounded-xs space-y-1 hover:border-purple-500/50 transition-all">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-display font-extrabold text-white/50 uppercase">INT / GYAAN</span>
+            <span className="text-[10px] font-dev text-purple-300/80">ज्ञान</span>
+          </div>
+          <div className="text-xl font-display font-bold text-[#A855F7] tabular-nums">
+            {stats.gyaan} <span className="text-[10px] font-sans font-normal text-white/40">PTS</span>
+          </div>
+          <div className="text-[10px] text-white/50">Mental Wisdom</div>
+        </div>
+
+        {/* AGI / DHARMA */}
+        <div className="p-3 bg-[#080C18]/80 border border-blue-500/20 rounded-xs space-y-1 hover:border-blue-500/50 transition-all">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-display font-extrabold text-white/50 uppercase">AGI / DHARMA</span>
+            <span className="text-[10px] font-dev text-blue-300/80">धर्म</span>
+          </div>
+          <div className="text-xl font-display font-bold text-[#4F8CFF] tabular-nums">
+            {stats.dharma} <span className="text-[10px] font-sans font-normal text-white/40">PTS</span>
+          </div>
+          <div className="text-[10px] text-white/50">Habit Alignment</div>
+        </div>
+
+        {/* VIT / SADHANA */}
+        <div className="p-3 bg-[#080C18]/80 border border-emerald-500/20 rounded-xs space-y-1 hover:border-emerald-500/50 transition-all">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-display font-extrabold text-white/50 uppercase">VIT / SADHANA</span>
+            <span className="text-[10px] font-dev text-emerald-400/80">साधना</span>
+          </div>
+          <div className="text-xl font-display font-bold text-emerald-400 tabular-nums">
+            {stats.sadhana} <span className="text-[10px] font-sans font-normal text-white/40">PTS</span>
+          </div>
+          <div className="text-[10px] text-white/50">Spiritual Energy</div>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 /* ═══════════════════════════════════════════════════════════════════ *
@@ -2251,7 +2352,9 @@ function ProfileHeaderButton({ onOpenProfile }) {
  * ═══════════════════════════════════════════════════════════════════ */
 
 export default function Home({ onOpenFocus, onOpenProfile }) {
+  const { user } = useAuth();
   const { state, toggleBookmark, logTarget, setPillars, logMetric } = useStorage();
+  const systemStats = useSystemStats();
   const pillars = state.pillars || [];
   const { logs, bookmarks, settings, metrics = {} } = state;
   const dailyVerse = useDailyVerse();
@@ -2307,22 +2410,38 @@ export default function Home({ onOpenFocus, onOpenProfile }) {
     <div className="page-container page-transition">
       {showNight && <NightInterstitial onClose={() => setShowNight(false)} />}
       {showCelebration && <DayCelebration onClose={() => setShowCelebration(false)} />}
+      {systemStats.levelUpData && (
+        <LevelUpModal data={systemStats.levelUpData} onClose={systemStats.dismissLevelUp} />
+      )}
 
       {/* ── Header ──────────────────────────────────────────────── */}
-      <div className="flex items-start justify-between mb-5 lg:mb-6">
+      <div className="flex items-start justify-between mb-4">
         <div>
-          <p className="text-xs font-semibold text-stone-400 uppercase tracking-widest mb-0.5">
-            {dateInfo.dayEn} · {dateInfo.short}
+          <p className="text-[10px] font-display font-bold text-[#00F0FF] uppercase tracking-widest mb-0.5">
+            SYSTEM CALENDAR · {dateInfo.dayEn.toUpperCase()} · {dateInfo.short.toUpperCase()}
           </p>
-          <h1 className="text-2xl lg:text-3xl font-bold text-[#1a1a2e] dark:text-white leading-tight">
-            Dashboard
+          <h1 className="text-2xl lg:text-3xl font-display font-black text-white tracking-wider leading-tight text-glow-cyan">
+            ASCEND STATUS WINDOW
           </h1>
         </div>
         <div className="flex items-center gap-2 pt-1">
-          {completion >= 1 && total > 0 && <ShankhaSVG size={26} color="#C9A961" />}
+          {completion >= 1 && total > 0 && <ShankhaSVG size={26} color="#00F0FF" />}
           <ProfileHeaderButton onOpenProfile={onOpenProfile} />
         </div>
       </div>
+
+      {/* ── System Player Status Window ── */}
+      <PlayerStatusWindow
+        level={systemStats.level}
+        currentRank={systemStats.currentRank}
+        xp={systemStats.xp}
+        xpNeeded={systemStats.xpNeeded}
+        currentLevelXp={systemStats.currentLevelXp}
+        progressPct={systemStats.progressPct}
+        stats={systemStats.stats}
+        name={user?.name}
+      />
+
 
       {/* ═══ MOBILE VIEW ═══════════════════════════════════════════ */}
       <MobileTodayView

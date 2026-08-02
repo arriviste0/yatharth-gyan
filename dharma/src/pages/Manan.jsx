@@ -513,23 +513,20 @@ export default function Manan() {
       {/* JotPad File Explorer Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <div className="flex items-center gap-2">
-            {activeFolderId && (
-              <button
-                onClick={() => { setActiveFolderId(null); setActiveFile(null); }}
-                className="text-xs text-[#F05A36] font-bold hover:underline flex items-center gap-1 mr-1"
-              >
-                Folders <ChevronRight size={12} />
-              </button>
-            )}
-            <h1 className="text-2xl lg:text-3xl font-extrabold text-[#18191E] dark:text-white tracking-tight">
-              {activeFolderId ? currentFolder?.title : 'JotPad Explorer'}
-            </h1>
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-[10px] font-display font-extrabold text-[#00F0FF] tracking-widest uppercase px-2 py-0.5 bg-[#00F0FF]/10 border border-[#00F0FF]/30 rounded-xs">
+              EPISODE LOG
+            </span>
+            <span className="text-[11px] font-dev text-[#00F0FF]/70">मनन गाथा</span>
           </div>
-          <p className="text-xs text-stone-500 dark:text-white/40 mt-0.5 font-medium">
-            {activeFolderId ? `${folderFiles.length} files in folder` : 'Manage your folders, notes & checklists'}
+          <h1 className="text-2xl lg:text-3xl font-display font-black text-white tracking-wider text-glow-cyan">
+            {activeFolderId ? currentFolder?.title.toUpperCase() : 'QUEST CHRONICLES & LOGS'}
+          </h1>
+          <p className="text-xs text-white/60 font-sans tracking-wide mt-1">
+            {activeFolderId ? `${folderFiles.length} System Records in Archive` : 'Introspective journal entries & system mental logs'}
           </p>
         </div>
+
 
         {/* Action Buttons */}
         <div className="flex items-center gap-2">

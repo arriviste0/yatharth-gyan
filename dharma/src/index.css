@@ -1,16 +1,26 @@
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Tiro+Devanagari+Hindi&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600;700;800;900&family=Rajdhani:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Tiro+Devanagari+Hindi&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  --color-accent: #F05A36;
-  --color-accent-hover: #d94a28;
-  --color-accent-light: rgba(240, 90, 54, 0.12);
-  --color-accent-border: rgba(240, 90, 54, 0.3);
-  --color-accent-shadow: rgba(240, 90, 54, 0.35);
-  --color-secondary: #C9A961;
+  --bg-system: #0B0E1A;
+  --bg-panel: rgba(13, 18, 36, 0.85);
+  --border-hud: rgba(79, 140, 255, 0.35);
+  --border-hud-glow: rgba(79, 140, 255, 0.6);
+  --accent-cyan: #00F0FF;
+  --accent-blue: #4F8CFF;
+  --accent-violet: #A855F7;
+  --accent-gold: #F59E0B;
+  --penalty-red: #FF4D4D;
+  
+  --color-accent: #00F0FF;
+  --color-accent-hover: #4F8CFF;
+  --color-accent-light: rgba(0, 240, 255, 0.12);
+  --color-accent-border: rgba(0, 240, 255, 0.35);
+  --color-accent-shadow: rgba(0, 240, 255, 0.4);
+  --color-secondary: #A855F7;
 }
 
 @layer base {
@@ -20,42 +30,40 @@
   }
 
   html {
-    font-family: 'Plus Jakarta Sans', 'Outfit', system-ui, sans-serif;
+    font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
     touch-action: manipulation;
     -webkit-text-size-adjust: 100%;
+    background-color: #0B0E1A;
+    color: #F0F4FF;
   }
 
   body {
     margin: 0;
     padding: 0;
     min-height: 100svh;
-    background: #FBF9F5;
-    color: #18191E;
+    background: #0B0E1A;
+    color: #F0F4FF;
     overflow-x: hidden;
     touch-action: manipulation;
-    transition: background-color 0.3s ease, color 0.3s ease;
   }
 
-  /* Global sleek scrollbar - remove ugly thick white scrollbars */
+  /* Sleek cyan/violet scrollbar */
   ::-webkit-scrollbar {
     width: 4px;
     height: 4px;
   }
   ::-webkit-scrollbar-track {
-    background: transparent;
+    background: #0B0E1A;
   }
   ::-webkit-scrollbar-thumb {
-    background: rgba(150, 150, 150, 0.25);
-    border-radius: 9999px;
-  }
-  .dark ::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.15);
+    background: rgba(79, 140, 255, 0.3);
+    border-radius: 2px;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: var(--color-accent);
+    background: #00F0FF;
   }
   
   .no-scrollbar {
@@ -67,35 +75,8 @@
   }
 
   .dark body {
-    background: #12131C;
-    color: #F5F3EF;
-  }
-
-  /* Prevent auto-zoom on focus for iOS Safari & Mobile WebKit */
-  @media screen and (max-width: 768px) {
-    input:not([type='checkbox']):not([type='radio']):not([type='range']),
-    textarea,
-    select {
-      font-size: 16px !important;
-    }
-  }
-
-  /* Inputs always readable */
-  input:not([type='checkbox']):not([type='radio']):not([type='range']),
-  textarea,
-  select {
-    color: #18191E;
-  }
-  .dark input:not([type='checkbox']):not([type='radio']):not([type='range']),
-  .dark textarea,
-  .dark select {
-    background-color: rgba(255, 255, 255, 0.06);
-    color: #F5F3EF;
-    border-color: rgba(255, 255, 255, 0.12);
-  }
-  .dark input::placeholder,
-  .dark textarea::placeholder {
-    color: rgba(255, 255, 255, 0.35);
+    background: #0B0E1A;
+    color: #F0F4FF;
   }
 
   #root {
@@ -104,30 +85,29 @@
     max-width: 480px;
     margin: 0 auto;
     position: relative;
-    background: #FBF9F5;
+    background: #0B0E1A;
     overflow-x: hidden;
-    transition: background-color 0.3s ease;
-  }
-
-  .dark #root {
-    background: #12131C;
   }
 
   @media (min-width: 1024px) {
     #root {
       max-width: 100%;
       display: flex;
-      background: #FBF9F5;
-    }
-    .dark #root {
-      background: #12131C;
+      background: #0B0E1A;
     }
   }
 }
 
 @layer components {
-  .font-verse {
-    font-family: 'Lora', Georgia, serif;
+  /* Futuristic Display Font */
+  .font-display {
+    font-family: 'Orbitron', 'Rajdhani', sans-serif;
+    letter-spacing: 0.05em;
+  }
+
+  .font-stat {
+    font-family: 'Rajdhani', sans-serif;
+    letter-spacing: 0.04em;
   }
 
   .font-dev {
@@ -138,6 +118,7 @@
   .page-container {
     @apply px-4 pt-5 pb-28;
     min-height: 100svh;
+    background: radial-gradient(circle at 50% 0%, rgba(16, 24, 52, 0.8) 0%, #0B0E1A 75%);
   }
 
   @media (min-width: 1024px) {
@@ -147,139 +128,167 @@
     }
   }
 
-  @media (min-width: 1280px) {
-    .page-container {
-      @apply px-14 pt-10 pb-12;
-    }
+  /* System HUD Panel Window */
+  .hud-panel {
+    position: relative;
+    background: rgba(13, 18, 36, 0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(79, 140, 255, 0.35);
+    box-shadow: inset 0 0 15px rgba(79, 140, 255, 0.08), 0 8px 32px rgba(0, 0, 0, 0.6);
+    border-radius: 4px;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
-  /* Dynamic Accent Color Utility Classes */
-  .bg-accent {
-    background-color: var(--color-accent) !important;
-  }
-  .text-accent {
-    color: var(--color-accent) !important;
-  }
-  .border-accent {
-    border-color: var(--color-accent) !important;
+  .hud-panel:hover {
+    border-color: rgba(0, 240, 255, 0.6);
+    box-shadow: inset 0 0 20px rgba(0, 240, 255, 0.12), 0 10px 35px rgba(0, 240, 255, 0.15);
   }
 
-  /* Reference Bento Card Styling */
-  .card-bento {
-    @apply rounded-3xl p-6 transition-all duration-300;
-    background: #FFFFFF;
-    border: 1px solid rgba(0, 0, 0, 0.06);
-    box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.04);
+  .hud-panel-warning {
+    background: rgba(26, 12, 18, 0.85);
+    border: 1px solid rgba(255, 77, 77, 0.4);
+    box-shadow: inset 0 0 15px rgba(255, 77, 77, 0.1), 0 8px 32px rgba(255, 77, 77, 0.15);
   }
 
-  .dark .card-bento {
-    background: #181926;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.4);
+  .hud-panel-gold {
+    background: rgba(26, 20, 10, 0.85);
+    border: 1px solid rgba(245, 158, 11, 0.5);
+    box-shadow: inset 0 0 20px rgba(245, 158, 11, 0.15), 0 8px 32px rgba(245, 158, 11, 0.25);
   }
 
-  /* Reference Button Styles */
-  .btn-coral,
-  .btn-primary-coral {
-    background: var(--color-accent);
-    color: #FFFFFF;
-    font-weight: 800;
-    border-radius: 9999px;
-    padding: 0.65rem 1.6rem;
-    box-shadow: 0 4px 20px var(--color-accent-shadow);
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  /* HUD Window Bracket Accents */
+  .hud-brackets::before {
+    content: '';
+    position: absolute;
+    top: -1px;
+    left: -1px;
+    width: 8px;
+    height: 8px;
+    border-top: 2px solid #00F0FF;
+    border-left: 2px solid #00F0FF;
   }
-  .btn-coral:hover,
-  .btn-primary-coral:hover {
-    background: var(--color-accent-hover);
-    transform: translateY(-1px);
-    box-shadow: 0 6px 25px var(--color-accent-shadow);
-  }
-
-  .btn-outline-dark,
-  .btn-secondary-outline {
-    border: 1.5px solid #18191E;
-    color: #18191E;
-    font-weight: 700;
-    border-radius: 9999px;
-    padding: 0.65rem 1.5rem;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-  .btn-outline-dark:hover,
-  .btn-secondary-outline:hover {
-    background: #18191E;
-    color: #FFFFFF;
+  
+  .hud-brackets::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    right: -1px;
+    width: 8px;
+    height: 8px;
+    border-bottom: 2px solid #00F0FF;
+    border-right: 2px solid #00F0FF;
   }
 
-  .dark .btn-outline-dark,
-  .dark .btn-secondary-outline {
-    border: 1.5px solid rgba(255, 255, 255, 0.3);
-    color: #FFFFFF;
-  }
-  .dark .btn-outline-dark:hover,
-  .dark .btn-secondary-outline:hover {
-    background: #FFFFFF;
-    color: #18191E;
+  /* XP Stat Bar */
+  .xp-bar-container {
+    background: rgba(8, 12, 24, 0.9);
+    border: 1px solid rgba(79, 140, 255, 0.3);
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.8);
+    position: relative;
+    overflow: hidden;
   }
 
-  /* Glass Nav for Mobile */
+  .xp-bar-fill {
+    background: linear-gradient(90deg, #4F8CFF 0%, #00F0FF 50%, #A855F7 100%);
+    box-shadow: 0 0 12px rgba(0, 240, 255, 0.8);
+    height: 100%;
+    transition: width 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+    position: relative;
+  }
+
+  .xp-bar-fill::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+    animation: xp-shimmer 2s infinite;
+  }
+
+  /* Holographic Glow Text */
+  .text-glow-cyan {
+    color: #00F0FF;
+    text-shadow: 0 0 10px rgba(0, 240, 255, 0.7), 0 0 20px rgba(0, 240, 255, 0.4);
+  }
+
+  .text-glow-violet {
+    color: #C084FC;
+    text-shadow: 0 0 10px rgba(168, 85, 247, 0.7), 0 0 20px rgba(168, 85, 247, 0.4);
+  }
+
+  .text-glow-gold {
+    color: #FBBF24;
+    text-shadow: 0 0 10px rgba(245, 158, 11, 0.8), 0 0 20px rgba(245, 158, 11, 0.5);
+  }
+
+  .text-glow-red {
+    color: #FF4D4D;
+    text-shadow: 0 0 10px rgba(255, 77, 77, 0.8), 0 0 20px rgba(255, 77, 77, 0.5);
+  }
+
+  /* Glass Nav */
   .glass-nav {
-    background: rgba(251, 249, 245, 0.92);
+    background: rgba(11, 14, 26, 0.92);
     backdrop-filter: blur(16px);
-    border-top: 1px solid rgba(0, 0, 0, 0.06);
-  }
-  .dark .glass-nav {
-    background: rgba(24, 25, 38, 0.92);
-    backdrop-filter: blur(16px);
-    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    border-top: 1px solid rgba(79, 140, 255, 0.25);
+    box-shadow: 0 -5px 25px rgba(0, 0, 0, 0.7);
   }
 
-  /* iOS safe area bottom padding */
-  .safe-bottom {
-    padding-bottom: env(safe-area-inset-bottom, 0px);
+  .btn-system-primary {
+    background: linear-gradient(135deg, #00F0FF 0%, #4F8CFF 50%, #A855F7 100%);
+    color: #080C18;
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    border-radius: 2px;
+    padding: 0.65rem 1.6rem;
+    box-shadow: 0 0 20px rgba(0, 240, 255, 0.4);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .btn-system-primary:hover {
+    box-shadow: 0 0 30px rgba(0, 240, 255, 0.7);
+    transform: translateY(-1px);
   }
 
-  /* Page transition animation */
-  .page-transition {
-    animation: fade-in 0.2s ease-out;
+  .btn-system-outline {
+    border: 1px solid rgba(79, 140, 255, 0.5);
+    background: rgba(13, 18, 36, 0.8);
+    color: #00F0FF;
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    border-radius: 2px;
+    padding: 0.6rem 1.4rem;
+    transition: all 0.2s ease;
   }
-
-  /* Base card style (used in Drishti, Settings) */
-  .card {
-    @apply rounded-2xl p-4 transition-all duration-200;
-    background: #FFFFFF;
-    border: 1px solid rgba(0, 0, 0, 0.06);
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
-    margin-bottom: 1rem;
-  }
-  .dark .card {
-    background: #181926;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-  }
-
-  /* Section label */
-  .section-label {
-    @apply text-[10px] font-extrabold uppercase tracking-widest text-stone-400;
+  .btn-system-outline:hover {
+    border-color: #00F0FF;
+    background: rgba(0, 240, 255, 0.15);
+    box-shadow: 0 0 15px rgba(0, 240, 255, 0.3);
   }
 }
 
 /* Animations */
-@keyframes marquee {
-  0% { transform: translateX(0%); }
-  100% { transform: translateX(-50%); }
+@keyframes xp-shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
 }
 
-.animate-marquee {
-  display: flex;
-  width: 200%;
-  animation: marquee 25s linear infinite;
+@keyframes system-flash {
+  0% { opacity: 0; transform: scale(0.95); }
+  50% { opacity: 1; transform: scale(1.02); }
+  100% { opacity: 1; transform: scale(1); }
 }
 
-@keyframes float-slow {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-8px); }
+@keyframes rank-pulse {
+  0%, 100% { box-shadow: 0 0 15px rgba(168, 85, 247, 0.4); }
+  50% { box-shadow: 0 0 30px rgba(0, 240, 255, 0.9); }
 }
 
-.animate-float {
-  animation: float-slow 4s ease-in-out infinite;
+.animate-system-flash {
+  animation: system-flash 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-rank-pulse {
+  animation: rank-pulse 2.5s infinite ease-in-out;
 }

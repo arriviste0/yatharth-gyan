@@ -812,16 +812,39 @@ export default function Sadhana() {
       {/* Header */}
       <div className="flex items-start justify-between mb-6 flex-wrap sm:flex-nowrap gap-3">
         <div>
-          <h1 className="text-2xl lg:text-3xl font-extrabold text-[#18191E] dark:text-white">Pillars of Practice</h1>
-          <p className="text-xs text-stone-500 dark:text-stone-400 mt-0.5 font-medium">Track your habits · Set your goals · Let AI guide you</p>
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-[10px] font-display font-extrabold text-[#00F0FF] tracking-widest uppercase px-2 py-0.5 bg-[#00F0FF]/10 border border-[#00F0FF]/30 rounded-xs">
+              QUEST BOARD
+            </span>
+            <span className="text-[11px] font-dev text-[#00F0FF]/70">साधना मण्डल</span>
+          </div>
+          <h1 className="text-2xl lg:text-3xl font-display font-black text-white tracking-wider text-glow-cyan">
+            DAILY QUEST & SADHANA REWARDS
+          </h1>
+          <p className="text-xs text-white/60 font-sans tracking-wide mt-1">
+            Complete daily quests to gain EXP, upgrade attributes, and maintain streak power.
+          </p>
         </div>
         <button
           onClick={() => activeTab === 'pillars' ? setAddingPillar(true) : (setAddingGoal(true), setEditingGoal(null))}
-          className="btn-coral text-xs flex items-center gap-1.5 shadow-md shrink-0 whitespace-nowrap"
+          className="btn-system-primary text-xs flex items-center gap-1.5 shadow-md shrink-0 whitespace-nowrap"
         >
-          <Plus size={14} /> {activeTab === 'pillars' ? 'Add Pillar' : 'Add Goal'}
+          <Plus size={14} /> {activeTab === 'pillars' ? 'CREATE QUEST PILLAR' : 'CREATE GOAL TARGET'}
         </button>
       </div>
+
+      {/* System Warning Penalty Banner */}
+      <div className="hud-panel hud-panel-warning p-3.5 mb-6 rounded-xs flex items-center justify-between text-xs text-red-300">
+        <div className="flex items-center gap-2.5">
+          <span className="w-2 h-2 rounded-full bg-[#FF4D4D] animate-ping" />
+          <span className="font-display font-bold uppercase tracking-wider text-glow-red">[!] SYSTEM PENALTY NOTICE</span>
+          <span className="hidden sm:inline text-white/70">· Inactivity or skipping daily quests will reduce mana efficiency.</span>
+        </div>
+        <span className="font-display text-[10px] px-2 py-0.5 bg-red-950 border border-red-500/50 rounded-xs font-bold text-[#FF4D4D]">
+          0 PENALTIES
+        </span>
+      </div>
+
 
       {/* Tabs */}
       <div className="flex gap-1 p-1 rounded-2xl bg-black/5 dark:bg-white/5 mb-6">

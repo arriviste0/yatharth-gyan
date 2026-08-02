@@ -345,20 +345,26 @@ export default function Gyaan() {
     { id: 'plan',      label: 'Reading Plan' },
     { id: 'ask',       label: 'Ask Krishna' },
   ];
-
   return (
     <div className="page-container page-transition">
       <div className="flex items-start justify-between mb-5 gap-3 flex-wrap">
         <div>
-          <h1 className="text-2xl font-extrabold text-[#18191E] dark:text-white">Wisdom</h1>
-          <div className="text-xs text-stone-400 font-medium">Bhagavad Gita · 18 Chapters</div>
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-[10px] font-display font-extrabold text-[#A855F7] tracking-widest uppercase px-2 py-0.5 bg-purple-950/80 border border-purple-500/40 rounded-xs">
+              SYSTEM CODEX
+            </span>
+            <span className="text-[11px] font-dev text-purple-300/80">ज्ञानकोश</span>
+          </div>
+          <h1 className="text-2xl font-display font-black text-white tracking-wider text-glow-violet">
+            SACRED WISDOM ARCHIVE
+          </h1>
+          <div className="text-xs text-white/60 font-sans mt-0.5">Bhagavad Gita · 18 Knowledge Scrolls & Skill Grids</div>
         </div>
         <div className="space-y-1.5">
-          <div className="text-xs font-extrabold text-[#18191E] dark:text-white flex items-center gap-1.5 justify-end">
-            <span className="w-2 h-2 rounded-full bg-[#F05A36]" />
-            {chapterProgress.length}/18 Chapters Read
+          <div className="text-xs font-display font-bold text-[#A855F7] flex items-center gap-1.5 justify-end">
+            <span className="w-2 h-2 rounded-full bg-[#A855F7] animate-pulse" />
+            {chapterProgress.length}/18 SCROLLS UNLOCKED ({progress}%)
           </div>
-          {/* 18-cell grid */}
           <ChapterGrid progress={chapterProgress} />
         </div>
       </div>
