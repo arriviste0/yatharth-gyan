@@ -119,14 +119,18 @@ function useSwipeNav() {
 function AppShell({ children, onOpenFocus, onOpenProfile }) {
   useSwipeNav();
   return (
-    <div className="min-h-screen bg-[#0B0E1A] text-white flex flex-col justify-between">
-      <main className="flex-1 w-full">
-        {children}
-      </main>
-      <BottomNav onOpenFocus={onOpenFocus} />
+    <div className="flex min-h-screen w-full relative bg-[#0B0E1A] text-white">
+      <SideNav onOpenFocus={onOpenFocus} onOpenProfile={onOpenProfile} />
+      <div className="flex-1 min-w-0 flex flex-col justify-between">
+        <main className="flex-1 w-full">
+          {children}
+        </main>
+        <BottomNav onOpenFocus={onOpenFocus} onOpenProfile={onOpenProfile} />
+      </div>
     </div>
   );
 }
+
 
 /* ── Main App (needs router context) ────────────────────────────── */
 function AppInner() {

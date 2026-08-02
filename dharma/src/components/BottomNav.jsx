@@ -111,13 +111,7 @@ export function SideNav({ onOpenFocus, onOpenProfile }) {
   const location  = useLocation();
   const { state, updateSettings } = useStorage();
   const pillars   = state.pillars || [];
-  const { logs, settings } = state;
-
-  const isDark = settings.theme === 'dark';
-
-  function toggleTheme() {
-    updateSettings({ theme: isDark ? 'light' : 'dark' });
-  }
+  const { logs } = state;
 
   const { done, total } = getTodayCompletedCount(logs, pillars);
   const streak          = getCurrentStreak(logs, pillars);
@@ -127,86 +121,83 @@ export function SideNav({ onOpenFocus, onOpenProfile }) {
   const { user, syncing, lastSync } = useAuth();
 
   return (
-    <nav className="hidden lg:flex flex-col w-60 min-h-screen bg-[#FBF9F5] dark:bg-[#12131C] border-r border-black/5 dark:border-white/5 px-4 py-8 sticky top-0 shrink-0">
+    <nav className="hidden lg:flex flex-col w-64 min-h-screen bg-[#0D1224] border-r border-[#00F0FF]/25 px-4 py-8 sticky top-0 shrink-0 text-white font-display">
       {/* Logo + profile */}
       <div className="mb-6">
         <div className="flex items-center gap-3 mb-4">
-          <div className="w-10 h-10 rounded-2xl bg-accent flex items-center justify-center font-bold text-xl text-white shadow-md" style={{ background: 'var(--color-accent)' }}>
-            ॐ
+          <div className="w-10 h-10 rounded-xs bg-[#00F0FF]/20 border border-[#00F0FF] flex items-center justify-center font-black text-xl text-[#00F0FF] shadow-[0_0_15px_rgba(0,240,255,0.4)]">
+            ⚡
           </div>
           <div>
-            <div className="font-extrabold text-sm text-[#18191E] dark:text-white">Dharma</div>
-            <div className="text-[11px] font-bold text-accent">Private Practice</div>
+            <div className="font-black text-base text-white tracking-wider text-glow-cyan">ASCEND</div>
+            <div className="text-[10px] font-bold text-[#A855F7] tracking-widest uppercase">SYSTEM NAVIGATOR</div>
           </div>
         </div>
 
         {/* Profile card */}
         {user ? (
           <button onClick={onOpenProfile}
-            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-2xl transition-all hover:bg-black/5 dark:hover:bg-white/5 text-left border border-black/5 dark:border-white/5">
+            className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xs transition-all bg-[#080C18] border border-[#00F0FF]/30 hover:border-[#00F0FF] text-left">
             <div className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs text-white flex-shrink-0"
-              style={{ background: user.avatarColor || 'var(--color-accent)' }}>
+              style={{ background: user.avatarColor || '#00F0FF' }}>
               {user.name.split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase()}
             </div>
             <div className="flex-1 min-w-0">
-              <div className="text-xs font-bold text-[#18191E] dark:text-white truncate">{user.name}</div>
-              <div className="text-[10px] text-stone-400 flex items-center gap-1">
-                {syncing  ? <><Cloud size={9} className="animate-pulse text-accent" />syncing…</>
-                : lastSync ? <><CheckCircle2 size={9} className="text-emerald-500" />synced</>
-                : 'cloud ready'}
+              <div className="text-xs font-bold text-white truncate">{user.name.toUpperCase()}</div>
+              <div className="text-[10px] text-[#00F0FF] flex items-center gap-1">
+                {syncing  ? <><Cloud size={9} className="animate-pulse text-[#00F0FF]" />syncing…</>
+                : lastSync ? <><CheckCircle2 size={9} className="text-emerald-400" />synced</>
+                : 'SYSTEM READY'}
               </div>
             </div>
           </button>
         ) : (
           <button onClick={onOpenProfile}
-            className="btn-coral w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-full text-xs font-extrabold shadow-md">
-            <LogIn size={14} /> Sign in to sync
+            className="btn-system-primary w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-xs text-xs font-black uppercase tracking-widest">
+            <LogIn size={14} /> SIGN IN TO SYSTEM
           </button>
         )}
       </div>
 
       {/* Today's status card */}
-      <div className="mb-5 px-4 py-3.5 rounded-3xl bg-white dark:bg-[#181926] border border-black/5 dark:border-white/8 shadow-sm">
-        <div className="text-[10px] font-extrabold text-accent uppercase tracking-widest mb-2">
-          {dateInfo.dayEn.slice(0, 3)} · {dateInfo.short}
+      <div className="mb-6 p-4 rounded-xs bg-[#080C18] border border-[#00F0FF]/30 space-y-2">
+        <div className="text-[10px] font-bold text-[#00F0FF] uppercase tracking-widest">
+          SYSTEM DATE · {dateInfo.dayEn.slice(0, 3).toUpperCase()} · {dateInfo.short.toUpperCase()}
         </div>
-        {/* Mini progress bar */}
-        <div className="h-2 rounded-full bg-black/5 dark:bg-white/8 mb-2 overflow-hidden">
-          <div
-            className="h-full rounded-full transition-all duration-700 bg-accent"
-            style={{ width: `${pct}%` }}
-          />
+        <div className="h-2.5 rounded-xs xp-bar-container">
+          <div className="xp-bar-fill rounded-xs" style={{ width: `${pct}%` }} />
         </div>
-        <div className="flex items-center justify-between text-xs">
-          <span className="font-bold text-stone-500 dark:text-stone-400">{done}/{total} done</span>
-          {!settings.silentMode && streak > 0 && (
-            <span className="font-extrabold text-accent">
-              🔥 {streak}d
+        <div className="flex items-center justify-between text-xs text-white/70">
+          <span>{done}/{total} CLEARED</span>
+          {streak > 0 && (
+            <span className="font-bold text-[#F59E0B]">
+              🔥 {streak}D STREAK
             </span>
           )}
         </div>
       </div>
 
       {/* Nav links */}
-      <div className="flex flex-col gap-1.5 flex-1">
+      <div className="flex flex-col gap-2 flex-1">
         {SIDE_NAV_ITEMS.map(({ path, label, Icon }) => {
           const isActive = location.pathname === path || (path !== '/home' && location.pathname.startsWith(path + '/'));
           return (
             <NavLink
               key={path}
               to={path}
-              className={`flex items-center gap-3 px-4 py-3 rounded-full text-sm font-extrabold transition-all duration-200 ${
+              className={`flex items-center gap-3 px-4 py-2.5 rounded-xs text-xs font-bold uppercase tracking-wider transition-all duration-200 ${
                 isActive
-                  ? 'bg-accent text-white shadow-md shadow-accent'
-                  : 'text-stone-600 dark:text-stone-300 hover:bg-black/5 dark:hover:bg-white/5'
+                  ? 'bg-[#00F0FF]/20 text-[#00F0FF] border border-[#00F0FF]/60 shadow-[0_0_20px_rgba(0,240,255,0.3)]'
+                  : 'text-white/70 hover:text-white hover:bg-white/5 border border-transparent'
               }`}
             >
-              <Icon size={18} strokeWidth={isActive ? 2.5 : 1.8} />
+              <Icon size={16} className={isActive ? 'text-[#00F0FF]' : 'text-white/50'} />
               {label}
             </NavLink>
           );
         })}
       </div>
+
 
       {/* Bottom Controls: Theme Toggle + Focus + Settings */}
       <div className="mt-4 border-t border-black/5 dark:border-white/5 pt-4 space-y-2">
