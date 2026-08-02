@@ -1450,23 +1450,23 @@ function MobileTodayView({ pillars, logs, metrics = {}, logTarget, dateStr, stre
  * ═══════════════════════════════════════════════════════════════════ */
 
 /* ── KPI Metric Card ──────────────────────────────────────────────── */
-function KPICard({ label, value, sublabel, color = '#F05A36', icon: IconComp, trend }) {
+function KPICard({ label, value, sublabel, color = '#00F0FF', icon: IconComp, trend }) {
   return (
-    <div className="card-bento p-5 transition-all hover:shadow-md flex flex-col justify-between">
-      <div className="flex items-start justify-between mb-3">
-        <div className="w-10 h-10 rounded-2xl flex items-center justify-center" style={{ background: `${color}18` }}>
-          {IconComp && <IconComp size={18} style={{ color }} />}
+    <div className="hud-panel hud-brackets p-5 transition-all flex flex-col justify-between text-white space-y-2">
+      <div className="flex items-start justify-between mb-2">
+        <div className="w-9 h-9 rounded-xs flex items-center justify-center bg-[#00F0FF]/15 border border-[#00F0FF]/30 text-[#00F0FF]">
+          {IconComp && <IconComp size={18} className="text-[#00F0FF]" />}
         </div>
         {trend !== undefined && (
-          <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full ${trend >= 0 ? 'text-emerald-500 bg-emerald-500/10' : 'text-red-500 bg-red-500/10'}`}>
+          <span className={`text-[10px] font-display font-extrabold px-2 py-0.5 rounded-xs border ${trend >= 0 ? 'text-emerald-400 border-emerald-500/40 bg-emerald-950/60' : 'text-[#FF4D4D] border-red-500/40 bg-red-950/60'}`}>
             {trend >= 0 ? '↑' : '↓'} {Math.abs(trend)}%
           </span>
         )}
       </div>
       <div>
-        <div className="text-3xl font-extrabold tabular-nums text-[#18191E] dark:text-white mb-0.5">{value}</div>
-        <div className="text-xs font-bold text-stone-500 dark:text-stone-400">{label}</div>
-        {sublabel && <div className="text-[10px] text-stone-400 dark:text-white/40 mt-0.5 font-medium">{sublabel}</div>}
+        <div className="text-3xl font-display font-black text-white text-glow-cyan mb-0.5">{value}</div>
+        <div className="text-xs font-display font-extrabold uppercase tracking-wider text-white/70">{label}</div>
+        {sublabel && <div className="text-[10px] text-white/50 mt-0.5 font-sans">{sublabel}</div>}
       </div>
     </div>
   );
@@ -1477,10 +1477,10 @@ function TabButton({ active, label, count, onClick }) {
   return (
     <button
       onClick={onClick}
-      className={`px-4 py-2 text-xs font-extrabold uppercase tracking-wider rounded-full transition-all ${
+      className={`px-4 py-2 text-xs font-display font-bold uppercase tracking-wider rounded-xs transition-all ${
         active
-          ? 'bg-accent text-white shadow-md'
-          : 'text-stone-500 dark:text-white/50 hover:text-[#18191E] dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5'
+          ? 'bg-[#00F0FF]/20 text-[#00F0FF] border border-[#00F0FF]/50 shadow-[0_0_15px_rgba(0,240,255,0.25)]'
+          : 'text-white/60 hover:text-white hover:bg-white/5'
       }`}
     >
       {label}
@@ -1644,14 +1644,15 @@ function DesktopTaskManager({ pillars, logs, logTarget, dateStr, setPillars }) {
   }
 
   return (
-    <div id="daily-targets" className="card-bento p-5">
+    <div id="daily-targets" className="hud-panel hud-brackets p-5 text-white space-y-3">
       {/* Header */}
-      <div className="pb-4">
-        <div className="flex items-center justify-between mb-4">
+      <div className="pb-3 border-b border-[#00F0FF]/20">
+        <div className="flex items-center justify-between mb-2">
           <div>
-            <h3 className="text-base font-extrabold text-[#18191E] dark:text-white">Daily Practice Targets</h3>
-            <p className="text-[11px] text-stone-400 dark:text-white/40 mt-0.5 font-medium">Complete your daily targets</p>
+            <h3 className="text-base font-display font-black text-white text-glow-cyan">Daily Practice Targets</h3>
+            <p className="text-[11px] text-white/60 font-sans">Complete daily practice quests to gain XP</p>
           </div>
+
           {/* Pillar filter */}
           <div className="relative">
             <select
@@ -1840,12 +1841,13 @@ function DesktopWeeklyChart({ logs, pillars }) {
   ];
 
   return (
-    <div className="card-bento p-5 space-y-4">
+    <div className="hud-panel hud-brackets p-5 text-white space-y-4">
       {/* Header */}
-      <div className="flex items-start justify-between gap-3 flex-wrap">
+      <div className="flex items-start justify-between gap-3 flex-wrap border-b border-[#00F0FF]/20 pb-3">
         <div>
-          <h3 className="text-base font-bold text-[#18191E] dark:text-white mb-1.5">Completion Analysis</h3>
-          <div className="inline-flex items-center p-1 rounded-2xl border border-black/5 dark:border-white/10 bg-black/5 dark:bg-white/5 text-[11px] font-extrabold flex-wrap gap-0.5">
+          <h3 className="text-base font-display font-black text-white text-glow-cyan mb-1.5">COMPLETION ANALYSIS</h3>
+          <div className="inline-flex items-center p-1 rounded-xs border border-white/10 bg-[#080C18] text-[11px] font-display font-extrabold flex-wrap gap-0.5">
+
             {[
               { id: '1', label: 'Today' },
               { id: '7', label: '7D' },
@@ -2109,24 +2111,25 @@ function DesktopGoalVisualization({ pillars, logs, dateStr }) {
   const dayLog = logs[dateStr] || {};
 
   return (
-    <div className="card-bento p-5 space-y-4">
-      <div className="flex items-center justify-between">
+    <div className="hud-panel hud-brackets p-5 text-white space-y-4">
+      <div className="flex items-center justify-between border-b border-[#00F0FF]/20 pb-3">
         <div>
-          <h3 className="text-base font-extrabold text-[#18191E] dark:text-white flex items-center gap-2">
-            <Target size={18} className="text-accent" /> Goal Progress & Targets
+          <h3 className="text-base font-display font-black text-white text-glow-cyan flex items-center gap-2">
+            <Target size={18} className="text-[#00F0FF]" /> Goal Progress & System Targets
           </h3>
-          <p className="text-xs text-stone-500 dark:text-stone-400 mt-0.5 font-medium">
-            Live progress across linked pillars, trackers & independent goals
+          <p className="text-xs text-white/60 font-sans mt-0.5">
+            Live progress across linked pillars, trackers & independent system goals
           </p>
         </div>
         <Link
           to="/sadhana"
           state={{ addGoal: true }}
-          className="btn-coral text-xs px-3 py-1.5 flex items-center gap-1.5 shrink-0 shadow-sm"
+          className="btn-system-primary text-xs px-3 py-1.5 flex items-center gap-1.5 shrink-0 shadow-sm font-display uppercase"
         >
           <Plus size={13} /> Set Goal
         </Link>
       </div>
+
 
       {goals.length > 0 ? (
         <div className="space-y-3">
