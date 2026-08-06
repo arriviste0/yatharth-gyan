@@ -374,22 +374,21 @@ function LogValueModal({ target, dateStr, onLog, onClose }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-[fadeIn_0.2s_ease-out]">
-      <div className="w-full max-w-md bg-white dark:bg-[#181926] border border-black/10 dark:border-white/10 rounded-3xl p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+      <div className="w-full max-w-md bg-white dark:bg-[#181A26] border border-stone-100 dark:border-white/10 rounded-[32px] p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
         {/* Modal Header */}
         <div className="flex items-start justify-between">
           <div>
-            <span className="text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-1 rounded-full"
-              style={{ background: `${target.pillarColor}15`, color: target.pillarColor }}>
+            <span className="text-[10px] font-extrabold uppercase tracking-wider px-3 py-1 rounded-full bg-stone-100 dark:bg-white/10 text-stone-800 dark:text-stone-200">
               {target.pillarName}
             </span>
-            <h3 className="text-lg font-extrabold text-[#18191E] dark:text-white mt-2">{target.name}</h3>
+            <h3 className="text-xl font-extrabold text-stone-900 dark:text-white mt-2">{target.name}</h3>
             {unit && !isMulti && (
               <p className="text-xs text-stone-500 dark:text-stone-400 mt-0.5 font-medium">
                 Log your {unit ? `value in ${unit}` : 'value'}
               </p>
             )}
           </div>
-          <button onClick={onClose} className="w-8 h-8 rounded-full flex items-center justify-center text-stone-400 hover:text-stone-700 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5 transition-all">
+          <button onClick={onClose} className="w-8 h-8 rounded-full flex items-center justify-center text-stone-400 hover:text-stone-700 dark:hover:text-white hover:bg-stone-100 dark:hover:bg-white/5 transition-all">
             <X size={16} />
           </button>
         </div>
@@ -398,14 +397,14 @@ function LogValueModal({ target, dateStr, onLog, onClose }) {
         <form onSubmit={handleSubmit} className="space-y-4 pt-1">
           {isMulti ? (
             <div className="space-y-3">
-              <label className="block text-xs font-extrabold text-accent uppercase tracking-wider">
+              <label className="block text-xs font-bold text-stone-700 dark:text-stone-300 uppercase tracking-wider">
                 Logged Sub-Metrics Breakdown
               </label>
               {subMetrics.map((sub) => {
                 const idKey = sub.id || sub.name;
                 return (
-                  <div key={idKey} className="p-3.5 rounded-2xl bg-black/[0.02] dark:bg-white/[0.03] border border-black/5 dark:border-white/5 space-y-2">
-                    <div className="flex items-center justify-between text-xs font-bold text-[#18191E] dark:text-white">
+                  <div key={idKey} className="p-3.5 rounded-2xl bg-stone-50 dark:bg-white/[0.03] border border-stone-200/60 dark:border-white/5 space-y-2">
+                    <div className="flex items-center justify-between text-xs font-bold text-stone-900 dark:text-white">
                       <span>{sub.name}</span>
                       <span className="text-[10px] text-stone-400">
                         Goal: {sub.comparison === 'lte' ? '≤' : '≥'} {sub.targetValue} {sub.unit || unit}
@@ -418,9 +417,9 @@ function LogValueModal({ target, dateStr, onLog, onClose }) {
                         value={subVals[idKey] ?? ''}
                         onChange={(e) => setSubVals({ ...subVals, [idKey]: e.target.value })}
                         placeholder={isDuration ? '00:30' : '0'}
-                        className="flex-1 text-base font-bold text-[#18191E] dark:text-white bg-white dark:bg-[#181926] border border-black/10 dark:border-white/10 rounded-xl px-3.5 py-2.5 outline-none focus:border-accent"
+                        className="input-pill flex-1"
                       />
-                      <span className="text-xs font-bold text-stone-500 px-3 py-2.5 rounded-xl bg-black/5 dark:bg-white/5">
+                      <span className="text-xs font-bold text-stone-500 px-3 py-2 rounded-full bg-stone-100 dark:bg-white/5">
                         {sub.unit || unit}
                       </span>
                     </div>
@@ -441,10 +440,10 @@ function LogValueModal({ target, dateStr, onLog, onClose }) {
                   onChange={(e) => setVal(e.target.value)}
                   placeholder={isDuration ? '00:45' : (target.targetValue != null ? String(target.targetValue) : '0')}
                   autoFocus
-                  className="flex-1 text-base font-bold text-[#18191E] dark:text-white bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-2xl px-4 py-3 outline-none focus:border-[#F05A36] transition-colors"
+                  className="input-pill flex-1 text-base"
                 />
                 {unit && !isDuration && (
-                  <span className="text-sm font-bold text-stone-500 dark:text-stone-400 px-3.5 py-3 rounded-2xl bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10">
+                  <span className="text-sm font-bold text-stone-500 dark:text-stone-400 px-4 py-2.5 rounded-full bg-stone-100 dark:bg-white/5 border border-stone-200 dark:border-white/10">
                     {unit}
                   </span>
                 )}
@@ -463,7 +462,7 @@ function LogValueModal({ target, dateStr, onLog, onClose }) {
                     key={mult}
                     type="button"
                     onClick={() => setVal(String(preset))}
-                    className="text-xs font-bold px-3 py-1.5 rounded-full bg-black/5 dark:bg-white/5 hover:bg-accent hover:text-white transition-all text-stone-600 dark:text-stone-300 border border-black/5 dark:border-white/10"
+                    className="text-xs font-bold px-3 py-1.5 rounded-full bg-stone-100 dark:bg-white/5 hover:bg-stone-900 hover:text-white transition-all text-stone-700 dark:text-stone-300"
                   >
                     {preset} {unit}
                   </button>
@@ -476,15 +475,15 @@ function LogValueModal({ target, dateStr, onLog, onClose }) {
           <div className="flex gap-2 pt-2">
             <button
               type="submit"
-              className="flex-1 btn-coral py-3.5 px-6 text-xs font-extrabold uppercase tracking-wider shadow-md hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2"
+              className="flex-1 btn-pill-dark py-3 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2"
             >
-              {isDone ? 'Update Log' : 'Log & Complete'}
+              Save Value
             </button>
-            {isDone && (
+            {target.done && (
               <button
                 type="button"
                 onClick={handleClear}
-                className="btn-secondary-outline px-5 py-3.5 text-xs font-extrabold uppercase tracking-wider text-red-500 hover:bg-red-500 hover:text-white border-red-500/30 transition-all rounded-full"
+                className="px-4 py-3 rounded-full text-xs font-bold text-red-600 bg-red-50 hover:bg-red-100 dark:bg-red-950/40 dark:text-red-400 transition-all"
               >
                 Clear Log
               </button>
@@ -495,6 +494,7 @@ function LogValueModal({ target, dateStr, onLog, onClose }) {
     </div>
   );
 }
+
 
 function isInputRequired(target) {
   if (!target) return false;
@@ -1450,23 +1450,23 @@ function MobileTodayView({ pillars, logs, metrics = {}, logTarget, dateStr, stre
  * ═══════════════════════════════════════════════════════════════════ */
 
 /* ── KPI Metric Card ──────────────────────────────────────────────── */
-function KPICard({ label, value, sublabel, color = '#00F0FF', icon: IconComp, trend }) {
+function KPICard({ label, value, sublabel, color = '#18191E', icon: IconComp, trend, bgClass = 'card-ref' }) {
   return (
-    <div className="hud-panel hud-brackets p-5 transition-all flex flex-col justify-between text-white space-y-2">
-      <div className="flex items-start justify-between mb-2">
-        <div className="w-9 h-9 rounded-xs flex items-center justify-center bg-[#00F0FF]/15 border border-[#00F0FF]/30 text-[#00F0FF]">
-          {IconComp && <IconComp size={18} className="text-[#00F0FF]" />}
+    <div className={`${bgClass} p-6 transition-all flex flex-col justify-between`}>
+      <div className="flex items-start justify-between mb-3">
+        <div className="w-10 h-10 rounded-2xl flex items-center justify-center bg-stone-100 dark:bg-white/10 text-stone-900 dark:text-white">
+          {IconComp && <IconComp size={18} />}
         </div>
         {trend !== undefined && (
-          <span className={`text-[10px] font-display font-extrabold px-2 py-0.5 rounded-xs border ${trend >= 0 ? 'text-emerald-400 border-emerald-500/40 bg-emerald-950/60' : 'text-[#FF4D4D] border-red-500/40 bg-red-950/60'}`}>
+          <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full ${trend >= 0 ? 'text-emerald-800 bg-emerald-100' : 'text-red-800 bg-red-100'}`}>
             {trend >= 0 ? '↑' : '↓'} {Math.abs(trend)}%
           </span>
         )}
       </div>
       <div>
-        <div className="text-3xl font-display font-black text-white text-glow-cyan mb-0.5">{value}</div>
-        <div className="text-xs font-display font-extrabold uppercase tracking-wider text-white/70">{label}</div>
-        {sublabel && <div className="text-[10px] text-white/50 mt-0.5 font-sans">{sublabel}</div>}
+        <div className="text-3xl font-extrabold text-stone-900 dark:text-white tracking-tight mb-0.5">{value}</div>
+        <div className="text-xs font-bold text-stone-600 dark:text-stone-300">{label}</div>
+        {sublabel && <div className="text-[10px] text-stone-400 dark:text-stone-400 mt-0.5 font-medium">{sublabel}</div>}
       </div>
     </div>
   );
@@ -1477,21 +1477,22 @@ function TabButton({ active, label, count, onClick }) {
   return (
     <button
       onClick={onClick}
-      className={`px-4 py-2 text-xs font-display font-bold uppercase tracking-wider rounded-xs transition-all ${
+      className={`px-4 py-2 text-xs font-bold rounded-full transition-all flex items-center gap-1.5 ${
         active
-          ? 'bg-[#00F0FF]/20 text-[#00F0FF] border border-[#00F0FF]/50 shadow-[0_0_15px_rgba(0,240,255,0.25)]'
-          : 'text-white/60 hover:text-white hover:bg-white/5'
+          ? 'bg-[#18191E] text-white dark:bg-[#00F0FF] dark:text-[#080C18] shadow-xs'
+          : 'text-stone-600 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-white/5'
       }`}
     >
-      {label}
+      <span>{label}</span>
       {count !== undefined && (
-        <span className={`ml-1.5 px-2 py-0.5 rounded-full text-[10px] ${active ? 'bg-white/20' : 'bg-black/5 dark:bg-white/10'}`}>
+        <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold ${active ? 'bg-white/20 text-white dark:text-[#080C18]' : 'bg-stone-100 dark:bg-white/10 text-stone-700 dark:text-stone-300'}`}>
           {count}
         </span>
       )}
     </button>
   );
 }
+
 
 /* ── Desktop Task Row ─────────────────────────────────────────────── */
 function TaskRow({ target, dateStr, logTarget, onEdit, onLogModal }) {
@@ -1644,36 +1645,37 @@ function DesktopTaskManager({ pillars, logs, logTarget, dateStr, setPillars }) {
   }
 
   return (
-    <div id="daily-targets" className="hud-panel hud-brackets p-5 text-white space-y-3">
+    <div id="daily-targets" className="card-ref p-6 space-y-4">
       {/* Header */}
-      <div className="pb-3 border-b border-[#00F0FF]/20">
-        <div className="flex items-center justify-between mb-2">
+      <div className="pb-3 border-b border-stone-100 dark:border-white/5">
+        <div className="flex items-center justify-between mb-3">
           <div>
-            <h3 className="text-base font-display font-black text-white text-glow-cyan">Daily Practice Targets</h3>
-            <p className="text-[11px] text-white/60 font-sans">Complete daily practice quests to gain XP</p>
+            <h3 className="text-lg font-extrabold text-stone-900 dark:text-white tracking-tight">To do list</h3>
+            <p className="text-xs text-stone-500 dark:text-stone-400 font-medium">Manage and log your daily practice targets</p>
           </div>
 
-          {/* Pillar filter */}
+          {/* Pillar filter dropdown */}
           <div className="relative">
             <select
               value={filterPillar}
               onChange={(e) => setFilterPillar(e.target.value)}
-              className="appearance-none bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 text-[#18191E] dark:text-white text-xs font-extrabold px-3 py-1.5 pr-7 rounded-xl outline-none focus:border-[#F05A36] cursor-pointer"
+              className="select-pill appearance-none pr-8 text-xs shadow-xs"
             >
-              <option value="all" className="text-stone-800">All Pillars</option>
-              {pillars.map((p) => <option key={p.id} value={p.id} className="text-stone-800">{p.english}</option>)}
+              <option value="all">All Pillars</option>
+              {pillars.map((p) => <option key={p.id} value={p.id}>{p.english}</option>)}
             </select>
-            <ChevronDown size={11} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-stone-400 pointer-events-none" />
+            <ChevronDown size={12} className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 pointer-events-none" />
           </div>
         </div>
 
-        {/* Tabs */}
-        <div className="flex items-center gap-1.5">
-          <TabButton active={tab === 'all'} label="All" count={activeTargets.length} onClick={() => setTab('all')} />
-          <TabButton active={tab === 'pending'} label="Pending" count={pendingCount} onClick={() => setTab('pending')} />
-          <TabButton active={tab === 'done'} label="Done" count={doneCount} onClick={() => setTab('done')} />
+        {/* Pill Tabs (Reference Design Style) */}
+        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
+          <TabButton active={tab === 'all'} label="Design" count={activeTargets.length} onClick={() => setTab('all')} />
+          <TabButton active={tab === 'pending'} label="Course" count={pendingCount} onClick={() => setTab('pending')} />
+          <TabButton active={tab === 'done'} label="Development" count={doneCount} onClick={() => setTab('done')} />
         </div>
       </div>
+
 
       {/* Task List */}
       <div className="space-y-1.5 max-h-[440px] overflow-y-auto no-scrollbar">
@@ -1841,74 +1843,45 @@ function DesktopWeeklyChart({ logs, pillars }) {
   ];
 
   return (
-    <div className="hud-panel hud-brackets p-5 text-white space-y-4">
+    <div className="card-ref p-6 space-y-4">
       {/* Header */}
-      <div className="flex items-start justify-between gap-3 flex-wrap border-b border-[#00F0FF]/20 pb-3">
+      <div className="flex items-start justify-between gap-3 flex-wrap border-b border-stone-100 dark:border-white/5 pb-3">
         <div>
-          <h3 className="text-base font-display font-black text-white text-glow-cyan mb-1.5">COMPLETION ANALYSIS</h3>
-          <div className="inline-flex items-center p-1 rounded-xs border border-white/10 bg-[#080C18] text-[11px] font-display font-extrabold flex-wrap gap-0.5">
-
+          <h3 className="text-lg font-extrabold text-stone-900 dark:text-white tracking-tight">Activity & Completion</h3>
+          <p className="text-xs text-stone-500 dark:text-stone-400 font-medium">Track your practice consistency over time</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="inline-flex items-center p-1 rounded-full bg-stone-100 dark:bg-white/5 text-xs font-bold gap-0.5">
             {[
-              { id: '1', label: 'Today' },
               { id: '7', label: '7D' },
               { id: '14', label: '14D' },
               { id: '30', label: '30D' },
-              { id: '90', label: '90D' },
             ].map(tf => (
               <button
                 key={tf.id}
                 type="button"
                 onClick={() => setTimeframeMode(tf.id)}
-                className={`px-2.5 py-1 rounded-xl transition-all ${timeframeMode === tf.id ? 'bg-accent text-white shadow-sm' : 'text-stone-500 dark:text-stone-400 hover:text-[#18191E] dark:hover:text-white'}`}
+                className={`px-3 py-1 rounded-full text-xs font-bold transition-all ${
+                  timeframeMode === tf.id
+                    ? 'bg-[#18191E] text-white dark:bg-[#00F0FF] dark:text-[#080C18] shadow-xs'
+                    : 'text-stone-500 hover:text-stone-900 dark:text-stone-400'
+                }`}
               >
                 {tf.label}
               </button>
             ))}
-
-            {timeframeMode !== 'custom' ? (
-              <button
-                type="button"
-                onClick={() => setTimeframeMode('custom')}
-                className="px-2.5 py-1 rounded-xl transition-all text-stone-500 dark:text-stone-400 hover:text-[#18191E] dark:hover:text-white"
-              >
-                Custom
-              </button>
-            ) : (
-              <div className="flex items-center gap-0 bg-accent text-white rounded-xl overflow-hidden shadow-sm">
-                <button
-                  type="button"
-                  onClick={() => setCustomDays(Math.max(1, customDays - 1))}
-                  className="px-1.5 py-1 text-white/80 hover:text-white font-bold"
-                >
-                  −
-                </button>
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  value={customDays}
-                  onChange={(e) => {
-                    const v = parseInt(e.target.value);
-                    if (!isNaN(v) && v >= 1 && v <= 365) setCustomDays(v);
-                  }}
-                  className="w-7 bg-transparent text-white text-center font-extrabold outline-none text-[11px] py-1"
-                />
-                <span className="text-white/60 text-[9px] pr-1 font-bold">d</span>
-                <button
-                  type="button"
-                  onClick={() => setCustomDays(Math.min(365, customDays + 1))}
-                  className="px-1.5 py-1 text-white/80 hover:text-white font-bold"
-                >
-                  +
-                </button>
-              </div>
-            )}
           </div>
         </div>
-        <div className="text-right shrink-0">
-          <div className="text-2xl font-extrabold tabular-nums text-accent">{avg}%</div>
-          <div className="text-[10px] text-stone-400 dark:text-white/30">avg rate ({daysCount}d)</div>
+      </div>
+
+      {/* Graph Area */}
+      <div className="flex items-center justify-between">
+        <div>
+          <div className="text-2xl font-extrabold text-stone-900 dark:text-white tabular-nums">{avg}%</div>
+          <div className="text-xs text-stone-400 font-medium">Average Completion Rate ({daysCount}d)</div>
         </div>
       </div>
+
 
       {/* Pillar Filter Pills */}
       {pillars.length > 0 && (
@@ -2111,24 +2084,25 @@ function DesktopGoalVisualization({ pillars, logs, dateStr }) {
   const dayLog = logs[dateStr] || {};
 
   return (
-    <div className="hud-panel hud-brackets p-5 text-white space-y-4">
-      <div className="flex items-center justify-between border-b border-[#00F0FF]/20 pb-3">
+    <div className="card-ref p-6 space-y-4">
+      <div className="flex items-center justify-between border-b border-stone-100 dark:border-white/5 pb-3">
         <div>
-          <h3 className="text-base font-display font-black text-white text-glow-cyan flex items-center gap-2">
-            <Target size={18} className="text-[#00F0FF]" /> Goal Progress & System Targets
+          <h3 className="text-lg font-extrabold text-stone-900 dark:text-white tracking-tight flex items-center gap-2">
+            <Target size={18} className="text-stone-900 dark:text-cyan-400" /> Goal Progress & Targets
           </h3>
-          <p className="text-xs text-white/60 font-sans mt-0.5">
-            Live progress across linked pillars, trackers & independent system goals
+          <p className="text-xs text-stone-500 dark:text-stone-400 font-medium">
+            Live progress across linked pillars, trackers & goals
           </p>
         </div>
         <Link
           to="/sadhana"
           state={{ addGoal: true }}
-          className="btn-system-primary text-xs px-3 py-1.5 flex items-center gap-1.5 shrink-0 shadow-sm font-display uppercase"
+          className="btn-pill-dark text-xs px-4 py-2 flex items-center gap-1.5 shrink-0"
         >
           <Plus size={13} /> Set Goal
         </Link>
       </div>
+
 
 
       {goals.length > 0 ? (

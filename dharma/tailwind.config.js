@@ -5,7 +5,28 @@ export default {
   theme: {
     extend: {
       colors: {
-        /* ASCEND System Theme Colors */
+        /* Reference Soft Pastel Palette */
+        pastel: {
+          canvas: '#F4F7F6',
+          darkCanvas: '#0F111A',
+          card: '#FFFFFF',
+          darkCard: '#181A26',
+          yellow: '#FEF3D6',
+          yellowText: '#855B14',
+          mint: '#E1F5E9',
+          mintText: '#1B633A',
+          purple: '#EAE5FF',
+          purpleText: '#4A34A3',
+          blue: '#E0F2FE',
+          blueText: '#0369A1',
+          peach: '#FFEAD2',
+          peachText: '#9A4112',
+          coral: '#FFE5E5',
+          coralText: '#991B1B',
+          darkPill: '#18191E',
+          subtleBorder: '#EFEFEF',
+        },
+        /* ASCEND System Palette */
         system: {
           bg: '#0B0E1A',
           panel: 'rgba(13, 18, 36, 0.85)',
@@ -34,7 +55,6 @@ export default {
           a: '#A855F7',
           s: '#F59E0B',
         },
-        /* Stat Attribute Categories (Mind / Health / Wealth + Dynamic) */
         stat: {
           mind: '#A855F7',
           health: '#10B981',
@@ -42,24 +62,27 @@ export default {
           custom: '#00F0FF',
         },
       },
+      borderRadius: {
+        '2xl': '1.25rem',
+        '3xl': '1.75rem',
+        '4xl': '2.25rem',
+      },
       fontFamily: {
-        display: ['Orbitron', 'Rajdhani', 'sans-serif'],
-        stat: ['Rajdhani', 'sans-serif'],
+        display: ['Outfit', 'Plus Jakarta Sans', 'sans-serif'],
+        stat: ['Plus Jakarta Sans', 'sans-serif'],
         sans: ['Plus Jakarta Sans', 'Outfit', 'system-ui', 'sans-serif'],
         devanagari: ['Tiro Devanagari Hindi', 'Mukta', 'serif'],
       },
       boxShadow: {
+        'card-subtle': '0 4px 20px -2px rgba(0, 0, 0, 0.03), 0 2px 6px -1px rgba(0, 0, 0, 0.02)',
+        'card-float': '0 12px 32px -4px rgba(0, 0, 0, 0.06), 0 4px 12px -2px rgba(0, 0, 0, 0.03)',
         'hud-glass': 'inset 0 0 15px rgba(79, 140, 255, 0.08), 0 8px 32px rgba(0, 0, 0, 0.6)',
         'hud-cyan': 'inset 0 0 20px rgba(0, 240, 255, 0.15), 0 0 25px rgba(0, 240, 255, 0.3)',
-        'hud-violet': 'inset 0 0 20px rgba(168, 85, 247, 0.15), 0 0 25px rgba(168, 85, 247, 0.3)',
-        'hud-warning': 'inset 0 0 15px rgba(255, 77, 77, 0.12), 0 0 25px rgba(255, 77, 77, 0.25)',
-        'hud-gold': 'inset 0 0 25px rgba(245, 158, 11, 0.2), 0 0 35px rgba(245, 158, 11, 0.4)',
       },
       animation: {
         'xp-shimmer': 'xp-shimmer 2s infinite',
         'system-flash': 'system-flash 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards',
         'rank-pulse': 'rank-pulse 2.5s infinite ease-in-out',
-        'hud-scan': 'hud-scan 8s linear infinite',
       },
       keyframes: {
         'xp-shimmer': {
@@ -74,10 +97,6 @@ export default {
         'rank-pulse': {
           '0%, 100%': { boxShadow: '0 0 15px rgba(168, 85, 247, 0.4)' },
           '50%': { boxShadow: '0 0 30px rgba(0, 240, 255, 0.9)' },
-        },
-        'hud-scan': {
-          '0%': { backgroundPosition: '0 0' },
-          '100%': { backgroundPosition: '0 100%' },
         },
       },
     },

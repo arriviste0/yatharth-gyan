@@ -4,10 +4,10 @@ import { useSystemStats } from '../hooks/useSystemStats';
 import LevelUpModal from '../components/LevelUpModal';
 
 const STAT_BADGES = {
-  mind: { label: 'MIND (ज्ञान)', color: '#A855F7', border: 'border-purple-500/40', bg: 'bg-purple-950/60' },
-  health: { label: 'HEALTH (साधना)', color: '#10B981', border: 'border-emerald-500/40', bg: 'bg-emerald-950/60' },
-  wealth: { label: 'WEALTH (धर्म)', color: '#F59E0B', border: 'border-amber-500/40', bg: 'bg-amber-950/60' },
-  tapas: { label: 'TAPAS (तपस्)', color: '#00F0FF', border: 'border-cyan-500/40', bg: 'bg-cyan-950/60' },
+  mind: { label: 'MIND (ज्ञान)', color: '#A855F7', bg: 'bg-purple-100 text-purple-900 dark:bg-purple-950/60 dark:text-purple-300' },
+  health: { label: 'HEALTH (साधना)', color: '#10B981', bg: 'bg-emerald-100 text-emerald-900 dark:bg-emerald-950/60 dark:text-emerald-300' },
+  wealth: { label: 'WEALTH (धर्म)', color: '#F59E0B', bg: 'bg-amber-100 text-amber-900 dark:bg-amber-950/60 dark:text-amber-300' },
+  tapas: { label: 'TAPAS (तपस्)', color: '#3B82F6', bg: 'bg-blue-100 text-blue-900 dark:bg-blue-950/60 dark:text-blue-300' },
 };
 
 export default function QuestBoard() {
@@ -52,7 +52,7 @@ export default function QuestBoard() {
       statKey: 'health',
       xpReward: 200,
       frequency: 'daily',
-      status: 'failed', // Penalty state!
+      status: 'failed',
       dueDate: new Date(Date.now() - 86400000).toISOString(),
     },
     {
@@ -90,44 +90,48 @@ export default function QuestBoard() {
   const weeklyQuests = quests.filter(q => q.frequency === 'weekly');
   const bossQuests = quests.filter(q => q.frequency === 'boss');
 
+  const visibleQuests = activeCategory === 'daily' ? dailyQuests
+    : activeCategory === 'weekly' ? weeklyQuests
+    : bossQuests;
+
   return (
-    <div className="page-container page-transition">
+    <div className="page-container page-transition space-y-6">
       {system.levelUpData && (
         <LevelUpModal data={system.levelUpData} onClose={system.dismissLevelUp} />
       )}
 
       {/* Header */}
-      <div className="flex items-start justify-between mb-6 flex-wrap sm:flex-nowrap gap-3">
+      <div className="flex items-start justify-between flex-wrap sm:flex-nowrap gap-3">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <span className="text-[10px] font-display font-extrabold text-[#00F0FF] tracking-widest uppercase px-2 py-0.5 bg-[#00F0FF]/10 border border-[#00F0FF]/30 rounded-xs">
-              SYSTEM QUEST BOARD
+            <span className="text-[10px] font-extrabold text-stone-700 dark:text-stone-300 tracking-wider uppercase px-2.5 py-0.5 bg-stone-200 dark:bg-white/10 rounded-full">
+              Quest Board
             </span>
-            <span className="text-[11px] font-dev text-[#00F0FF]/70">साधना मण्डल</span>
+            <span className="text-xs font-dev text-stone-500">साधना मण्डल</span>
           </div>
-          <h1 className="text-2xl lg:text-3xl font-display font-black text-white tracking-wider text-glow-cyan">
-            QUEST BOARD & DUNGEONS
+          <h1 className="text-2xl lg:text-3xl font-extrabold text-stone-900 dark:text-white tracking-tight">
+            Quest Board & Dungeons
           </h1>
-          <p className="text-xs text-white/60 font-sans mt-1">
+          <p className="text-xs text-stone-500 dark:text-stone-400 mt-1 font-medium">
             Execute daily quests, raid weekly dungeons, and defeat boss milestones to level up.
           </p>
         </div>
       </div>
 
-      {/* Section Tabs */}
-      <div className="flex gap-1 p-1 rounded-xs bg-[#0D1224] border border-white/10 mb-6">
+      {/* Section Tabs (Reference Pill Style) */}
+      <div className="flex gap-2 p-1.5 rounded-full bg-stone-100 dark:bg-white/5">
         {[
-          { id: 'daily', label: '⚔️ DAILY QUESTS', count: dailyQuests.length },
-          { id: 'weekly', label: '🏰 WEEKLY DUNGEONS', count: weeklyQuests.length },
-          { id: 'boss', label: '🐲 BOSS FIGHTS', count: bossQuests.length },
+          { id: 'daily', label: '⚔️ Daily Quests', count: dailyQuests.length },
+          { id: 'weekly', label: '🏰 Weekly Dungeons', count: weeklyQuests.length },
+          { id: 'boss', label: '🐲 Boss Fights', count: bossQuests.length },
         ].map(t => (
           <button
             key={t.id}
             onClick={() => setActiveCategory(t.id)}
-            className={`flex-1 py-2.5 px-3 rounded-xs text-xs font-display font-bold transition-all ${
+            className={`flex-1 py-2.5 px-4 rounded-full text-xs font-bold transition-all ${
               activeCategory === t.id
-                ? 'bg-[#00F0FF]/20 text-[#00F0FF] border border-[#00F0FF]/50 shadow-[0_0_15px_rgba(0,240,255,0.2)]'
-                : 'text-white/60 hover:text-white'
+                ? 'bg-[#18191E] text-white dark:bg-[#00F0FF] dark:text-[#080C18] shadow-sm'
+                : 'text-stone-600 dark:text-stone-400 hover:text-stone-900'
             }`}
           >
             {t.label} ({t.count})
@@ -137,89 +141,85 @@ export default function QuestBoard() {
 
       {/* ── PENALTY ZONE (Overdue Quests) ── */}
       {penaltyQuests.length > 0 && (
-        <div className="mb-8 space-y-3">
-          <div className="flex items-center gap-2 text-xs font-display font-bold text-[#FF4D4D] tracking-widest uppercase">
+        <div className="space-y-3">
+          <div className="flex items-center gap-2 text-xs font-extrabold text-red-600 dark:text-red-400 uppercase tracking-wider">
             <AlertOctagon size={16} className="animate-pulse" />
-            [!] SYSTEM PENALTY ZONE — OVERDUE MISSED QUESTS
+            Penalty Zone — Overdue Missed Quests
           </div>
 
           {penaltyQuests.map((q) => (
-            <div key={q.id} className="hud-panel hud-panel-warning p-4 rounded-xs text-white space-y-2">
+            <div key={q.id} className="card-ref p-5 border-l-4 border-red-500 bg-red-50/50 dark:bg-red-950/20 space-y-2">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <span className="px-2 py-0.5 bg-red-950 border border-red-500/50 text-[#FF4D4D] text-[10px] font-display font-bold rounded-xs">
+                  <span className="px-2.5 py-0.5 bg-red-100 text-red-800 dark:bg-red-900/60 dark:text-red-200 text-[10px] font-extrabold rounded-full">
                     FAILED / PENALTY
                   </span>
-                  <h3 className="font-display font-bold text-sm text-[#FF4D4D]">{q.title}</h3>
+                  <h3 className="font-extrabold text-sm text-red-700 dark:text-red-400">{q.title}</h3>
                 </div>
-                <span className="font-display text-xs text-[#FF4D4D] font-bold">-100 MANA DEDUCTED</span>
+                <span className="text-xs text-red-600 dark:text-red-400 font-extrabold">-100 MANA DEDUCTED</span>
               </div>
-              <p className="text-xs text-white/70 font-sans">{q.desc}</p>
+              <p className="text-xs text-stone-600 dark:text-stone-300 font-medium">{q.desc}</p>
             </div>
           ))}
         </div>
       )}
 
-      {/* ── QUEST CARDS LIST ── */}
+      {/* ── ACTIVE QUEST CARDS ── */}
       <div className="space-y-4">
-        {activeCategory === 'daily' && dailyQuests.map(q => <QuestCard key={q.id} quest={q} onComplete={handleComplete} />)}
-        {activeCategory === 'weekly' && weeklyQuests.map(q => <QuestCard key={q.id} quest={q} onComplete={handleComplete} />)}
-        {activeCategory === 'boss' && bossQuests.map(q => <QuestCard key={q.id} quest={q} onComplete={handleComplete} />)}
-      </div>
-    </div>
-  );
-}
+        {visibleQuests.map((q) => {
+          const badge = STAT_BADGES[q.statKey] || STAT_BADGES.mind;
+          const isCompleted = q.status === 'completed';
 
-function QuestCard({ quest, onComplete }) {
-  const isDone = quest.status === 'completed';
-  const badge = STAT_BADGES[quest.statKey] || STAT_BADGES.mind;
+          return (
+            <div
+              key={q.id}
+              className={`card-ref p-6 transition-all flex flex-col md:flex-row md:items-center justify-between gap-4 ${
+                isCompleted ? 'opacity-60 bg-stone-50 dark:bg-white/[0.02]' : ''
+              }`}
+            >
+              <div className="space-y-2 flex-1">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className={`text-[10px] font-extrabold px-3 py-1 rounded-full ${badge.bg}`}>
+                    {badge.label}
+                  </span>
+                  <span className="text-xs font-extrabold text-[#855B14] bg-[#FEF3D6] px-2.5 py-0.5 rounded-full">
+                    +{q.xpReward} XP
+                  </span>
+                </div>
+                <h3 className={`text-base font-extrabold ${isCompleted ? 'line-through text-stone-400' : 'text-stone-900 dark:text-white'}`}>
+                  {q.title}
+                </h3>
+                <p className="text-xs text-stone-500 dark:text-stone-400 font-medium">
+                  {q.desc}
+                </p>
+              </div>
 
-  return (
-    <div className={`hud-panel p-4 rounded-xs space-y-3 transition-all ${isDone ? 'opacity-60 border-emerald-500/40 bg-emerald-950/20' : 'hover:border-[#00F0FF]/50'}`}>
-      <div className="flex items-start justify-between gap-3">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <span className={`px-2 py-0.5 text-[10px] font-display font-bold rounded-xs border ${badge.border} ${badge.bg}`} style={{ color: badge.color }}>
-              {badge.label}
-            </span>
-            <span className="text-[10px] font-display text-white/40 uppercase tracking-wider">
-              {quest.frequency} QUEST
-            </span>
-          </div>
-          <h3 className={`font-display font-bold text-base ${isDone ? 'line-through text-emerald-300' : 'text-white'}`}>
-            {quest.title}
-          </h3>
-          <p className="text-xs text-white/70 font-sans leading-relaxed">{quest.desc}</p>
-        </div>
+              <div className="flex items-center justify-between md:justify-end gap-4 border-t md:border-t-0 pt-3 md:pt-0 border-stone-100 dark:border-white/5">
+                <div className="text-xs text-stone-400 font-medium flex items-center gap-1">
+                  <Calendar size={14} /> Due: {new Date(q.dueDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                </div>
 
-        <div className="text-right shrink-0">
-          <span className="font-display font-black text-sm text-[#00F0FF] text-glow-cyan block">
-            +{quest.xpReward} XP
-          </span>
-          <span className="text-[10px] font-sans text-white/50 block mt-0.5">
-            REWARD
-          </span>
-        </div>
-      </div>
-
-      <div className="flex items-center justify-between border-t border-white/10 pt-3">
-        <div className="flex items-center gap-1.5 text-xs text-white/50 font-sans">
-          <Calendar size={13} className="text-[#00F0FF]" />
-          <span>DUE: {new Date(quest.dueDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-        </div>
-
-        {!isDone ? (
-          <button
-            onClick={() => onComplete(quest.id)}
-            className="btn-system-primary py-1.5 px-4 text-xs font-display font-bold uppercase tracking-wider flex items-center gap-1.5"
-          >
-            <CheckCircle2 size={14} /> COMPLETE QUEST
-          </button>
-        ) : (
-          <span className="text-xs font-display font-bold text-emerald-400 flex items-center gap-1">
-            <CheckCircle2 size={14} /> QUEST CLEARED
-          </span>
-        )}
+                <button
+                  disabled={isCompleted}
+                  onClick={() => handleComplete(q.id)}
+                  className={`btn-pill-dark text-xs px-5 py-2.5 ${
+                    isCompleted ? 'bg-stone-200 text-stone-500 cursor-not-allowed shadow-none' : ''
+                  }`}
+                >
+                  {isCompleted ? (
+                    <>
+                      <CheckCircle2 size={14} /> Quest Cleared
+                    </>
+                  ) : (
+                    <>
+                      <Sword size={14} /> Complete Quest
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );

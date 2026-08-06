@@ -38,7 +38,7 @@ export default function BottomNav({ onOpenProfile }) {
 
   return (
     <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md glass-nav safe-bottom z-50 lg:hidden">
-      <div className="grid grid-cols-5 items-center px-2 py-1">
+      <div className="grid grid-cols-5 items-center px-3 py-1.5">
         {/* Left items */}
         {NAV_ITEMS_LEFT.map(({ path, label, Icon }) => {
           const isActive = location.pathname === path || (path !== '/home' && location.pathname.startsWith(path + '/'));
@@ -46,18 +46,15 @@ export default function BottomNav({ onOpenProfile }) {
             <NavLink
               key={path}
               to={path}
-              className="flex flex-col items-center justify-center gap-1 py-1.5 rounded-2xl transition-all duration-200 relative"
-              style={isActive ? { background: 'var(--color-accent-light)' } : {}}
+              className={`flex flex-col items-center justify-center gap-1 py-1.5 rounded-full transition-all duration-200 ${
+                isActive ? 'bg-[#18191E] text-white dark:bg-[#00F0FF]/20 dark:text-[#00F0FF]' : 'text-stone-500 hover:text-stone-800 dark:text-stone-400'
+              }`}
             >
               <Icon
-                size={19}
+                size={18}
                 strokeWidth={isActive ? 2.4 : 1.7}
-                style={{ color: isActive ? 'var(--color-accent)' : '#9CA3AF' }}
               />
-              <span
-                className="text-[9px] font-bold tracking-wide"
-                style={{ color: isActive ? 'var(--color-accent)' : '#9CA3AF' }}
-              >
+              <span className="text-[9px] font-bold tracking-wide">
                 {label}
               </span>
             </NavLink>
@@ -68,11 +65,10 @@ export default function BottomNav({ onOpenProfile }) {
         <div className="flex justify-center relative">
           <NavLink
             to="/ai-architect"
-            className="w-12 h-12 rounded-full -mt-6 shadow-2xl flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95 border-4 border-white dark:border-[#12131C] z-20 shrink-0"
-            style={{ background: 'var(--color-accent)', color: '#FFFFFF', boxShadow: '0 8px 20px var(--color-accent-shadow)' }}
+            className="w-11 h-11 rounded-full -mt-5 shadow-lg flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95 bg-[#18191E] text-white dark:bg-[#00F0FF] dark:text-[#080C18] border-2 border-white dark:border-[#0F111A] z-20 shrink-0"
             title="System AI"
           >
-            <Wand2 size={20} className="animate-pulse" />
+            <Wand2 size={18} />
           </NavLink>
         </div>
 
@@ -83,18 +79,15 @@ export default function BottomNav({ onOpenProfile }) {
             <NavLink
               key={path}
               to={path}
-              className="flex flex-col items-center justify-center gap-1 py-1.5 rounded-2xl transition-all duration-200 relative"
-              style={isActive ? { background: 'var(--color-accent-light)' } : {}}
+              className={`flex flex-col items-center justify-center gap-1 py-1.5 rounded-full transition-all duration-200 ${
+                isActive ? 'bg-[#18191E] text-white dark:bg-[#00F0FF]/20 dark:text-[#00F0FF]' : 'text-stone-500 hover:text-stone-800 dark:text-stone-400'
+              }`}
             >
               <Icon
-                size={19}
+                size={18}
                 strokeWidth={isActive ? 2.4 : 1.7}
-                style={{ color: isActive ? 'var(--color-accent)' : '#9CA3AF' }}
               />
-              <span
-                className="text-[9px] font-bold tracking-wide"
-                style={{ color: isActive ? 'var(--color-accent)' : '#9CA3AF' }}
-              >
+              <span className="text-[9px] font-bold tracking-wide">
                 {label}
               </span>
             </NavLink>
@@ -126,104 +119,101 @@ export function SideNav({ onOpenFocus, onOpenProfile }) {
   const { user, syncing, lastSync } = useAuth();
 
   return (
-    <nav className="hidden lg:flex flex-col w-64 min-h-screen bg-[#0D1224] border-r border-[#00F0FF]/25 px-4 py-8 sticky top-0 shrink-0 text-white font-display">
-      {/* Logo + profile */}
+    <nav className="hidden lg:flex flex-col w-64 min-h-screen bg-white dark:bg-[#141622] border-r border-stone-200/80 dark:border-white/5 px-4 py-8 sticky top-0 shrink-0 text-stone-800 dark:text-white font-sans">
+      {/* Logo + Profile */}
       <div className="mb-6">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-10 h-10 rounded-xs bg-[#00F0FF]/20 border border-[#00F0FF] flex items-center justify-center font-black text-xl text-[#00F0FF] shadow-[0_0_15px_rgba(0,240,255,0.4)]">
+        <div className="flex items-center gap-3 mb-4 px-2">
+          <div className="w-10 h-10 rounded-2xl bg-[#FEF3D6] text-[#855B14] flex items-center justify-center font-black text-xl shadow-sm">
             ⚡
           </div>
           <div>
-            <div className="font-black text-base text-white tracking-wider text-glow-cyan">ASCEND</div>
-            <div className="text-[10px] font-bold text-[#A855F7] tracking-widest uppercase">SYSTEM NAVIGATOR</div>
+            <div className="font-extrabold text-base text-stone-900 dark:text-white tracking-tight">ASCEND</div>
+            <div className="text-[10px] font-bold text-stone-400 dark:text-stone-400 tracking-wider uppercase">System Navigator</div>
           </div>
         </div>
 
-        {/* Profile card */}
+        {/* Profile Card */}
         {user ? (
           <button onClick={onOpenProfile}
-            className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xs transition-all bg-[#080C18] border border-[#00F0FF]/30 hover:border-[#00F0FF] text-left">
-            <div className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs text-white flex-shrink-0"
-              style={{ background: user.avatarColor || '#00F0FF' }}>
+            className="w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-2xl transition-all bg-[#F8FAF9] dark:bg-[#1D2030] border border-stone-200/60 dark:border-white/10 hover:border-stone-400 text-left">
+            <div className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs text-white shrink-0"
+              style={{ background: user.avatarColor || '#18191E' }}>
               {user.name.split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase()}
             </div>
             <div className="flex-1 min-w-0">
-              <div className="text-xs font-bold text-white truncate">{user.name.toUpperCase()}</div>
-              <div className="text-[10px] text-[#00F0FF] flex items-center gap-1">
-                {syncing  ? <><Cloud size={9} className="animate-pulse text-[#00F0FF]" />syncing…</>
-                : lastSync ? <><CheckCircle2 size={9} className="text-emerald-400" />synced</>
-                : 'SYSTEM READY'}
+              <div className="text-xs font-bold text-stone-900 dark:text-white truncate">{user.name}</div>
+              <div className="text-[10px] text-stone-500 dark:text-stone-400 flex items-center gap-1">
+                {syncing  ? <><Cloud size={9} className="animate-pulse text-stone-700 dark:text-cyan-400" />syncing…</>
+                : lastSync ? <><CheckCircle2 size={9} className="text-emerald-500" />synced</>
+                : 'System ready'}
               </div>
             </div>
           </button>
         ) : (
           <button onClick={onOpenProfile}
-            className="btn-system-primary w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-xs text-xs font-black uppercase tracking-widest">
-            <LogIn size={14} /> SIGN IN TO SYSTEM
+            className="btn-pill-dark w-full flex items-center justify-center gap-2 text-xs font-bold uppercase tracking-wider">
+            <LogIn size={14} /> Sign in to system
           </button>
         )}
       </div>
 
-      {/* Today's status card */}
-      <div className="mb-6 p-4 rounded-xs bg-[#080C18] border border-[#00F0FF]/30 space-y-2">
-        <div className="text-[10px] font-bold text-[#00F0FF] uppercase tracking-widest">
-          SYSTEM DATE · {dateInfo.dayEn.slice(0, 3).toUpperCase()} · {dateInfo.short.toUpperCase()}
+      {/* Today's Status Progress Card */}
+      <div className="mb-6 p-4 rounded-3xl bg-[#FEF3D6] text-[#855B14] space-y-2">
+        <div className="text-[10px] font-extrabold uppercase tracking-wider">
+          Today · {dateInfo.dayEn.slice(0, 3)} · {dateInfo.short}
         </div>
-        <div className="h-2.5 rounded-xs xp-bar-container">
-          <div className="xp-bar-fill rounded-xs" style={{ width: `${pct}%` }} />
+        <div className="h-2 rounded-full bg-white/60 overflow-hidden">
+          <div className="h-full rounded-full bg-[#855B14] transition-all duration-500" style={{ width: `${pct}%` }} />
         </div>
-        <div className="flex items-center justify-between text-xs text-white/70">
-          <span>{done}/{total} CLEARED</span>
+        <div className="flex items-center justify-between text-xs font-bold">
+          <span>{done}/{total} Done ({pct}%)</span>
           {streak > 0 && (
-            <span className="font-bold text-[#F59E0B]">
-              🔥 {streak}D STREAK
-            </span>
+            <span>🔥 {streak}d</span>
           )}
         </div>
       </div>
 
-      {/* Nav links */}
-      <div className="flex flex-col gap-2 flex-1">
+      {/* Side Nav Links (Clean Reference Pill Style) */}
+      <div className="flex flex-col gap-1.5 flex-1">
         {SIDE_NAV_ITEMS.map(({ path, label, Icon }) => {
           const isActive = location.pathname === path || (path !== '/home' && location.pathname.startsWith(path + '/'));
           return (
             <NavLink
               key={path}
               to={path}
-              className={`flex items-center gap-3 px-4 py-2.5 rounded-xs text-xs font-bold uppercase tracking-wider transition-all duration-200 ${
+              className={`flex items-center gap-3 px-4 py-2.5 rounded-full text-xs font-bold transition-all duration-200 ${
                 isActive
-                  ? 'bg-[#00F0FF]/20 text-[#00F0FF] border border-[#00F0FF]/60 shadow-[0_0_20px_rgba(0,240,255,0.3)]'
-                  : 'text-white/70 hover:text-white hover:bg-white/5 border border-transparent'
+                  ? 'bg-[#18191E] text-white dark:bg-[#00F0FF]/20 dark:text-[#00F0FF] shadow-sm'
+                  : 'text-stone-600 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-white/5'
               }`}
             >
-              <Icon size={16} className={isActive ? 'text-[#00F0FF]' : 'text-white/50'} />
+              <Icon size={16} strokeWidth={isActive ? 2.2 : 1.7} />
               {label}
             </NavLink>
           );
         })}
       </div>
 
-      {/* Bottom Controls: Theme Toggle + Focus + Settings */}
-      <div className="mt-4 border-t border-[#00F0FF]/20 pt-4 space-y-2">
-        {/* Theme Switcher */}
+      {/* Bottom Controls */}
+      <div className="mt-4 border-t border-stone-200/80 dark:border-white/5 pt-4 space-y-2">
         <button
           onClick={toggleTheme}
-          className="w-full flex items-center justify-between px-3.5 py-2 rounded-xs text-xs font-bold text-white bg-[#080C18] border border-white/10 hover:border-[#00F0FF]/40 transition-all uppercase"
+          className="w-full flex items-center justify-between px-4 py-2.5 rounded-full text-xs font-bold text-stone-700 dark:text-white bg-[#F8FAF9] dark:bg-[#1D2030] border border-stone-200/60 dark:border-white/10 hover:border-stone-400 transition-all"
         >
           <div className="flex items-center gap-2">
-            {isDark ? <Moon size={14} className="text-[#A855F7]" /> : <Sun size={14} className="text-[#00F0FF]" />}
-            <span>{isDark ? 'DARK MODE' : 'LIGHT MODE'}</span>
+            {isDark ? <Moon size={14} className="text-purple-400" /> : <Sun size={14} className="text-amber-500" />}
+            <span>{isDark ? 'Dark Mode' : 'Light Mode'}</span>
           </div>
-          <span className="text-[9px] px-2 py-0.5 rounded-xs bg-white/10 text-white/70 uppercase">
-            TOGGLE
+          <span className="text-[10px] px-2 py-0.5 rounded-full bg-stone-200 dark:bg-white/10 font-bold">
+            Toggle
           </span>
         </button>
 
         {onOpenFocus && (
           <button onClick={onOpenFocus}
-            className="w-full flex items-center gap-3 px-3.5 py-2 rounded-xs text-xs font-bold text-white/70 hover:text-white hover:bg-white/5 border border-transparent transition-all uppercase">
-            <Timer size={15} className="text-[#00F0FF]" />
-            FOCUS TIMER
+            className="w-full flex items-center gap-3 px-4 py-2.5 rounded-full text-xs font-bold text-stone-600 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-white/5 transition-all">
+            <Timer size={15} />
+            Focus Timer
           </button>
         )}
       </div>
