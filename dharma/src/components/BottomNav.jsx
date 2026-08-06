@@ -11,25 +11,23 @@ import { useDailyVerse } from '../hooks/useDailyVerse';
 import { useAuth } from '../context/AuthContext';
 
 const NAV_ITEMS_LEFT = [
-  { path: '/status',   label: 'Status', Icon: Shield },
-  { path: '/quests',   label: 'Quests', Icon: Sword },
+  { path: '/status', label: 'Status HUD', Icon: Shield },
+  { path: '/quests', label: 'Quests', Icon: Sword },
 ];
 
 const NAV_ITEMS_RIGHT = [
-  { path: '/episodes', label: 'Episodes', Icon: Film },
-  { path: '/gyaan',    label: 'Codex', Icon: BookMarked },
+  { path: '/ai-architect', label: 'System AI', Icon: Wand2 },
+  { path: '/codex', label: 'System Codex', Icon: BookMarked },
 ];
 
 const SIDE_NAV_ITEMS = [
-  { path: '/home',         label: 'Dashboard',    Icon: LayoutDashboard },
-  { path: '/status',       label: 'Status Window',Icon: Shield },
-  { path: '/quests',       label: 'Quest Board',  Icon: Sword },
-  { path: '/episodes',     label: 'Episode Log',  Icon: Film },
-  { path: '/sadhana',      label: 'Pillars',      Icon: Layers },
-  { path: '/ai-architect', label: 'System AI',    Icon: Wand2 },
-  { path: '/gyaan',        label: 'System Codex', Icon: BookMarked },
-  { path: '/settings',     label: 'Settings',     Icon: Settings },
+  { path: '/status', label: 'Status HUD', Icon: Shield },
+  { path: '/quests', label: 'Quest Board', Icon: Sword },
+  { path: '/ai-architect', label: 'System AI', Icon: Wand2 },
+  { path: '/codex', label: 'System Codex', Icon: BookMarked },
+  { path: '/settings', label: 'Settings', Icon: Settings },
 ];
+
 
 /* ── Mobile bottom bar ──────────────────────────────────────────────────────── */
 export default function BottomNav({ onOpenProfile }) {

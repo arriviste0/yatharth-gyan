@@ -1,14 +1,23 @@
 import React, { useState } from 'react';
-import { Sparkles, Plus, Activity, Flame, Shield, Award, Zap, ChevronRight, TrendingUp } from 'lucide-react';
+import { Sparkles, Plus, Activity, Flame, Shield, Award, Zap, ChevronRight, TrendingUp, Target, CheckCircle2 } from 'lucide-react';
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, Tooltip } from 'recharts';
 import { useAuth } from '../context/AuthContext';
 import { useSystemStats } from '../hooks/useSystemStats';
+import { useStorage } from '../hooks/useStorage';
+import { getTodayCompletedCount, getCurrentStreak } from '../utils/streakUtils';
 import RankBadge from '../components/RankBadge';
 import LevelUpModal from '../components/LevelUpModal';
 
 export default function StatusWindow() {
   const { user } = useAuth();
   const system = useSystemStats();
+  const { state } = useStorage();
+  const pillars = state?.pillars || [];
+  const logs = state?.logs || {};
+
+  const { done, total } = getTodayCompletedCount(logs, pillars);
+  const streak = getCurrentStreak(logs, pillars);
+  const pct = total > 0 ? Math.round((done / total) * 100) : 0;
 
   const [customStats, setCustomStats] = useState([
     { key: 'mind', name: 'Mind / Wisdom', nameDev: 'ज्ञान', val: system.stats.gyaan || 32, xp: 450, xpReq: 750, color: '#A855F7' },
@@ -64,12 +73,12 @@ export default function StatusWindow() {
         <div>
           <div className="flex items-center gap-2 mb-1">
             <span className="text-[10px] font-extrabold text-stone-700 dark:text-stone-300 tracking-wider uppercase px-2.5 py-0.5 bg-stone-200 dark:bg-white/10 rounded-full">
-              System Stats
+              Status HUD
             </span>
             <span className="text-xs font-dev text-stone-500">आत्म स्थिति</span>
           </div>
           <h1 className="text-2xl lg:text-3xl font-extrabold text-stone-900 dark:text-white tracking-tight">
-            Status Window
+            Player Status Window
           </h1>
         </div>
 
@@ -81,7 +90,46 @@ export default function StatusWindow() {
         </button>
       </div>
 
-      {/* Main Container Card */}
+      {/* 4 Pastel Overview Cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="card-pastel-yellow p-5 space-y-1">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-extrabold uppercase">Completion</span>
+            <Target size={18} />
+          </div>
+          <div className="text-2xl font-black">{pct}%</div>
+          <div className="text-[11px] font-bold opacity-80">{total - done} targets remaining</div>
+        </div>
+
+        <div className="card-pastel-mint p-5 space-y-1">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-extrabold uppercase">Tasks Done</span>
+            <CheckCircle2 size={18} />
+          </div>
+          <div className="text-2xl font-black">{done}/{total}</div>
+          <div className="text-[11px] font-bold opacity-80">Daily practice cleared</div>
+        </div>
+
+        <div className="card-pastel-purple p-5 space-y-1">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-extrabold uppercase">Streak</span>
+            <Flame size={18} />
+          </div>
+          <div className="text-2xl font-black">{streak} Days</div>
+          <div className="text-[11px] font-bold opacity-80">Continuous practice</div>
+        </div>
+
+        <div className="card-pastel-blue p-5 space-y-1">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-extrabold uppercase">Pillars</span>
+            <Activity size={18} />
+          </div>
+          <div className="text-2xl font-black">{pillars.length} Active</div>
+          <div className="text-[11px] font-bold opacity-80">{total} targets tracked</div>
+        </div>
+      </div>
+
+      {/* Main Status Sheet Card */}
       <div className="card-ref p-6 space-y-6">
         
         {/* Top Profile Header */}
@@ -126,7 +174,7 @@ export default function StatusWindow() {
             </h3>
 
             {customStats.map((st) => {
-              const pct = Math.round((st.xp / st.xpReq) * 100);
+              const stPct = Math.round((st.xp / st.xpReq) * 100);
               return (
                 <div key={st.key} className="p-4 bg-stone-50 dark:bg-white/[0.02] border border-stone-200/60 dark:border-white/5 rounded-2xl space-y-2">
                   <div className="flex items-center justify-between">
@@ -143,10 +191,10 @@ export default function StatusWindow() {
                   <div className="space-y-1">
                     <div className="flex items-center justify-between text-[11px] font-semibold text-stone-500">
                       <span>Progress</span>
-                      <span>{st.xp} / {st.xpReq} XP ({pct}%)</span>
+                      <span>{st.xp} / {st.xpReq} XP ({stPct}%)</span>
                     </div>
                     <div className="h-2 rounded-full bg-stone-200 dark:bg-white/10 overflow-hidden">
-                      <div className="h-full rounded-full transition-all duration-500" style={{ width: `${pct}%`, backgroundColor: st.color }} />
+                      <div className="h-full rounded-full transition-all duration-500" style={{ width: `${stPct}%`, backgroundColor: st.color }} />
                     </div>
                   </div>
                 </div>

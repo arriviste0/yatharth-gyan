@@ -27,8 +27,9 @@ import StatusWindow from './pages/StatusWindow';
 import QuestBoard from './pages/QuestBoard';
 import EpisodeLog from './pages/EpisodeLog';
 import PublicProfile from './pages/PublicProfile';
+import CodexChronicles from './pages/CodexChronicles';
 
-const NAV_ROUTES = ['/home', '/status', '/quests', '/episodes', '/sadhana', '/ai-architect', '/manan', '/drishti', '/gyaan'];
+const NAV_ROUTES = ['/status', '/quests', '/codex', '/ai-architect'];
 
 /* ── Offline banner ─────────────────────────────────────────────── */
 function OfflineBanner() {
@@ -119,7 +120,7 @@ function useSwipeNav() {
 function AppShell({ children, onOpenFocus, onOpenProfile }) {
   useSwipeNav();
   return (
-    <div className="flex min-h-screen w-full relative bg-[#0B0E1A] text-white">
+    <div className="flex min-h-screen w-full relative bg-[#F4F7F6] dark:bg-[#0F111A] text-stone-900 dark:text-white">
       <SideNav onOpenFocus={onOpenFocus} onOpenProfile={onOpenProfile} />
       <div className="flex-1 min-w-0 flex flex-col justify-between">
         <main className="flex-1 w-full">
@@ -131,8 +132,7 @@ function AppShell({ children, onOpenFocus, onOpenProfile }) {
   );
 }
 
-
-/* ── Main App (needs router context) ────────────────────────────── */
+/* ── Main App ────────────────────────────────────────────────────── */
 function AppInner() {
   const { state, updateSettings, logFocusSession } = useStorage();
   const { settings } = state;
